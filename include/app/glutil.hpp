@@ -31,6 +31,13 @@
 
 namespace gl {
 
+#define MOVE_ONLY_CLASS(Name) \
+  Name(const Name &) = delete; \
+  Name &operator=(const Name &) = delete; \
+  Name() = default; \
+  Name(Name &&) = default; \
+  ~Name() noexcept;
+
 struct Uniform {
   GLint loc = -1;
   GLint count;
@@ -61,6 +68,8 @@ struct Program {
 #if !defined(DISABLE_GL_ATTRIBUTE_CACHE)
   std::vector<Attribute> attributes;
 #endif
+
+  MOVE_ONLY_CLASS(Program)
 };
 
 struct TextureData {
@@ -91,6 +100,8 @@ struct Texture {
   int height = 0;
 
   TextureOpts opts;
+
+  MOVE_ONLY_CLASS(Texture)
 };
 
 struct RenderbufferOpts {
@@ -103,6 +114,8 @@ struct Renderbuffer {
 
   int width = 0;
   int height = 0;
+
+  MOVE_ONLY_CLASS(Renderbuffer)
 };
 
 struct FramebufferTextureAttachment {
@@ -123,7 +136,11 @@ struct Framebuffer {
 
   std::vector<Texture> textures;
   std::vector<Renderbuffer> renderbuffers;
+
+  MOVE_ONLY_CLASS(Framebuffer)
 };
+
+#undef MOVE_ONLY_CLASS
 
 void checkError();
 void clearErrorLog();
@@ -133,45 +150,28 @@ GLuint createShader(std::string_view shader_src, GLenum type);
 
 Program createProgram(std::string_view vert_shader_src, std::string_view frag_shader_src);
 void createProgram(Program &prog, std::string_view vert_shader_src, std::string_view frag_shader_src);
-
 Program createProgram(std::string_view shader_src, ShaderVersion version = SHADER_VERSION_100);
 void createProgram(Program &prog, std::string_view shader_src, ShaderVersion version = SHADER_VERSION_100);
-
-void deleteProgram(Program &prog);
+void deleteProgram(Program &prog) noexcept;
 
 GLint getUniformLocation(const Program &prog, const GLchar *name);
 GLint getAttribLocation(const Program &prog, const GLchar *name);
 
 Texture createTexture(int width, int height, const TextureOpts &opts = {});
 Texture createTexture(const TextureData &data, const TextureOpts &opts = {});
-
 void createTexture(Texture &tex, int width, int height, const TextureOpts &opts = {});
 void createTexture(Texture &tex, const TextureData &data, const TextureOpts &opts = {});
-
-void deleteTexture(Texture &tex);
-
-template <std::size_t n>
-void deleteTexture(Texture (&tex)[n]) {
-  for (int i = 0; i < n; ++i) deleteTexture(tex[i]);
-}
+void deleteTexture(Texture &tex) noexcept;
 
 Renderbuffer createRenderbuffer(int width, int height, const RenderbufferOpts &opts = {});
-
 void createRenderbuffer(Renderbuffer &rb, int width, int height, const RenderbufferOpts &opts = {});
-void deleteRenderbuffer(Renderbuffer &rb);
+void deleteRenderbuffer(Renderbuffer &rb) noexcept;
 
 Framebuffer createFramebuffer(int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
                               const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
-
 void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
                        const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
-
-void deleteFramebuffer(Framebuffer &fb);
-
-template <std::size_t n>
-void deleteFramebuffers(Framebuffer (&fb)[n]) {
-  for (int i = 0; i < n; ++i) deleteFramebuffers(fb[i]);
-}
+void deleteFramebuffer(Framebuffer &fb) noexcept;
 
 inline void uniform(GLint loc, int x) {
   glUniform1i(loc, x);
@@ -268,41 +268,3 @@ inline void enableBlendScreen() {
 }
 
 } // gl
-
-namespace std {
-
-// Default Deleters for std::unique_ptr et al.
-
-template <>
-struct default_delete<gl::Program> {
-  void operator()(gl::Program *prog) {
-    gl::deleteProgram(*prog);
-    delete prog;
-  }
-};
-
-template <>
-struct default_delete<gl::Texture> {
-  void operator()(gl::Texture *tex) {
-    gl::deleteTexture(*tex);
-    delete tex;
-  }
-};
-
-template <>
-struct default_delete<gl::Renderbuffer> {
-  void operator()(gl::Renderbuffer *rb) {
-    gl::deleteRenderbuffer(*rb);
-    delete rb;
-  }
-};
-
-template <>
-struct default_delete<gl::Framebuffer> {
-  void operator()(gl::Framebuffer *fb) {
-    gl::deleteFramebuffer(*fb);
-    delete fb;
-  }
-};
-
-} // std

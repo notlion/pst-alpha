@@ -168,7 +168,7 @@ Program createProgram(std::string_view vert_shader_src, std::string_view frag_sh
 }
 
 void createProgram(Program &prog, std::string_view vert_shader_src, std::string_view frag_shader_src) {
-  gl::deleteProgram(prog);
+  deleteProgram(prog);
 
   auto vshader = createShader(vert_shader_src, GL_VERTEX_SHADER);
   auto fshader = createShader(frag_shader_src, GL_FRAGMENT_SHADER);
@@ -215,7 +215,7 @@ void createProgram(Program &prog, std::string_view vert_shader_src, std::string_
 Program createProgram(std::string_view shader_src, ShaderVersion version) {
   Program prog;
   createProgram(prog, shader_src, version);
-  return prog;
+  return std::move(prog);
 }
 
 void createProgram(Program &prog, std::string_view shader_src, ShaderVersion version) {
@@ -238,7 +238,7 @@ void createProgram(Program &prog, std::string_view shader_src, ShaderVersion ver
   createProgram(prog, vertex_src, fragment_src);
 }
 
-void deleteProgram(Program &prog) {
+void deleteProgram(Program &prog) noexcept {
   if (prog.id) {
     glDeleteProgram(prog.id);
 
@@ -246,6 +246,10 @@ void deleteProgram(Program &prog) {
     prog.uniforms.clear();
     prog.attributes.clear();
   }
+}
+
+Program::~Program() noexcept {
+  deleteProgram(*this);
 }
 
 GLint getUniformLocation(const Program &prog, const GLchar *name) {
@@ -341,11 +345,15 @@ void createTexture(Texture &tex, const TextureData &data, const TextureOpts &opt
   CHECK_GL_ERROR();
 }
 
-void deleteTexture(Texture &tex) {
+void deleteTexture(Texture &tex) noexcept {
   if (tex.id > 0) {
     glDeleteTextures(1, &tex.id);
     tex.id = 0;
   }
+}
+
+Texture::~Texture() noexcept {
+  deleteTexture(*this);
 }
 
 
@@ -367,9 +375,13 @@ void createRenderbuffer(Renderbuffer &rb, int width, int height, const Renderbuf
   CHECK_GL_ERROR();
 }
 
-void deleteRenderbuffer(Renderbuffer &rb) {
+void deleteRenderbuffer(Renderbuffer &rb) noexcept {
   if (rb.id > 0) glDeleteRenderbuffers(1, &rb.id);
   rb.id = 0;
+}
+
+Renderbuffer::~Renderbuffer() noexcept {
+  deleteRenderbuffer(*this);
 }
 
 
@@ -427,14 +439,18 @@ void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector
   CHECK_GL_ERROR();
 }
 
-void deleteFramebuffer(Framebuffer &fb) {
-  for (auto &tex : fb.textures) gl::deleteTexture(tex);
-  for (auto &rb : fb.renderbuffers) gl::deleteRenderbuffer(rb);
+void deleteFramebuffer(Framebuffer &fb) noexcept {
+  for (auto &tex : fb.textures) deleteTexture(tex);
+  for (auto &rb : fb.renderbuffers) deleteRenderbuffer(rb);
 
   if (fb.id > 0) {
     glDeleteFramebuffers(1, &fb.id);
     fb.id = 0;
   }
+}
+
+Framebuffer::~Framebuffer() noexcept {
+  deleteFramebuffer(*this);
 }
 
 } // gl

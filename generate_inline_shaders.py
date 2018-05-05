@@ -21,7 +21,7 @@ const char *shader_source_%s = R"GLSL(%s)GLSL";
 
 BASE_DIR = sys.argv[1] if len(sys.argv) >= 2 else ''
 INCLUDE_DIR = path.join(BASE_DIR, 'include/')
-ASSETS_DIR = path.join(BASE_DIR, 'assets/')
+ASSETS_DIR = path.join(BASE_DIR, 'shaders/')
 OUTPUT_DIR = path.join(INCLUDE_DIR, 'app/')
 
 if not path.exists(OUTPUT_DIR):
