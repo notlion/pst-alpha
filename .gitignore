@@ -1,0 +1,9 @@
+bin/
+build/
+CMakeSettings.json
+
+.vs/
+.vscode/
+.idea/
+*.ilk
+*.pdb
