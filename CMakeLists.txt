@@ -1,18 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(APP_NAME wasm_webgl2)
-
-project(${APP_NAME}_project)
-
+set(APP_TARGET wasm_webgl2)
 set(BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
 set(ASSETS_DIR ${PROJECT_SOURCE_DIR}/assets)
 
+project(${APP_TARGET}_project)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-
 file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/app/*.cpp)
 
-if (APPLE)
+if (APPLE OR WIN32)
   set(PLATFORM_SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/glad/glad.c)
 endif()
 
@@ -26,17 +23,15 @@ if (EMSCRIPTEN)
   file(GLOB PLATFORM_SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/emscripten/*.cpp)
 endif ()
 
-add_executable(${APP_NAME} ${SOURCE_FILES} ${PLATFORM_SOURCE_FILES})
-set_target_properties(${APP_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
+add_executable(${APP_TARGET} ${SOURCE_FILES} ${PLATFORM_SOURCE_FILES})
+set_target_properties(${APP_TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
 
 add_custom_target(inline_shaders
     COMMAND python ${PROJECT_SOURCE_DIR}/generate_inline_shaders.py ${PROJECT_SOURCE_DIR})
-add_dependencies(${APP_NAME} inline_shaders)
+add_dependencies(${APP_TARGET} inline_shaders)
 
 if (EMSCRIPTEN)
   set(BUILD_ASSETS_DIR ${CMAKE_BINARY_DIR}/assets)
-  # add_custom_command(TARGET ${APP_NAME} PRE_BUILD
-  #     COMMAND ${CMAKE_COMMAND} -E create_symlink ${ASSETS_DIR} ${BUILD_ASSETS_DIR} DEPENDS ${BUILD_ASSETS_DIR})
-  add_custom_command(TARGET ${APP_NAME} POST_BUILD
+  add_custom_command(TARGET ${APP_TARGET} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/emscripten/index.html ${BIN_DIR} DEPENDS ${BIN_DIR})
 endif ()

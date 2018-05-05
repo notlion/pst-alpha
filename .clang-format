@@ -1,0 +1,43 @@
+---
+BasedOnStyle: Mozilla
+ColumnLimit: 0
+IndentWidth: 2
+ContinuationIndentWidth: 4
+Standard: Cpp11
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+ConstructorInitializerIndentWidth: 0
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+PointerAlignment: Right
+AlwaysBreakTemplateDeclarations: true
+BreakConstructorInitializersBeforeComma: false
+BreakBeforeBinaryOperators: None
+MaxEmptyLinesToKeep: 2
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: true
+  BeforeElse: true
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+KeepEmptyLinesAtTheStartOfBlocks: true
+NamespaceIndentation: None
+AlignOperands: true
+AlignTrailingComments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackArguments: false
+BinPackParameters: false
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+BreakBeforeInheritanceComma: false
+...

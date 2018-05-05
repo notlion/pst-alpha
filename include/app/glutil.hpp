@@ -161,10 +161,10 @@ void createRenderbuffer(Renderbuffer &rb, int width, int height, const Renderbuf
 void deleteRenderbuffer(Renderbuffer &rb);
 
 Framebuffer createFramebuffer(int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                                                     const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
+                              const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
 
 void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                                                               const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
+                       const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
 
 void deleteFramebuffer(Framebuffer &fb);
 
