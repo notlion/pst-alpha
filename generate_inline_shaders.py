@@ -30,6 +30,7 @@ if not path.exists(OUTPUT_DIR):
 shader_paths = []
 for ext in ['*.glsl']:
     shader_paths.extend(glob(ASSETS_DIR + ext))
+shader_paths.sort()
 
 shaders_hpp_contents = ''
 
