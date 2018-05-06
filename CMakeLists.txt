@@ -9,7 +9,7 @@ project(${APP_TARGET}_project)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/app/*.cpp)
 
-if (APPLE OR WIN32)
+if (APPLE)
   set(PLATFORM_SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/glad/glad.c)
 endif()
 
