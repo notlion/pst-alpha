@@ -35,6 +35,8 @@ struct TriangleMeshVertexBuffer {
   GLuint buffer = 0;
   GLsizei count = 0;
   std::vector<VertexAttribute> attribs;
+
+  GL_UTIL_MOVE_ONLY_CLASS(TriangleMeshVertexBuffer)
 };
 
 struct BoundingBox {
@@ -50,7 +52,7 @@ BoundingBox calcBoundingBox(const DefaultTriangleMesh &mesh);
 vec3 calcCenter(const BoundingBox &box);
 
 void createTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb, std::size_t triangle_size, std::size_t triangle_count, const void *data, const std::vector<VertexAttribute> &attribs);
-void deleteTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb);
+void deleteTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) noexcept;
 
 template <typename Vertex>
 void createTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb, const TriangleMesh<Vertex> &mesh) {

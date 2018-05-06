@@ -215,7 +215,7 @@ void createProgram(Program &prog, std::string_view vert_shader_src, std::string_
 Program createProgram(std::string_view shader_src, ShaderVersion version) {
   Program prog;
   createProgram(prog, shader_src, version);
-  return std::move(prog);
+  return prog;
 }
 
 void createProgram(Program &prog, std::string_view shader_src, ShaderVersion version) {

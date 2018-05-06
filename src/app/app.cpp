@@ -42,8 +42,6 @@ bool App::init() {
 }
 
 void App::cleanup() {
-  gl::deleteTriangleMeshVertexBuffer(m_mesh_vb);
-  gl::deleteProgram(m_mesh_prog);
 }
 
 void App::update(int timestamp) {

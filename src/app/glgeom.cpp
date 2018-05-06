@@ -58,12 +58,16 @@ void createTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb, std::size_t tr
   vb.attribs = attribs;
 }
 
-void deleteTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) {
+void deleteTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) noexcept {
   if (vb.buffer > 0) {
     glDeleteBuffers(1, &vb.buffer);
     vb.buffer = 0;
   }
   vb.count = 0;
+}
+
+TriangleMeshVertexBuffer::~TriangleMeshVertexBuffer() noexcept {
+  deleteTriangleMeshVertexBuffer(*this);
 }
 
 void enableTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) {

@@ -31,7 +31,7 @@
 
 namespace gl {
 
-#define MOVE_ONLY_CLASS(Name)             \
+#define GL_UTIL_MOVE_ONLY_CLASS(Name)             \
   Name(const Name &) = delete;            \
   Name &operator=(const Name &) = delete; \
   Name() = default;                       \
@@ -69,7 +69,7 @@ struct Program {
   std::vector<Attribute> attributes;
 #endif
 
-  MOVE_ONLY_CLASS(Program)
+  GL_UTIL_MOVE_ONLY_CLASS(Program)
 };
 
 struct TextureData {
@@ -101,7 +101,7 @@ struct Texture {
 
   TextureOpts opts;
 
-  MOVE_ONLY_CLASS(Texture)
+  GL_UTIL_MOVE_ONLY_CLASS(Texture)
 };
 
 struct RenderbufferOpts {
@@ -115,7 +115,7 @@ struct Renderbuffer {
   int width = 0;
   int height = 0;
 
-  MOVE_ONLY_CLASS(Renderbuffer)
+  GL_UTIL_MOVE_ONLY_CLASS(Renderbuffer)
 };
 
 struct FramebufferTextureAttachment {
@@ -137,10 +137,8 @@ struct Framebuffer {
   std::vector<Texture> textures;
   std::vector<Renderbuffer> renderbuffers;
 
-  MOVE_ONLY_CLASS(Framebuffer)
+  GL_UTIL_MOVE_ONLY_CLASS(Framebuffer)
 };
-
-#undef MOVE_ONLY_CLASS
 
 void checkError();
 void clearErrorLog();
