@@ -318,17 +318,7 @@ void createTexture(Texture &tex, const TextureData &data, const TextureOpts &opt
   glGenTextures(1, &tex.id);
   glBindTexture(opts.target, tex.id);
 
-  GLenum format = [&] {
-    switch (data.component_count) {
-      case 3: return GL_RGB;
-      case 4: return GL_RGBA;
-      default:
-        PRINT_ERROR("Component count not 3 or 4: %d", data.component_count);
-    }
-    return GL_RGBA;
-  }();
-
-  glTexImage2D(opts.target, 0, format, tex.width, tex.height, 0, format, GL_UNSIGNED_BYTE, data.pixels.get());
+  glTexImage2D(opts.target, 0, opts.internal_format, data.width, data.height, 0, opts.format, opts.component_type, data.pixels.get());
 
   glTexParameteri(opts.target, GL_TEXTURE_MIN_FILTER, opts.min_filter);
   glTexParameteri(opts.target, GL_TEXTURE_MAG_FILTER, opts.mag_filter);
@@ -396,14 +386,14 @@ static const char *getFramebufferStatusString(GLenum status) {
 }
 
 Framebuffer createFramebuffer(int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                                                     const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
+                              const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
   Framebuffer fb;
   createFramebuffer(fb, width, height, texture_attachments, renderbuffer_attachments);
   return fb;
 }
 
 void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                                                               const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
+                       const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
   deleteFramebuffer(fb);
 
   fb.width = width;

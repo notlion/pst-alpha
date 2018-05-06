@@ -31,11 +31,11 @@
 
 namespace gl {
 
-#define MOVE_ONLY_CLASS(Name) \
-  Name(const Name &) = delete; \
+#define MOVE_ONLY_CLASS(Name)             \
+  Name(const Name &) = delete;            \
   Name &operator=(const Name &) = delete; \
-  Name() = default; \
-  Name(Name &&) = default; \
+  Name() = default;                       \
+  Name(Name &&) = default;                \
   ~Name() noexcept;
 
 struct Uniform {
