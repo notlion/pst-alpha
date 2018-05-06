@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 
 set(APP_TARGET wasm_webgl2)
-set(BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
-set(ASSETS_DIR ${PROJECT_SOURCE_DIR}/assets)
 
 project(${APP_TARGET}_project)
+
+set(BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
+set(ASSETS_DIR ${PROJECT_SOURCE_DIR}/assets)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/app/*.cpp)
