@@ -95,7 +95,7 @@ void App::update(int timestamp) {
 
     gl::useProgram(m_simulate_prog);
     gl::uniform(m_simulate_prog, "u_resolution", gl::vec2(m_particle_framebuffer_resolution));
-    gl::uniform(m_simulate_prog, "u_frame", m_clock.elapsed_frames);
+    gl::uniform(m_simulate_prog, "u_frame", GLint(m_clock.elapsed_frames));
     gl::uniform(m_simulate_prog, "u_time", m_clock.elapsed_seconds);
     gl::uniform(m_simulate_prog, "u_time_delta", m_clock.elapsed_seconds_delta);
 

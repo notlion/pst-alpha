@@ -114,14 +114,25 @@ void main() {
   vec3 vel = pos.xyz - pos_prev.xyz;
   vel *= 0.9;
 
+  vec3 color_vel = color.rgb - color_prev.rgb;
+  color_vel *= 0.9;
+
   vec2 uv = gl_FragCoord.xy / vec2(u_resolution);
-  o_position = vec4(pos.xyz + vel, 1.0);
-  o_color = vec4(sin(u_time + uv.x), cos(u_time + uv.y), 0.0, 1.0);
 
   float z = sin(u_time + uv.x * 5.231) + cos(u_time + uv.y * 5.763);
   z *= 0.5;
-  o_position = vec4(uv * 2.0 - 1.0, z, 1.0);
-  o_color = vec4(sin(z * 10.0) * 0.5 + 0.5, cos(z * 10.0) * 0.5 + 0.5, 0.0, 1.0);
+  vec3 goal_position = vec3(uv * 2.0 - 1.0, z);
+  vec3 goal_color = vec3(sin(z * 10.0) * 0.5 + 0.5, cos(z * 10.0) * 0.5 + 0.5, 0.0);
+
+  vel += (goal_position - pos.xyz) * 0.1;
+  color_vel += (goal_color - color.rgb) * 0.1;
+
+  o_position = vec4(pos.xyz + vel, 1.0);
+  o_color = vec4(color.rgb + color_vel, 1.0);
+
+  float t = u_time * 0.2;
+  o_position = mix(o_position, vec4(0.0, 0.0, 0.0, 1.0), smoothstep(0.9, 1.0, abs(fract(uv.x - uv.y - t) * 2.0 - 1.0)));
+  o_color = mix(o_color, vec4(0.0, 0.0, 0.0, 1.0), smoothstep(0.9, 1.0, abs(fract(uv.x - uv.y - t) * 2.0 - 1.0)));
 }
 
 #endif
