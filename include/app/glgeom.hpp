@@ -6,7 +6,7 @@ namespace gl {
 
 struct VertexAttribute {
   GLenum component_type = GL_FLOAT;
-  GLint component_size = 0;
+  GLint component_count = 0;
   GLsizei stride = 0;
   GLsizeiptr offset = 0;
   GLint loc = -1;
@@ -31,12 +31,15 @@ struct TriangleMesh {
   std::vector<VertexAttribute> attribs;
 };
 
-struct TriangleMeshVertexBuffer {
+struct VertexBuffer {
   GLuint buffer = 0;
-  GLsizei count = 0;
+
+  GLenum primitive;
+  GLsizei count;
+
   std::vector<VertexAttribute> attribs;
 
-  GL_UTIL_MOVE_ONLY_CLASS(TriangleMeshVertexBuffer)
+  GL_UTIL_MOVE_ONLY_CLASS(VertexBuffer)
 };
 
 struct BoundingBox {
@@ -51,27 +54,27 @@ DefaultTriangleMesh createQuad(const vec2 &min = vec2(-1.0f), const vec2 &max = 
 BoundingBox calcBoundingBox(const DefaultTriangleMesh &mesh);
 vec3 calcCenter(const BoundingBox &box);
 
-void createTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb, std::size_t triangle_size, std::size_t triangle_count, const void *data, const std::vector<VertexAttribute> &attribs);
-void deleteTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) noexcept;
+void createVertexBuffer(VertexBuffer &vb, GLenum primitive, std::size_t triangle_size, std::size_t triangle_count, const void *data, const std::vector<VertexAttribute> &attribs);
+void deleteVertexBuffer(VertexBuffer &vb) noexcept;
 
 template <typename Vertex>
-void createTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb, const TriangleMesh<Vertex> &mesh) {
-  createTriangleMeshVertexBuffer(vb, sizeof(Triangle<Vertex>), mesh.triangles.size(), mesh.triangles.data(), mesh.attribs);
+void createVertexBuffer(VertexBuffer &vb, const TriangleMesh<Vertex> &mesh) {
+  createVertexBuffer(vb, GL_TRIANGLES, sizeof(Triangle<Vertex>) * mesh.triangles.size(), mesh.triangles.size() * 3, mesh.triangles.data(), mesh.attribs);
 }
 
 template <typename Vertex>
-TriangleMeshVertexBuffer createTriangleMeshVertexBuffer(const TriangleMesh<Vertex> &mesh) {
-  TriangleMeshVertexBuffer vb;
-  createTriangleMeshVertexBuffer(vb, mesh);
+VertexBuffer createVertexBuffer(const TriangleMesh<Vertex> &mesh) {
+  VertexBuffer vb;
+  createVertexBuffer(vb, mesh);
   return vb;
 }
 
-void enableTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb);
-void disableTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb);
+void enableVertexBuffer(VertexBuffer &vb);
+void disableVertexBuffer(VertexBuffer &vb);
 
-void assignTriangleMeshVertexBufferAttributeLocations(TriangleMeshVertexBuffer &vb, const std::vector<GLint> &attrib_locs);
-void assignTriangleMeshVertexBufferAttributeLocations(TriangleMeshVertexBuffer &vb, const Program &prog, const std::vector<const std::string_view> &attrib_names);
+void assignVertexBufferAttributeLocations(VertexBuffer &vb, const std::vector<GLint> &attrib_locs);
+void assignVertexBufferAttributeLocations(VertexBuffer &vb, const Program &prog, const std::vector<const std::string_view> &attrib_names);
 
-void drawTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb);
+void drawVertexBuffer(VertexBuffer &vb);
 
 } // gl

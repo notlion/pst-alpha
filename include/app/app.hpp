@@ -14,7 +14,7 @@ struct Camera {
 };
 
 class App {
-  gl::TriangleMeshVertexBuffer m_mesh_vb;
+  gl::VertexBuffer m_mesh_vb;
   gl::Program m_mesh_prog;
 
   GLuint m_particle_buffer_id;
@@ -23,7 +23,8 @@ class App {
 
   std::array<std::unique_ptr<gl::Framebuffer>, 3> m_particle_fbs;
 
-  gl::TriangleMeshVertexBuffer m_fullscreen_triangle_vb;
+  gl::VertexBuffer m_fullscreen_triangle_vb;
+  gl::VertexBuffer m_particles_vb;
 
   gl::Program m_simulate_prog;
   gl::Program m_render_prog;
@@ -31,8 +32,6 @@ class App {
   FrameClock m_clock;
 
   Camera m_camera;
-
-  GLuint m_points_texcoords_buf_id;
 
 public:
   bool init();

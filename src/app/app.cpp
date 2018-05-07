@@ -25,8 +25,8 @@ bool App::init() {
   gl::uniform(m_render_prog, "u_position", 0);
   gl::uniform(m_render_prog, "u_color", 1);
 
-  gl::createTriangleMeshVertexBuffer(m_mesh_vb, gl::createQuad());
-  gl::assignTriangleMeshVertexBufferAttributeLocations(m_mesh_vb, { 0, 1, 2 });
+  gl::createVertexBuffer(m_mesh_vb, gl::createQuad());
+  gl::assignVertexBufferAttributeLocations(m_mesh_vb, { 0, 1, 2 });
 
   gl::DefaultVertex fs_tri_verts[]{
     { gl::vec3(-1.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
@@ -37,22 +37,22 @@ bool App::init() {
     { { fs_tri_verts[0], fs_tri_verts[1], fs_tri_verts[2] } },
     gl::DefaultVertex::default_attribs
   };
-  gl::createTriangleMeshVertexBuffer(m_fullscreen_triangle_vb, fs_tri_mesh);
-  gl::assignTriangleMeshVertexBufferAttributeLocations(m_fullscreen_triangle_vb, { 0, -1, -1 });
+  gl::createVertexBuffer(m_fullscreen_triangle_vb, fs_tri_mesh);
+  gl::assignVertexBufferAttributeLocations(m_fullscreen_triangle_vb, { 0, -1, -1 });
 
   {
-    std::vector<GLint> particle_texcoords;
-    particle_texcoords.reserve(m_particle_framebuffer_resolution);
+    std::vector<GLint> texcoords;
+    texcoords.reserve(m_particle_framebuffer_resolution);
     for (GLint y = 0; y < m_particle_framebuffer_resolution; ++y) {
       for (GLint x = 0; x < m_particle_framebuffer_resolution; ++x) {
-        particle_texcoords.emplace_back(x);
-        particle_texcoords.emplace_back(y);
+        texcoords.emplace_back(x);
+        texcoords.emplace_back(y);
       }
     }
 
-    glGenBuffers(1, &m_points_texcoords_buf_id);
-    glBindBuffer(GL_ARRAY_BUFFER, m_points_texcoords_buf_id);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLint) * particle_texcoords.size(), particle_texcoords.data(), GL_STATIC_DRAW);
+    gl::createVertexBuffer(m_particles_vb, GL_POINTS, sizeof(GLint) * texcoords.size(), texcoords.size() / 2, texcoords.data(), {
+      { GL_INT, 2, 0, 0, 0 }
+    });
   }
 
   gl::TextureOpts particle_tex_opts{ GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST };
@@ -99,7 +99,7 @@ void App::update(int timestamp) {
     gl::uniform(m_simulate_prog, "u_time", m_clock.elapsed_seconds);
     gl::uniform(m_simulate_prog, "u_time_delta", m_clock.elapsed_seconds_delta);
 
-    gl::drawTriangleMeshVertexBuffer(m_fullscreen_triangle_vb);
+    gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
     gl::unbindFramebuffer();
   }
@@ -139,7 +139,7 @@ void App::render(int width, int height) {
       gl::uniform(m_mesh_prog, "u_mvp_matrix", mvp_matrix);
       gl::uniform(m_mesh_prog, "u_normal_matrix", normal_matrix);
 
-      gl::drawTriangleMeshVertexBuffer(m_mesh_vb);
+      gl::drawVertexBuffer(m_mesh_vb);
     }
 #endif
 
@@ -147,11 +147,7 @@ void App::render(int width, int height) {
       gl::useProgram(m_render_prog);
       gl::uniform(m_render_prog, "u_mvp_matrix", mvp_matrix);
 
-      glBindBuffer(GL_ARRAY_BUFFER, m_points_texcoords_buf_id);
-      glEnableVertexAttribArray(0);
-      glVertexAttribIPointer(0, 2, GL_INT, 0, 0);
-      glDrawArrays(GL_POINTS, 0, m_particle_framebuffer_resolution * m_particle_framebuffer_resolution);
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      gl::drawVertexBuffer(m_particles_vb);
     }
   }
 #endif

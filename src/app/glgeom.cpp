@@ -47,18 +47,19 @@ vec3 calcCenter(const BoundingBox &box) {
 }
 
 
-void createTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb, std::size_t triangle_size, std::size_t triangle_count, const void *data, const std::vector<VertexAttribute> &attribs) {
-  deleteTriangleMeshVertexBuffer(vb);
+void createVertexBuffer(VertexBuffer &vb, GLenum primitive, std::size_t data_size, std::size_t count, const void *data, const std::vector<VertexAttribute> &attribs) {
+  deleteVertexBuffer(vb);
 
   glGenBuffers(1, &vb.buffer);
   glBindBuffer(GL_ARRAY_BUFFER, vb.buffer);
-  glBufferData(GL_ARRAY_BUFFER, triangle_count * triangle_size, data, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
 
-  vb.count = triangle_count * 3;
+  vb.primitive = primitive;
+  vb.count = count;
   vb.attribs = attribs;
 }
 
-void deleteTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) noexcept {
+void deleteVertexBuffer(VertexBuffer &vb) noexcept {
   if (vb.buffer > 0) {
     glDeleteBuffers(1, &vb.buffer);
     vb.buffer = 0;
@@ -66,24 +67,35 @@ void deleteTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) noexcept {
   vb.count = 0;
 }
 
-TriangleMeshVertexBuffer::~TriangleMeshVertexBuffer() noexcept {
-  deleteTriangleMeshVertexBuffer(*this);
+VertexBuffer::~VertexBuffer() noexcept {
+  deleteVertexBuffer(*this);
 }
 
-void enableTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) {
+void enableVertexBuffer(VertexBuffer &vb) {
   glBindBuffer(GL_ARRAY_BUFFER, vb.buffer);
 
   for (const auto &attr : vb.attribs) {
     if (attr.loc >= 0) {
       glEnableVertexAttribArray(attr.loc);
-      glVertexAttribPointer(attr.loc, attr.component_size, GL_FLOAT, GL_FALSE, attr.stride, reinterpret_cast<void *>(attr.offset));
+      switch (attr.component_type) {
+        case GL_BYTE:
+        case GL_UNSIGNED_BYTE:
+        case GL_SHORT:
+        case GL_UNSIGNED_SHORT:
+        case GL_INT:
+        case GL_UNSIGNED_INT: {
+          glVertexAttribIPointer(attr.loc, attr.component_count, attr.component_type, attr.stride, reinterpret_cast<void *>(attr.offset));
+        } break;
+        default:
+          glVertexAttribPointer(attr.loc, attr.component_count, attr.component_type, GL_FALSE, attr.stride, reinterpret_cast<void *>(attr.offset));
+      }
     }
   }
 
   CHECK_GL_ERROR();
 }
 
-void disableTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) {
+void disableVertexBuffer(VertexBuffer &vb) {
   for (const auto &attr : vb.attribs) {
     if (attr.loc >= 0) {
       glDisableVertexAttribArray(attr.loc);
@@ -93,17 +105,17 @@ void disableTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) {
   CHECK_GL_ERROR();
 }
 
-void drawTriangleMeshVertexBuffer(TriangleMeshVertexBuffer &vb) {
-  enableTriangleMeshVertexBuffer(vb);
+void drawVertexBuffer(VertexBuffer &vb) {
+  enableVertexBuffer(vb);
 
-  glDrawArrays(GL_TRIANGLES, 0, vb.count);
+  glDrawArrays(vb.primitive, 0, vb.count);
 
   CHECK_GL_ERROR();
 
-  disableTriangleMeshVertexBuffer(vb);
+  disableVertexBuffer(vb);
 }
 
-void assignTriangleMeshVertexBufferAttributeLocations(TriangleMeshVertexBuffer &vb, const std::vector<GLint> &attrib_locs) {
+void assignVertexBufferAttributeLocations(VertexBuffer &vb, const std::vector<GLint> &attrib_locs) {
   assert(attrib_locs.size() == vb.attribs.size());
 
   for (std::size_t i = 0; i < vb.attribs.size(); ++i) {
@@ -111,7 +123,7 @@ void assignTriangleMeshVertexBufferAttributeLocations(TriangleMeshVertexBuffer &
   }
 }
 
-void assignTriangleMeshVertexBufferAttributeLocations(TriangleMeshVertexBuffer &vb, const Program &prog, const std::vector<const std::string_view> &attrib_names) {
+void assignVertexBufferAttributeLocations(VertexBuffer &vb, const Program &prog, const std::vector<const std::string_view> &attrib_names) {
   assert(attrib_names.size() == vb.attribs.size());
 
   for (std::size_t i = 0; i < vb.attribs.size(); ++i) {
