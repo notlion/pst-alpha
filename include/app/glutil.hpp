@@ -31,7 +31,7 @@
 
 namespace gl {
 
-#define GL_UTIL_MOVE_ONLY_CLASS(Name)             \
+#define GL_UTIL_MOVE_ONLY_CLASS(Name)     \
   Name(const Name &) = delete;            \
   Name &operator=(const Name &) = delete; \
   Name() = default;                       \
@@ -137,6 +137,8 @@ struct Framebuffer {
   std::vector<Texture> textures;
   std::vector<Renderbuffer> renderbuffers;
 
+  std::vector<GLenum> buffers;
+
   GL_UTIL_MOVE_ONLY_CLASS(Framebuffer)
 };
 
@@ -171,14 +173,17 @@ void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector
                        const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
 void deleteFramebuffer(Framebuffer &fb) noexcept;
 
-inline void uniform(GLint loc, int x) {
+inline void uniform(GLint loc, GLint x) {
   glUniform1i(loc, x);
 }
-inline void uniform(GLint loc, float x) {
+inline void uniform(GLint loc, GLuint x) {
+  glUniform1ui(loc, x);
+}
+inline void uniform(GLint loc, GLfloat x) {
   glUniform1f(loc, x);
 }
 inline void uniform(GLint loc, double x) {
-  glUniform1f(loc, float(x));
+  glUniform1f(loc, static_cast<GLfloat>(x));
 }
 
 inline void uniform(GLint loc, float x, float y) {
@@ -232,9 +237,7 @@ inline void bindTexture(const Texture &tex, GLenum tex_unit) {
   glBindTexture(tex.opts.target, tex.id);
 }
 
-inline void bindFramebuffer(const Framebuffer &fb) {
-  glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
-}
+void bindFramebuffer(const Framebuffer &fb);
 
 inline void unbindFramebuffer() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -263,6 +266,16 @@ inline void enableBlendAdditive() {
 
 inline void enableBlendScreen() {
   enableBlend(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
+}
+
+inline void enableDepth() {
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+}
+
+inline void disableDepth() {
+  glDisable(GL_DEPTH_TEST);
+  glDepthMask(GL_FALSE);
 }
 
 } // gl

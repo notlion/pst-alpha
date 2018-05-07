@@ -32,6 +32,8 @@ class App {
 
   Camera m_camera;
 
+  GLuint m_points_texcoords_buf_id;
+
 public:
   bool init();
   void cleanup();

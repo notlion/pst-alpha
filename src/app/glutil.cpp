@@ -385,14 +385,16 @@ static const char *getFramebufferStatusString(GLenum status) {
   }
 }
 
-Framebuffer createFramebuffer(int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
+Framebuffer createFramebuffer(int width, int height,
+                              const std::vector<FramebufferTextureAttachment> &texture_attachments,
                               const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
   Framebuffer fb;
   createFramebuffer(fb, width, height, texture_attachments, renderbuffer_attachments);
   return fb;
 }
 
-void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
+void createFramebuffer(Framebuffer &fb, int width, int height,
+                       const std::vector<FramebufferTextureAttachment> &texture_attachments,
                        const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
   deleteFramebuffer(fb);
 
@@ -403,8 +405,10 @@ void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector
   glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
 
   fb.textures.reserve(texture_attachments.size());
+  fb.buffers.reserve(texture_attachments.size());
 
   for (const auto &ta : texture_attachments) {
+    fb.buffers.emplace_back(ta.attachment);
     fb.textures.emplace_back();
     createTexture(fb.textures.back(), width, height, ta.opts);
     glFramebufferTexture2D(GL_FRAMEBUFFER, ta.attachment, ta.opts.target, fb.textures.back().id, 0);
@@ -441,6 +445,11 @@ void deleteFramebuffer(Framebuffer &fb) noexcept {
 
 Framebuffer::~Framebuffer() noexcept {
   deleteFramebuffer(*this);
+}
+
+void bindFramebuffer(const Framebuffer &fb) {
+  glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
+  glDrawBuffers(fb.buffers.size(), fb.buffers.data());
 }
 
 } // gl
