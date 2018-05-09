@@ -38,7 +38,7 @@ class App {
 public:
   bool init();
   void cleanup();
-  void update(int timestamp);
+  void update(double time_seconds);
   void render(int width, int height);
 
   std::string_view getShaderSource();

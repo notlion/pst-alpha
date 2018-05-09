@@ -5,9 +5,7 @@
 #include "app/shaders.hpp"
 
 bool App::init() {
-  randSeed(uint32_t(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-
-  m_clock.start();
+  // randSeed(uint32_t(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
 
   gl::createProgram(m_mesh_prog, shader_source_mesh, gl::SHADER_VERSION_300ES);
   gl::useProgram(m_mesh_prog);
@@ -67,8 +65,9 @@ bool App::init() {
 void App::cleanup() {
 }
 
-void App::update(int timestamp) {
-  m_clock.tick();
+void App::update(double time_seconds) {
+  m_clock.tick(time_seconds);
+ 
   m_camera.position = gl::vec3(std::cos(m_clock.elapsed_seconds), std::sin(m_clock.elapsed_seconds), 3.0f);
 
   {

@@ -99,33 +99,29 @@ std::string formatString(const char *fmt, ...) {
 }
 
 
-void FrameClock::start() {
-  m_start_time = m_time = now();
-  m_average_fps_start_time = m_time;
+void FrameClock::start(double time_seconds) {
+  m_start_time_seconds = m_time_seconds = time_seconds;
+  m_average_fps_start_time_seconds = m_time_seconds;
+  m_has_started = true;
 }
 
-bool FrameClock::tick() {
-  using namespace std::chrono;
+void FrameClock::tick(double time_seconds) {
+  if (!m_has_started) start(time_seconds);
 
-  auto time = now();
-  elapsed_seconds_delta = duration<double>(time - m_time).count();
-  elapsed_seconds = duration<double>(time - m_start_time).count();
+  elapsed_seconds_delta = time_seconds - m_time_seconds;
+  elapsed_seconds = time_seconds - m_start_time_seconds;
   
-  m_time = time;
+  m_time_seconds = time_seconds;
 
   elapsed_frames++;
 
   m_average_fps_accum += 1.0 / elapsed_seconds_delta;
   m_average_fps_count += 1;
-  if (time - m_average_fps_start_time > seconds(1)) {
+  if (time_seconds - m_average_fps_start_time_seconds > 1.0) {
     average_fps = m_average_fps_accum / m_average_fps_count;
 
     m_average_fps_accum = 0.0;
     m_average_fps_count = 0;
-    m_average_fps_start_time = time;
-
-    return true;
+    m_average_fps_start_time_seconds = time_seconds;
   }
-
-  return false;
 }

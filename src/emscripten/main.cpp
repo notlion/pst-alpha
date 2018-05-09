@@ -43,14 +43,14 @@ void init(const char *canvas_id) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void update(int timestamp) {
+void update(double time_seconds) {
   const auto res = emscripten_webgl_make_context_current(g_webgl_context);
   if (res != EMSCRIPTEN_RESULT_SUCCESS) {
     PRINT_ERROR("Could not make WebGL context current: %s\n", emscripten_result_to_string(res));
     return;
   }
 
-  g_app.update(timestamp);
+  g_app.update(time_seconds);
 }
 
 EMSCRIPTEN_KEEPALIVE

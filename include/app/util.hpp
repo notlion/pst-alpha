@@ -3,8 +3,6 @@
 #include "glutil.hpp"
 #include "platform.hpp"
 
-#include <chrono>
-
 
 // Random
 
@@ -159,15 +157,14 @@ std::string formatString(const char *fmt, ...);
 // Clock
 
 class FrameClock {
-  using Clock = std::chrono::steady_clock;
-  using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
-
-  TimePoint m_start_time;
-  TimePoint m_time;
-  TimePoint m_average_fps_start_time;
+  double m_start_time_seconds = 0.0;
+  double m_time_seconds = 0.0;
+  double m_average_fps_start_time_seconds = 0.0;
 
   double m_average_fps_accum = 0.0;
   int m_average_fps_count = 0;
+
+  bool m_has_started = false;
 
 public:
   double elapsed_seconds = 0.0;
@@ -177,10 +174,6 @@ public:
 
   uint32_t elapsed_frames = 0;
 
-  void start();
-  bool tick();
-
-  inline static TimePoint now() {
-    return Clock::now();
-  }
+  void start(double time_seconds);
+  void tick(double time_seconds);
 };
