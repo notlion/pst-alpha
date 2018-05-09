@@ -31,6 +31,15 @@
       if (window.editor) window.editor.layout();
     };
 
+    const getShaderSource = () => {
+      return Module.UTF8ToString(Module._getShaderSource());
+    };
+    const setShaderSource = (src) => {
+      const src_ptr = Module.allocateUTF8(src);
+      Module._setShaderSource(src_ptr);
+      Module._free(src_ptr);
+    };
+
     const init = () => {
       resizeCanvas();
 
@@ -45,39 +54,30 @@
       };
 
       window.requestAnimationFrame(onFrame);
-    };
 
-    const getShaderSource = () => {
-      return Module.UTF8ToString(Module._getShaderSource());
-    };
-    const setShaderSource = (src) => {
-      const src_ptr = Module.allocateUTF8(src);
-      Module._setShaderSource(src_ptr);
-      Module._free(src_ptr);
+      require(["vs/editor/editor.main"], () => {
+        const editor_elem = document.getElementById("editor-container");
+        
+        window.editor = monaco.editor.create(editor_elem, {
+          value: getShaderSource(),
+          theme: 'vs-dark',
+          dragAndDrop: false,
+          folding: false,
+          minimap: { enabled: false }
+        });
+
+        window.editor.onDidChangeModelContent((event) => {
+          setShaderSource(window.editor.getValue());
+        });
+
+        resizeEditor();
+      });
     };
 
     Module.onRuntimeInitialized = init;
 
     window.addEventListener('resize', () => {
       resizeCanvas();
-      resizeEditor();
-    });
-
-    require(["vs/editor/editor.main"], () => {
-      const editor_elem = document.getElementById("editor-container");
-      
-      window.editor = monaco.editor.create(editor_elem, {
-        value: getShaderSource(),
-        theme: 'vs-dark',
-        dragAndDrop: false,
-        folding: false,
-        minimap: { enabled: false }
-      });
-
-      window.editor.onDidChangeModelContent((event) => {
-        setShaderSource(window.editor.getValue());
-      });
-
       resizeEditor();
     });
   </script>
