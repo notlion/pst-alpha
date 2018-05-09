@@ -4,6 +4,8 @@
 #include "app/util.hpp"
 
 #include <array>
+#include <string>
+#include <string_view>
 
 struct Camera {
   gl::vec3 position = gl::vec3(0.0f);
@@ -38,4 +40,7 @@ public:
   void cleanup();
   void update(int timestamp);
   void render(int width, int height);
+
+  std::string_view getShaderSource();
+  void setShaderSource(std::string_view shader_src);
 };

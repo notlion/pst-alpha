@@ -31,12 +31,13 @@
 
 namespace gl {
 
-#define GL_UTIL_MOVE_ONLY_CLASS(Name)     \
-  Name(const Name &) = delete;            \
-  Name &operator=(const Name &) = delete; \
-  Name() = default;                       \
-  Name(Name &&) = default;                \
-  ~Name() noexcept;
+#define GL_UTIL_MOVE_ONLY_CLASS(ClassName)          \
+  ClassName(const ClassName &) = delete;            \
+  ClassName &operator=(const ClassName &) = delete; \
+  ClassName(ClassName &&) noexcept;                 \
+  ClassName &operator=(ClassName &&) noexcept;      \
+  ClassName() noexcept = default;                            \
+  ~ClassName() noexcept;
 
 struct Uniform {
   GLint loc = -1;
@@ -62,12 +63,8 @@ enum ShaderVersion {
 struct Program {
   GLuint id = 0;
 
-#if !defined(DISABLE_GL_UNIFORM_CACHE)
   std::vector<Uniform> uniforms;
-#endif
-#if !defined(DISABLE_GL_ATTRIBUTE_CACHE)
   std::vector<Attribute> attributes;
-#endif
 
   GL_UTIL_MOVE_ONLY_CLASS(Program)
 };

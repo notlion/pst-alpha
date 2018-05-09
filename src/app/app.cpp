@@ -13,12 +13,7 @@ bool App::init() {
   gl::useProgram(m_mesh_prog);
   gl::uniform(m_mesh_prog, "u_texture", 0);
 
-  gl::createProgram(m_simulate_prog, shader_source_simulate, gl::SHADER_VERSION_300ES);
-  gl::useProgram(m_simulate_prog);
-  gl::uniform(m_simulate_prog, "u_position", 0);
-  gl::uniform(m_simulate_prog, "u_position_prev", 1);
-  gl::uniform(m_simulate_prog, "u_color", 2);
-  gl::uniform(m_simulate_prog, "u_color_prev", 3);
+  setShaderSource(shader_source_simulate);
 
   gl::createProgram(m_render_prog, shader_source_render, gl::SHADER_VERSION_300ES);
   gl::useProgram(m_render_prog);
@@ -153,4 +148,22 @@ void App::render(int width, int height) {
 #endif
 
   CHECK_GL_ERROR();
+}
+
+std::string_view App::getShaderSource() {
+  return shader_source_simulate;
+}
+
+void App::setShaderSource(std::string_view shader_src) {
+  auto prog = gl::createProgram(shader_src, gl::SHADER_VERSION_300ES);
+
+  if (prog.id) {
+    gl::useProgram(prog);
+    gl::uniform(prog, "u_position", 0);
+    gl::uniform(prog, "u_position_prev", 1);
+    gl::uniform(prog, "u_color", 2);
+    gl::uniform(prog, "u_color_prev", 3);
+
+    m_simulate_prog = std::move(prog);
+  }
 }

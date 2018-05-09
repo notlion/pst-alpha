@@ -77,4 +77,15 @@ void render() {
   g_app.render(width, height);
 }
 
+EMSCRIPTEN_KEEPALIVE
+const char *getShaderSource() {
+  auto src = g_app.getShaderSource();
+  return src.data();
+}
+
+EMSCRIPTEN_KEEPALIVE
+void setShaderSource(const char *shader_src) {
+  return g_app.setShaderSource(shader_src);
+}
+
 }

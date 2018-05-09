@@ -67,9 +67,6 @@ void deleteVertexBuffer(VertexBuffer &vb) noexcept {
   vb.count = 0;
 }
 
-VertexBuffer::~VertexBuffer() noexcept {
-  deleteVertexBuffer(*this);
-}
 
 void enableVertexBuffer(VertexBuffer &vb) {
   glBindBuffer(GL_ARRAY_BUFFER, vb.buffer);
@@ -129,6 +126,34 @@ void assignVertexBufferAttributeLocations(VertexBuffer &vb, const Program &prog,
   for (std::size_t i = 0; i < vb.attribs.size(); ++i) {
     vb.attribs[i].loc = gl::getAttribLocation(prog, attrib_names[i].data());
   }
+}
+
+
+VertexBuffer::VertexBuffer(VertexBuffer &&vb) noexcept
+: primitive(std::move(vb.primitive)),
+  count(std::move(vb.count)),
+  attribs(std::move(vb.attribs)) {
+  deleteVertexBuffer(*this);
+  buffer = vb.buffer;
+  vb.buffer = 0;
+}
+
+VertexBuffer &VertexBuffer::operator=(VertexBuffer &&vb) noexcept {
+  if (this != &vb) {
+    deleteVertexBuffer(*this);
+    buffer = vb.buffer;
+    
+    primitive = std::move(vb.primitive);
+    count = std::move(vb.count);
+    attribs = std::move(vb.attribs);
+
+    vb.buffer = 0;
+  }
+  return *this;
+}
+
+VertexBuffer::~VertexBuffer() noexcept {
+  deleteVertexBuffer(*this);
 }
 
 } // gl

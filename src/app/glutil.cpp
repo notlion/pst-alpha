@@ -201,12 +201,10 @@ void createProgram(Program &prog, std::string_view vert_shader_src, std::string_
       return;
     }
 
-#if !defined(DISABLE_GL_UNIFORM_CACHE)
     cacheActiveUniforms(prog);
-#endif
-#if !defined(DISABLE_GL_ATTRIBUTE_CACHE)
     cacheActiveAttribs(prog);
-#endif
+
+    PRINT_DEBUG("Created program %u\n", prog.id);
   }
 
   CHECK_GL_ERROR();
@@ -240,6 +238,8 @@ void createProgram(Program &prog, std::string_view shader_src, ShaderVersion ver
 
 void deleteProgram(Program &prog) noexcept {
   if (prog.id) {
+    PRINT_DEBUG("Deleting program %u\n", prog.id);
+
     glDeleteProgram(prog.id);
 
     prog.id = 0;
@@ -248,30 +248,18 @@ void deleteProgram(Program &prog) noexcept {
   }
 }
 
-Program::~Program() noexcept {
-  deleteProgram(*this);
-}
-
 GLint getUniformLocation(const Program &prog, const GLchar *name) {
-#if defined(DISABLE_GL_UNIFORM_CACHE)
-  return glGetUniformLocation(prog.id, name);
-#else
   const auto it = std::find_if(prog.uniforms.begin(),
                                prog.uniforms.end(),
                                [&](const Uniform &uniform) { return uniform.name == name; });
   return it == prog.uniforms.end() ? -1 : it->loc;
-#endif
 }
 
 GLint getAttribLocation(const Program &prog, const GLchar *name) {
-#if defined(DISABLE_GL_ATTRIBUTE_CACHE)
-  return glGetAttribLocation(prog.id, name);
-#else
   const auto it = std::find_if(prog.attributes.begin(),
                                prog.attributes.end(),
                                [&](const Attribute &attrib) { return attrib.name == name; });
   return it == prog.attributes.end() ? -1 : it->loc;
-#endif
 }
 
 
@@ -342,10 +330,6 @@ void deleteTexture(Texture &tex) noexcept {
   }
 }
 
-Texture::~Texture() noexcept {
-  deleteTexture(*this);
-}
-
 
 Renderbuffer createRenderbuffer(int width, int height, const RenderbufferOpts &opts) {
   Renderbuffer rb;
@@ -368,10 +352,6 @@ void createRenderbuffer(Renderbuffer &rb, int width, int height, const Renderbuf
 void deleteRenderbuffer(Renderbuffer &rb) noexcept {
   if (rb.id > 0) glDeleteRenderbuffers(1, &rb.id);
   rb.id = 0;
-}
-
-Renderbuffer::~Renderbuffer() noexcept {
-  deleteRenderbuffer(*this);
 }
 
 
@@ -443,13 +423,121 @@ void deleteFramebuffer(Framebuffer &fb) noexcept {
   }
 }
 
-Framebuffer::~Framebuffer() noexcept {
-  deleteFramebuffer(*this);
-}
 
 void bindFramebuffer(const Framebuffer &fb) {
   glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
   glDrawBuffers(fb.buffers.size(), fb.buffers.data());
 }
+
+
+Program::Program(Program &&prog) noexcept
+: uniforms(std::move(prog.uniforms)), attributes(std::move(prog.attributes)) {
+  deleteProgram(*this);
+  id = prog.id;
+  prog.id = 0;
+}
+
+Program &Program::operator=(Program &&prog) noexcept {
+  if (this != &prog) {
+    deleteProgram(*this);
+    id = prog.id;
+
+    uniforms = std::move(prog.uniforms);
+    attributes = std::move(prog.attributes);
+
+    prog.id = 0;
+  }
+  return *this;
+}
+
+Program::~Program() noexcept {
+  deleteProgram(*this);
+}
+
+
+Texture::Texture(Texture &&tex) noexcept
+: width(std::move(tex.width)), height(std::move(tex.height)), opts(std::move(tex.opts)) {
+  deleteTexture(*this);
+  id = tex.id;
+  tex.id = 0;
+}
+
+Texture &Texture::operator=(Texture &&tex) noexcept {
+  if (this != &tex) {
+    deleteTexture(*this);
+    id = tex.id;
+
+    width = std::move(tex.width);
+    height = std::move(tex.height);
+    opts = std::move(tex.opts);
+
+    tex.id = 0;
+  }
+  return *this;
+}
+
+Texture::~Texture() noexcept {
+  deleteTexture(*this);
+}
+
+
+Renderbuffer::Renderbuffer(Renderbuffer &&rb) noexcept
+: width(std::move(rb.width)), height(std::move(rb.height)) {
+  deleteRenderbuffer(*this);
+  id = rb.id;
+  rb.id = 0;
+}
+
+Renderbuffer &Renderbuffer::operator=(Renderbuffer &&rb) noexcept {
+  if (this != &rb) {
+    deleteRenderbuffer(*this);
+    id = rb.id;
+
+    width = std::move(rb.width);
+    height = std::move(rb.height);
+
+    rb.id = 0;
+  }
+  return *this;
+}
+
+Renderbuffer::~Renderbuffer() noexcept {
+  deleteRenderbuffer(*this);
+}
+
+
+Framebuffer::Framebuffer(Framebuffer &&fb) noexcept
+: width(std::move(fb.width)),
+  height(std::move(fb.height)),
+  buffers(std::move(fb.buffers)) {
+  deleteFramebuffer(*this);
+  id = fb.id;
+
+  textures = std::move(fb.textures);
+  renderbuffers = std::move(fb.renderbuffers);
+
+  fb.id = 0;
+}
+
+Framebuffer &Framebuffer::operator=(Framebuffer &&fb) noexcept {
+  if (this != &fb) {
+    deleteFramebuffer(*this);
+    id = fb.id;
+
+    width = std::move(fb.width);
+    height = std::move(fb.height);
+    textures = std::move(fb.textures);
+    renderbuffers = std::move(fb.renderbuffers);
+    buffers = std::move(fb.buffers);
+
+    fb.id = 0;
+  }
+  return *this;
+}
+
+Framebuffer::~Framebuffer() noexcept {
+  deleteFramebuffer(*this);
+}
+
 
 } // gl
