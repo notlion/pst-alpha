@@ -32,6 +32,11 @@ class App {
 
   Camera m_camera;
 
+  std::string_view m_shader_source_simulate_prefix;
+  std::string_view m_shader_source_simulate_postfix;
+  
+  std::string m_user_shader_source;
+
 public:
   bool init();
   void cleanup();

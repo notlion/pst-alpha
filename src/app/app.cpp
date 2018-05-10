@@ -4,10 +4,20 @@
 #include "app/util.hpp"
 #include "app/shaders.hpp"
 
+using namespace std::string_literals;
+
 bool App::init() {
   // randSeed(uint32_t(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
 
-  setShaderSource(shader_source_simulate);
+  {
+    const auto sim_marker = "{simulation}"s;
+    const auto sim_src = std::string_view(shader_source_simulate);
+    const auto pos = sim_src.find(sim_marker) + sim_marker.length();
+    m_shader_source_simulate_prefix = sim_src.substr(0, pos);
+    m_shader_source_simulate_postfix = sim_src.substr(pos, sim_src.length() - pos);
+  }
+
+  setShaderSource(shader_source_user_default);
 
   gl::createProgram(m_render_prog, shader_source_render, gl::SHADER_VERSION_300ES);
   gl::useProgram(m_render_prog);
@@ -128,11 +138,18 @@ void App::render(int width, int height) {
 }
 
 std::string_view App::getShaderSource() {
-  return shader_source_simulate;
+  return m_user_shader_source;
 }
 
 void App::setShaderSource(std::string_view shader_src) {
-  auto prog = gl::createProgram(shader_src, gl::SHADER_VERSION_300ES);
+  m_user_shader_source = shader_src;
+
+  auto src = std::string(m_shader_source_simulate_prefix);
+  src += '\n';
+  src += m_user_shader_source;
+  src += m_shader_source_simulate_postfix;
+
+  auto prog = gl::createProgram(src, gl::SHADER_VERSION_300ES);
 
   if (prog.id) {
     gl::useProgram(prog);

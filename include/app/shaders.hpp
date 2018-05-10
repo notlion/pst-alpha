@@ -99,8 +99,19 @@ uniform int   iFrame;
 uniform float iTime;
 uniform float iTimeDelta;
 
-// mainSimulation
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
+// {simulation}
+
+layout(location = 0) out vec4 oPosition;
+layout(location = 1) out vec4 oColor;
+
+void main() {
+  mainSimulation(oPosition, oColor);
+}
+
+#endif
+)GLSL";
+
+const char *shader_source_user_default = R"GLSL(void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
   ivec2 texcoord = ivec2(gl_FragCoord);
 
   vec4 pos = texelFetch(iPosition, texcoord, 0);
@@ -127,14 +138,4 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
 
   fragPosition = vec4(pos.xyz + vel, 1.0);
   fragColor = vec4(color.rgb + color_vel, 1.0);
-}
-
-layout(location = 0) out vec4 oPosition;
-layout(location = 1) out vec4 oColor;
-
-void main() {
-  mainSimulation(oPosition, oColor);
-}
-
-#endif
-)GLSL";
+})GLSL";
