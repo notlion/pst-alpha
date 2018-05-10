@@ -2,29 +2,29 @@ precision highp float;
 
 #ifdef VERTEX_SHADER
 
-uniform sampler2D u_position;
-uniform sampler2D u_color;
+uniform sampler2D iPosition;
+uniform sampler2D iColor;
 
-uniform mat4 u_mvp_matrix;
+uniform mat4 iModelViewProjection;
 
-layout(location = 0) in ivec2 a_texcoord;
+layout(location = 0) in ivec2 aTexcoord;
 
-out vec4 v_color;
+out vec4 vColor;
 
 void main() {
-  v_color = texelFetch(u_color, a_texcoord, 0);
-  gl_Position = u_mvp_matrix * texelFetch(u_position, a_texcoord, 0);
+  vColor = texelFetch(iColor, aTexcoord, 0);
+  gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
   gl_PointSize = 2.0;
 }
 
 #endif
 
 #ifdef FRAGMENT_SHADER
-in vec4 v_color;
+in vec4 vColor;
 
-out vec4 o_fragcolor;
+out vec4 oFragColor;
 
 void main() {
-  o_fragcolor = v_color;
+  oFragColor = vColor;
 }
 #endif

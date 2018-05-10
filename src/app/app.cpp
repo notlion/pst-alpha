@@ -7,19 +7,12 @@
 bool App::init() {
   // randSeed(uint32_t(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
 
-  gl::createProgram(m_mesh_prog, shader_source_mesh, gl::SHADER_VERSION_300ES);
-  gl::useProgram(m_mesh_prog);
-  gl::uniform(m_mesh_prog, "u_texture", 0);
-
   setShaderSource(shader_source_simulate);
 
   gl::createProgram(m_render_prog, shader_source_render, gl::SHADER_VERSION_300ES);
   gl::useProgram(m_render_prog);
-  gl::uniform(m_render_prog, "u_position", 0);
-  gl::uniform(m_render_prog, "u_color", 1);
-
-  gl::createVertexBuffer(m_mesh_vb, gl::createQuad());
-  gl::assignVertexBufferAttributeLocations(m_mesh_vb, { 0, 1, 2 });
+  gl::uniform(m_render_prog, "iPosition", 0);
+  gl::uniform(m_render_prog, "iColor", 1);
 
   gl::DefaultVertex fs_tri_verts[]{
     { gl::vec3(-1.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
@@ -88,10 +81,10 @@ void App::update(double time_seconds) {
     gl::bindTexture(m_particle_fbs[2]->textures[1], GL_TEXTURE3);
 
     gl::useProgram(m_simulate_prog);
-    gl::uniform(m_simulate_prog, "u_resolution", gl::vec2(m_particle_framebuffer_resolution));
-    gl::uniform(m_simulate_prog, "u_frame", GLint(m_clock.elapsed_frames));
-    gl::uniform(m_simulate_prog, "u_time", m_clock.elapsed_seconds);
-    gl::uniform(m_simulate_prog, "u_time_delta", m_clock.elapsed_seconds_delta);
+    gl::uniform(m_simulate_prog, "iResolution", gl::vec2(m_particle_framebuffer_resolution));
+    gl::uniform(m_simulate_prog, "iFrame", GLint(m_clock.elapsed_frames));
+    gl::uniform(m_simulate_prog, "iTime", m_clock.elapsed_seconds);
+    gl::uniform(m_simulate_prog, "iTimeDelta", m_clock.elapsed_seconds_delta);
 
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
@@ -102,49 +95,34 @@ void App::update(double time_seconds) {
 }
 
 void App::render(int width, int height) {
-#if 1
+  glViewport(0, 0, width, height);
+
+  gl::enableBlendAlphaPremult();
+  gl::enableDepth();
+
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+  float render_aspect = float(width) / float(height);
+
+  const auto view_matrix = gl::lookAt(m_camera.position, m_camera.target, m_camera.up);
+  const auto proj_matrix = gl::perspective(radians(m_camera.fovy), render_aspect, 0.01f, 1000.0f);
+  const auto proj_view_matrix = proj_matrix * view_matrix;
+  const auto light_matrix = gl::transpose(gl::inverse(gl::mat3(proj_view_matrix)));
+
+  gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
+  gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
+
+  const auto model_matrix = gl::mat4();
+  const auto mvp_matrix = proj_view_matrix * model_matrix;
+  const auto normal_matrix = gl::transpose(gl::inverse(gl::mat3(mvp_matrix)));
+
   {
-    glViewport(0, 0, width, height);
+    gl::useProgram(m_render_prog);
+    gl::uniform(m_render_prog, "iModelViewProjection", mvp_matrix);
 
-    gl::enableBlendAlphaPremult();
-    gl::enableDepth();
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    float render_aspect = float(width) / float(height);
-
-    const auto view_matrix = gl::lookAt(m_camera.position, m_camera.target, m_camera.up);
-    const auto proj_matrix = gl::perspective(radians(m_camera.fovy), render_aspect, 0.01f, 1000.0f);
-    const auto proj_view_matrix = proj_matrix * view_matrix;
-    const auto light_matrix = gl::transpose(gl::inverse(gl::mat3(proj_view_matrix)));
-
-    gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
-    gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
-
-    const auto model_matrix = gl::mat4();
-    const auto mvp_matrix = proj_view_matrix * model_matrix;
-    const auto normal_matrix = gl::transpose(gl::inverse(gl::mat3(mvp_matrix)));
-
-#if 0
-    {
-      gl::useProgram(m_mesh_prog);
-
-      gl::uniform(m_mesh_prog, "u_mvp_matrix", mvp_matrix);
-      gl::uniform(m_mesh_prog, "u_normal_matrix", normal_matrix);
-
-      gl::drawVertexBuffer(m_mesh_vb);
-    }
-#endif
-
-    {
-      gl::useProgram(m_render_prog);
-      gl::uniform(m_render_prog, "u_mvp_matrix", mvp_matrix);
-
-      gl::drawVertexBuffer(m_particles_vb);
-    }
+    gl::drawVertexBuffer(m_particles_vb);
   }
-#endif
 
   CHECK_GL_ERROR();
 }
@@ -158,10 +136,10 @@ void App::setShaderSource(std::string_view shader_src) {
 
   if (prog.id) {
     gl::useProgram(prog);
-    gl::uniform(prog, "u_position", 0);
-    gl::uniform(prog, "u_position_prev", 1);
-    gl::uniform(prog, "u_color", 2);
-    gl::uniform(prog, "u_color_prev", 3);
+    gl::uniform(prog, "iPosition", 0);
+    gl::uniform(prog, "iPositionPrev", 1);
+    gl::uniform(prog, "iColor", 2);
+    gl::uniform(prog, "iColorPrev", 3);
 
     m_simulate_prog = std::move(prog);
   }

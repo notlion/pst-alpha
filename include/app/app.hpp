@@ -16,9 +16,6 @@ struct Camera {
 };
 
 class App {
-  gl::VertexBuffer m_mesh_vb;
-  gl::Program m_mesh_prog;
-
   GLuint m_particle_buffer_id;
   GLuint m_particle_vertex_array_id;
   GLint m_particle_framebuffer_resolution = 256;
