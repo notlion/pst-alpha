@@ -18,7 +18,7 @@ struct Camera {
 class App {
   GLuint m_particle_buffer_id;
   GLuint m_particle_vertex_array_id;
-  GLint m_particle_framebuffer_resolution = 256;
+  GLint m_particle_framebuffer_resolution = 512;
 
   std::array<std::unique_ptr<gl::Framebuffer>, 3> m_particle_fbs;
 
@@ -34,7 +34,7 @@ class App {
 
   std::string_view m_shader_source_simulate_prefix;
   std::string_view m_shader_source_simulate_postfix;
-  
+
   std::string m_user_shader_source;
 
 public:

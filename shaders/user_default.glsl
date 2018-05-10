@@ -1,28 +1,33 @@
+// Integer Hash by IQ https://www.shadertoy.com/view/XlXcW4
+vec3 hash(uvec3 x) {
+  for (int i = 0; i < 3; ++i) x = ((x >> 8U) ^ x.yzx) * 1103515245U;
+  return vec3(x) * (1.0 / float(0xffffffffU));
+}
+
 void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
   ivec2 texcoord = ivec2(gl_FragCoord);
+  int count = int(iResolution.x) * int(iResolution.y);
+  int id = (texcoord.x + texcoord.y * int(iResolution.x));
+  int frame = (iFrame - id / 128) % (count / 128);
 
-  vec4 pos = texelFetch(iPosition, texcoord, 0);
-  vec4 pos_prev = texelFetch(iPositionPrev, texcoord, 0);
+  vec3 pos = texelFetch(iPosition, texcoord, 0).xyz;
+  vec3 pos_prev = texelFetch(iPositionPrev, texcoord, 0).xyz;
 
-  vec4 color = texelFetch(iColor, texcoord, 0);
-  vec4 color_prev = texelFetch(iColorPrev, texcoord, 0);
+  vec3 vel = (pos - pos_prev) * 0.99;
 
-  vec3 vel = pos.xyz - pos_prev.xyz;
-  vel *= 0.9;
+  if (frame == 0) {
+    fragPosition = vec4(0.0, 0.5, 0.0, 1.0);
+  }
+  else if (frame == 1) {
+    vec3 dir = normalize(hash(uvec3(iFrame, texcoord.x, texcoord.y)) - 0.5);
+    fragPosition = vec4(pos + dir * 0.015, 1.0);
+  }
+  else {
+    if (pos.y < -0.5) vel.y *= -0.8;
+    else vel.y -= 0.002;
+    pos += vel;
+    fragPosition = vec4(pos, 1.0);
+  }
 
-  vec3 color_vel = color.rgb - color_prev.rgb;
-  color_vel *= 0.9;
-
-  vec2 uv = gl_FragCoord.xy / vec2(iResolution);
-
-  float z = sin(iTime + uv.x * 5.231) + cos(iTime + uv.y * 5.763);
-  z *= 0.5;
-  vec3 goal_position = vec3(uv * 2.0 - 1.0, z);
-  vec3 goal_color = vec3(sin(z * 10.0) * 0.5 + 0.5, cos(z * 10.0) * 0.5 + 0.5, 0.0);
-
-  vel += (goal_position - pos.xyz) * 0.1;
-  color_vel += (goal_color - color.rgb) * 0.1;
-
-  fragPosition = vec4(pos.xyz + vel, 1.0);
-  fragColor = vec4(color.rgb + color_vel, 1.0);
+  fragColor = vec4(vec2(texcoord) / iResolution, 1.0, 1.0);
 }

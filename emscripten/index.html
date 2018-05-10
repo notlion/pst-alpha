@@ -70,8 +70,9 @@
         window.editor.addAction({
           id: "shader-run",
           label: "Run Shader",
-          keybindings: [ monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter ],
+          keybindings: [ monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S ],
           contextMenuGroupId: "shader",
+          contextMenuOrder: 0,
           run: (editor) => {
             setShaderSource(editor.getValue());
           }
