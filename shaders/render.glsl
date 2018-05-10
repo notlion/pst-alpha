@@ -14,7 +14,7 @@ out vec4 vColor;
 void main() {
   vColor = texelFetch(iColor, aTexcoord, 0);
   gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
-  gl_PointSize = 2.0;
+  gl_PointSize = 3.0;
 }
 
 #endif

@@ -59,7 +59,7 @@ out vec4 vColor;
 void main() {
   vColor = texelFetch(iColor, aTexcoord, 0);
   gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
-  gl_PointSize = 2.0;
+  gl_PointSize = 3.0;
 }
 
 #endif
@@ -132,19 +132,16 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
     fragPosition = vec4(0.0, 0.5, 0.0, 1.0);
   }
   else if (frame == 1) {
-    vec3 dir = hash(uvec3(iFrame, texcoord.x, texcoord.y)) * 2.0 - 1.0;
-    float len = length(dir);
-    if (len > 0.0) dir /= len;
-    dir *= 0.01;
-    fragPosition = vec4(pos + dir, 1.0);
+    vel = 0.015 * normalize(hash(uvec3(iFrame, texcoord.x, texcoord.y)) - 0.5);
+    fragPosition = vec4(pos + vel, 1.0);
   }
   else {
     if (pos.y < -0.5) vel.y *= -0.8;
     else vel.y -= 0.002;
-    pos += vel;
-    fragPosition = vec4(pos, 1.0);
+    fragPosition = vec4(pos + vel, 1.0);
   }
 
   fragColor = vec4(vec2(texcoord) / iResolution, 1.0, 1.0);
+  fragColor.rgb *= min(1.0, length(vel) * 100.0);
 }
 )GLSL";
