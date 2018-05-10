@@ -106,14 +106,17 @@ void FrameClock::start(double time_seconds) {
 }
 
 void FrameClock::tick(double time_seconds) {
-  if (!m_has_started) start(time_seconds);
+  if (!m_has_started) {
+    start(time_seconds);
+  }
+  else {
+    elapsed_frames++;
+  }
 
   elapsed_seconds_delta = time_seconds - m_time_seconds;
   elapsed_seconds = time_seconds - m_start_time_seconds;
   
   m_time_seconds = time_seconds;
-
-  elapsed_frames++;
 
   m_average_fps_accum += 1.0 / elapsed_seconds_delta;
   m_average_fps_count += 1;

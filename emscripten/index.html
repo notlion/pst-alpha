@@ -63,11 +63,22 @@
           theme: 'vs-dark',
           dragAndDrop: false,
           folding: false,
+          scrollBeyondLastLine: false,
           minimap: { enabled: false }
         });
 
+        window.editor.addAction({
+          id: "shader-run",
+          label: "Run Shader",
+          keybindings: [ monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R ],
+          contextMenuGroupId: "shader",
+          run: (editor) => {
+            setShaderSource(editor.getValue());
+          }
+        });
+
         window.editor.onDidChangeModelContent((event) => {
-          setShaderSource(window.editor.getValue());
+          // setShaderSource(window.editor.getValue());
         });
 
         resizeEditor();
