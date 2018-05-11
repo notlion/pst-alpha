@@ -36,7 +36,7 @@ namespace gl {
   ClassName &operator=(const ClassName &) = delete; \
   ClassName(ClassName &&) noexcept;                 \
   ClassName &operator=(ClassName &&) noexcept;      \
-  ClassName() noexcept = default;                            \
+  ClassName() noexcept = default;                   \
   ~ClassName() noexcept;
 
 struct Uniform {
