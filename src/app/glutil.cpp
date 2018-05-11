@@ -17,27 +17,26 @@ constexpr std::size_t ERROR_LOG_MAX_SIZE = 256;
 
 static std::vector<std::string> s_error_log;
 
-static void logError(const char *err, std::string::size_type len = 0) {
+static void logError(std::string_view err) {
   if (s_error_log.size() == ERROR_LOG_MAX_SIZE) {
     std::copy(s_error_log.begin() + 1, s_error_log.end(), s_error_log.begin());
     s_error_log.pop_back();
   }
 
-  if (len == 0) len = std::strlen(err);
+  s_error_log.emplace_back(err);
 
-  s_error_log.emplace_back(err, len);
-
-  PRINT_ERROR("%s\n", s_error_log.back().c_str());
+  // NOTE(ryan): We must print `err` after converting to std::string to ensure it is null-terminated.
+  PRINT_ERROR("%s", s_error_log.back().c_str());
 }
 
 static void logErrorFmt(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  std::vector<char> buffer(1 + std::vsnprintf(nullptr, 0, fmt, args));
+  std::vector<char> buffer(std::vsnprintf(nullptr, 0, fmt, args));
   std::vsnprintf(buffer.data(), buffer.size(), fmt, args);
   va_end(args);
 
-  logError(buffer.data(), buffer.size() - 1);
+  logError({ buffer.data(), buffer.size() });
 }
 
 static const char *getErrorString(GLenum err) {
@@ -55,7 +54,7 @@ static const char *getErrorString(GLenum err) {
 void checkError() {
   auto err = glGetError();
   if (err != GL_NO_ERROR) {
-    logErrorFmt("GL error flag set: %s", getErrorString(err));
+    logErrorFmt("GL error flag set: %s\n", getErrorString(err));
   }
 }
 
@@ -88,7 +87,7 @@ GLuint createShader(std::string_view shader_src, GLenum type) {
     if (log_length > 0) {
       std::unique_ptr<GLchar[]> log(new GLchar[log_length]);
       glGetShaderInfoLog(shader, log_length, nullptr, log.get());
-      logError(log.get(), log_length - 1);
+      logError({ log.get(), static_cast<std::string_view::size_type>(log_length) });
     }
 
     return 0;
@@ -193,7 +192,7 @@ void createProgram(Program &prog, std::string_view vert_shader_src, std::string_
       if (log_length > 0) {
         std::unique_ptr<GLchar[]> log(new GLchar[log_length]);
         glGetProgramInfoLog(prog.id, log_length, nullptr, log.get());
-        logError(log.get(), log_length - 1);
+        logError({ log.get(), static_cast<std::string_view::size_type>(log_length) });
       }
 
       deleteProgram(prog);
