@@ -139,17 +139,18 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
   vec3 vel = (pos - pos_prev) * 0.99;
 
   if (frame == 0) {
-    fragPosition = vec4(0.0, 0.5, 0.0, 1.0);
+    fragPosition = vec4(0.5, 0.25, 0.0, 1.0);
   }
   else if (frame == 1) {
     vel = 0.01 * (hash33(uvec3(iFrame, texcoord.x, texcoord.y)) - 0.5);
     float t = sin(iTime) * 6.28318 * 2.0;
-    vel += vec3(sin(t), 2.0, cos(t)) * mix(0.015, 0.03, hash12(uvec2(iFrame, id)));
+    vel += vec3(sin(t) - 1.5, 2.0, cos(t)) * mix(0.01, 0.03, hash12(uvec2(iFrame, id)));
     fragPosition = vec4(pos + vel, 1.0);
   }
   else {
-    if (pos.y < -0.5) vel.y *= -0.8;
-    else vel.y -= 0.002;
+    float r = sin(iTime * 2.0) * 0.05 + 1.0;
+    if (length(pos) > r) pos = r * normalize(pos);
+    vel.y -= 0.002;
     fragPosition = vec4(pos + vel, 1.0);
   }
 
