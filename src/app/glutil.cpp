@@ -149,11 +149,7 @@ static void cacheActiveAttribs(Program &prog) {
     glGetActiveAttrib(prog.id, i, 511, &name_length, &count, &type, name);
     auto loc = glGetAttribLocation(prog.id, name);
     if (loc >= 0) {
-      prog.attributes.emplace_back();
-      prog.attributes.back().name = { name, std::string::size_type(name_length) };
-      prog.attributes.back().loc = loc;
-      prog.attributes.back().count = count;
-      prog.attributes.back().type = type;
+      prog.attributes.push_back({ loc, type, count, { name, static_cast<std::string::size_type>(name_length) } });
     }
   }
 
