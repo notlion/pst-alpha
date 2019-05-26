@@ -10,6 +10,7 @@
   #include "glad/glad.h"
 #elif defined(PLATFORM_EMSCRIPTEN)
   #include <GLES3/gl3.h>
+  #include <GLES2/gl2ext.h>
 #else
   #error "Unsupported Platform"
 #endif

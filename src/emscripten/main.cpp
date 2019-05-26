@@ -29,6 +29,7 @@ void init(const char *canvas_id) {
   attrs.depth = EM_TRUE;
   attrs.stencil = EM_TRUE;
   attrs.antialias = EM_TRUE;
+  attrs.enableExtensionsByDefault = EM_TRUE;
   attrs.majorVersion = 2;
   attrs.minorVersion = 0;
 
