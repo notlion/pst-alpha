@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>WASM Test!</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.12.0/min/vs/loader.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs/loader.js"></script>
   <script src="wasm_webgl2.js"></script>
   <script>
-    const monaco_vs_path = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.12.0/min/vs';
+    const monaco_vs_path = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs';
     require.config({ paths: { 'vs': monaco_vs_path }});
 
     window.MonacoEnvironment = {
@@ -61,10 +61,11 @@
         window.editor = monaco.editor.create(editor_elem, {
           value: getShaderSource(),
           theme: 'vs-dark',
+          language: 'c',
           dragAndDrop: false,
           folding: false,
           scrollBeyondLastLine: false,
-          minimap: { enabled: false }
+          minimap: { enabled: false },
         });
 
         window.editor.addAction({
@@ -115,12 +116,22 @@
       left: 0;
       bottom: 0;
     }
+    #editor-resize-handle {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      bottom: 0;
+      right: -8px;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
   </style>
 </head>
 <body>
   <div id="canvas-container">
     <canvas id="canvas" width="100" height="100"></canvas>
   </div>
-  <div id="editor-container"></div>
+  <div id="editor-container">
+    <div id="editor-resize-handle"></div>
+  </div>
 </body>
 </html>

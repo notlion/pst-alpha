@@ -66,7 +66,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int count = int(iResolution.x) * int(iResolution.y);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
-  int rate = 1024;
+  int rate = 2000;
   int frame = (iFrame - id / rate) % (count / rate);
 
   vec3 pos = texelFetch(iPosition, texcoord, 0).xyz;
@@ -75,7 +75,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
   vec3 vel = (pos - pos_prev) * 0.99;
 
   if (frame == 0) {
-    fragPosition = vec4(0.5, 0.25, 0.0, 1.0);
+    fragPosition = vec4(0.8, 0.25, 0.0, 1.0);
   }
   else if (frame == 1) {
     vel = 0.01 * (hash33(uvec3(iFrame, texcoord.x, texcoord.y)) - 0.5);
@@ -84,7 +84,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
     fragPosition = vec4(pos + vel, 1.0);
   }
   else {
-    float r = sin(iTime * 2.0) * 0.05 + 1.0;
+    float r = sin(iTime * 2.0) * 0.05 + 1.4;
     if (length(pos) > r) pos = r * normalize(pos);
     vel.y -= 0.002;
     fragPosition = vec4(pos + vel, 1.0);
