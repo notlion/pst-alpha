@@ -77,6 +77,7 @@
       const resizeHandleElem = document.getElementById("editor-resize-handle");
       let resizeHandleDragStartX = 0;
       let resizeHandleDragStartEditorWidth = 0;
+      let resizeHandlePrevClickTimeMillis = -1;
       const onMouseDown = (event) => {
         event.preventDefault();
         resizeHandleDragOffsetX = resizeHandleElem.offsetLeft - event.clientX;
@@ -94,7 +95,18 @@
         setEditorWidthFraction(handleX / document.body.clientWidth);
         updateLayout();
       };
+      const onClick = (event) => {
+        if (resizeHandlePrevClickTimeMillis >= 0 && event.timeStamp - resizeHandlePrevClickTimeMillis < 300) {
+          setEditorWidthFraction(0.5);
+          updateLayout();
+          resizeHandlePrevClickTimeMillis = -1;
+        }
+        else {
+          resizeHandlePrevClickTimeMillis = event.timeStamp;
+        }
+      };
       resizeHandleElem.addEventListener("mousedown", onMouseDown);
+      resizeHandleElem.addEventListener("click", onClick);
 
       require(["vs/editor/editor.main"], () => {
         window.editor = monaco.editor.create(editorContainerElem, {
