@@ -7,3 +7,5 @@ CMakeSettings.json
 .idea/
 *.ilk
 *.pdb
+
+.DS_Store

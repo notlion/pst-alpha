@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>WASM Test!</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs/loader.js"></script>
-  <script src="wasm_webgl2.js"></script>
+  <script src="dist/wasm_webgl2.js"></script>
   <script>
     const monaco_vs_path = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs';
     require.config({ paths: { 'vs': monaco_vs_path }});
@@ -21,14 +21,19 @@
     };
 
     const resizeCanvas = () => {
-      const container = document.getElementById("canvas-container");
-      const canvas = document.getElementById("canvas");
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
+      const canvasContainerElem = document.getElementById("canvas-container");
+      const canvasElem = document.getElementById("canvas");
+      canvasElem.width = canvasContainerElem.clientWidth;
+      canvasElem.height = canvasContainerElem.clientHeight;
     };
 
     const resizeEditor = () => {
       if (window.editor) window.editor.layout();
+    };
+
+    const updateLayout = () => {
+      resizeCanvas();
+      resizeEditor();
     };
 
     const getShaderSource = () => {
@@ -54,11 +59,36 @@
       };
 
       window.requestAnimationFrame(onFrame);
+      
+      const canvasContainerElem = document.getElementById("canvas-container");
+      const editorContainerElem = document.getElementById("editor-container");
+
+      const resizeHandleElem = document.getElementById("editor-resize-handle");
+      let resizeHandleDragStartX = 0;
+      let resizeHandleDragStartEditorWidth = 0;
+      const onMouseDown = (event) => {
+        event.preventDefault();
+        resizeHandleDragOffsetX = resizeHandleElem.offsetLeft - event.clientX;
+        resizeHandleDragStartEditorWidth = editorContainerElem.clientWidth;
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      };
+      const onMouseUp = (event) => {
+        resizeHandleDragPointerId = -1;
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      }
+      const onMouseMove = (event) => {
+        const handleX = event.clientX + resizeHandleDragOffsetX;
+        const handlePercent = 100 * handleX / document.body.clientWidth;
+        editorContainerElem.style.right = (100 - handlePercent) + "%";
+        canvasContainerElem.style.left = handlePercent + "%";
+        updateLayout();
+      };
+      resizeHandleElem.addEventListener("mousedown", onMouseDown);
 
       require(["vs/editor/editor.main"], () => {
-        const editor_elem = document.getElementById("editor-container");
-        
-        window.editor = monaco.editor.create(editor_elem, {
+        window.editor = monaco.editor.create(editorContainerElem, {
           value: getShaderSource(),
           theme: 'vs-dark',
           language: 'c',
@@ -90,8 +120,7 @@
     Module.onRuntimeInitialized = init;
 
     window.addEventListener('resize', () => {
-      resizeCanvas();
-      resizeEditor();
+      updateLayout();
     });
   </script>
   <style>
@@ -105,15 +134,15 @@
     #canvas-container {
       position: absolute;
       top: 0;
-      left: 40%;
+      left: 50%;
       right: 0;
       bottom: 0;
     }
     #editor-container {
       position: absolute;
       top: 0;
-      right: 60%;
       left: 0;
+      right: 50%;
       bottom: 0;
     }
     #editor-resize-handle {
