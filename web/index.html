@@ -45,9 +45,9 @@
       Module._free(src_ptr);
     };
 
-    const init = () => {
-      resizeCanvas();
+    const clamp = (x, min, max) => x < min ? min : x > max ? max : x;
 
+    const init = () => {
       const id_ptr = Module.allocateUTF8("canvas");
       Module._init(id_ptr);
       Module._free(id_ptr);
@@ -59,9 +59,20 @@
       };
 
       window.requestAnimationFrame(onFrame);
-      
+
       const canvasContainerElem = document.getElementById("canvas-container");
       const editorContainerElem = document.getElementById("editor-container");
+
+      const setEditorWidthFraction = (widthFraction) => {
+        const widthPercent = clamp(100 * widthFraction, 10, 90);
+        editorContainerElem.style.right = (100 - widthPercent) + "%";
+        canvasContainerElem.style.left = widthPercent + "%";
+        window.localStorage.setItem("editorWidthFraction", widthFraction);
+      };
+      const initialEditorWidthFraction = window.localStorage.getItem("editorWidthFraction");
+      if (initialEditorWidthFraction) {
+        setEditorWidthFraction(initialEditorWidthFraction);
+      }
 
       const resizeHandleElem = document.getElementById("editor-resize-handle");
       let resizeHandleDragStartX = 0;
@@ -80,9 +91,7 @@
       }
       const onMouseMove = (event) => {
         const handleX = event.clientX + resizeHandleDragOffsetX;
-        const handlePercent = 100 * handleX / document.body.clientWidth;
-        editorContainerElem.style.right = (100 - handlePercent) + "%";
-        canvasContainerElem.style.left = handlePercent + "%";
+        setEditorWidthFraction(handleX / document.body.clientWidth);
         updateLayout();
       };
       resizeHandleElem.addEventListener("mousedown", onMouseDown);
@@ -115,6 +124,8 @@
 
         resizeEditor();
       });
+
+      updateLayout();
     };
 
     Module.onRuntimeInitialized = init;
