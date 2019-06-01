@@ -1,0 +1,62 @@
+html, body {
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background-color: #1e1e1e;
+}
+
+#pane-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 50%;
+  bottom: 0;
+}
+
+#pane-right {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#canvas-container {
+  flex: 1 1 0px;
+
+  /* Prevent the enclosed canvas from increasing the min-height every time the layout is recalculated */
+  min-height: 0;
+}
+
+#controls {
+  flex: 0 0 32px;
+  display: flex;
+}
+#controls > button {
+  flex: 0 0 auto;
+  margin: 4px 4px 4px 0;
+  border: 0;
+  border-radius: 4px;
+  color: rgb(212, 212, 212);
+  background-color: #2c2c2c;
+  font-family: "Hack";
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.025s ease-out;
+}
+#controls > button:active {
+  transform: scale(0.9);
+}
+
+#pane-resize-handle {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  bottom: 0;
+  right: -8px;
+  cursor: col-resize;
+}

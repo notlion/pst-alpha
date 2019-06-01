@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>WASM Test!</title>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs/loader.js"></script>
   <script src="dist/wasm_webgl2.js"></script>
   <script>
     "use strict";
 
     const monaco_vs_path = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs';
-    require.config({ paths: { 'vs': monaco_vs_path }});
+    require.config({ paths: { 'vs': monaco_vs_path } });
 
     window.MonacoEnvironment = {
       getWorkerUrl: (workerId, label) => {
@@ -47,28 +50,41 @@
       Module._free(src_ptr);
     };
 
-    const clamp = (x, min, max) => x < min ? min : x > max ? max : x;
+    let rendererPrevFrameTimeMillis = 0;
+    let rendererTimeMillis = 0;
+    let rendererTimeIsPaused = false;
 
-    const init = () => {
-      const id_ptr = Module.allocateUTF8("canvas");
-      Module._init(id_ptr);
-      Module._free(id_ptr);
+    const initRenderer = () => {
+      const idStringPtr = Module.allocateUTF8("canvas");
+      Module._init(idStringPtr);
+      Module._free(idStringPtr);
 
       const onFrame = (timestamp) => {
-        Module._update(timestamp / 1000.0);
+        const deltaTime = rendererPrevFrameTimeMillis === 0 ? 0 : timestamp - rendererPrevFrameTimeMillis;
+        rendererPrevFrameTimeMillis = timestamp;
+
+        if (!rendererTimeIsPaused) {
+          rendererTimeMillis += deltaTime;
+        }
+
+        Module._update(rendererTimeMillis / 1000.0);
         Module._render();
-        window.requestAnimationFrame(onFrame);  
+        window.requestAnimationFrame(onFrame);
       };
 
       window.requestAnimationFrame(onFrame);
+    };
 
-      const canvasContainerElem = document.getElementById("canvas-container");
-      const editorContainerElem = document.getElementById("editor-container");
+    const init = () => {
+      const paneLeftElem = document.getElementById("pane-left");
+      const paneRightElem = document.getElementById("pane-right");
+
+      const clamp = (x, min, max) => x < min ? min : x > max ? max : x;
 
       const setEditorWidthFraction = (widthFraction) => {
         const widthPercent = clamp(100 * widthFraction, 10, 90);
-        editorContainerElem.style.right = (100 - widthPercent) + "%";
-        canvasContainerElem.style.left = widthPercent + "%";
+        paneLeftElem.style.right = (100 - widthPercent) + "%";
+        paneRightElem.style.left = widthPercent + "%";
         window.localStorage.setItem("editorWidthFraction", widthFraction);
       };
       const initialEditorWidthFraction = window.localStorage.getItem("editorWidthFraction");
@@ -76,7 +92,7 @@
         setEditorWidthFraction(initialEditorWidthFraction);
       }
 
-      const resizeHandleElem = document.getElementById("editor-resize-handle");
+      const resizeHandleElem = document.getElementById("pane-resize-handle");
       let resizeHandleDragOffsetX = 0;
       let resizeHandleDragStartEditorWidth = 0;
       let resizeHandlePrevClickTimeMillis = -1;
@@ -84,7 +100,7 @@
       const onMouseDown = (event) => {
         event.preventDefault();
         resizeHandleDragOffsetX = resizeHandleElem.offsetLeft - event.clientX;
-        resizeHandleDragStartEditorWidth = editorContainerElem.clientWidth;
+        resizeHandleDragStartEditorWidth = paneLeftElem.clientWidth;
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
       };
@@ -115,11 +131,20 @@
       resizeHandleElem.addEventListener("mousedown", onMouseDown);
       resizeHandleElem.addEventListener("click", onClick);
 
+      document.getElementById("rewind-button").addEventListener("click", (event) => {
+        rendererPrevFrameTimeMillis = 0;
+        rendererTimeMillis = 0;
+      });
+      document.getElementById("play-pause-button").addEventListener("click", (event) => {
+        rendererTimeIsPaused = !rendererTimeIsPaused;
+      });
+
       require(["vs/editor/editor.main"], () => {
-        window.editor = monaco.editor.create(editorContainerElem, {
+        window.editor = monaco.editor.create(paneLeftElem, {
           value: getShaderSource(),
-          theme: 'vs-dark',
-          language: 'c',
+          theme: "vs-dark",
+          fontFamily: "Hack",
+          language: "c",
           dragAndDrop: false,
           folding: false,
           scrollBeyondLastLine: false,
@@ -129,7 +154,7 @@
         window.editor.addAction({
           id: "shader-run",
           label: "Run Shader",
-          keybindings: [ monaco.KeyMod.Alt | monaco.KeyCode.Enter, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S ],
+          keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.Enter, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
           contextMenuGroupId: "shader",
           contextMenuOrder: 0,
           run: (editor) => {
@@ -147,50 +172,26 @@
       updateLayout();
     };
 
-    Module.onRuntimeInitialized = init;
+    Module.onRuntimeInitialized = initRenderer;
 
-    window.addEventListener('resize', () => {
-      updateLayout();
-    });
+    window.addEventListener("load", init);
+    window.addEventListener("resize", updateLayout);
   </script>
-  <style>
-    html, body {
-      margin: 0;
-      overflow: hidden;
-    }
-    body {
-      background-color: #1e1e1e;
-    }
-    #canvas-container {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      right: 0;
-      bottom: 0;
-    }
-    #editor-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 50%;
-      bottom: 0;
-    }
-    #editor-resize-handle {
-      position: absolute;
-      top: 0;
-      left: 100%;
-      bottom: 0;
-      right: -8px;
-      cursor: col-resize;
-    }
-  </style>
 </head>
+
 <body>
-  <div id="canvas-container">
-    <canvas id="canvas" width="100" height="100"></canvas>
+  <div id="pane-right">
+    <div id="canvas-container">
+      <canvas id="canvas" width="100" height="100"></canvas>
+    </div>
+    <div id="controls">
+      <button id="rewind-button">Rewind</button>
+      <button id="play-pause-button">Play/Pause</button>
+    </div>
   </div>
-  <div id="editor-container">
-    <div id="editor-resize-handle"></div>
+  <div id="pane-left">
+    <div id="pane-resize-handle"></div>
   </div>
 </body>
+
 </html>
