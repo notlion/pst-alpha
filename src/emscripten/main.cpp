@@ -89,4 +89,14 @@ void setShaderSource(const char *shader_src) {
   return g_app.setShaderSource(shader_src);
 }
 
+EMSCRIPTEN_KEEPALIVE
+void setViewMatrix(const float *values) {
+  g_app.setViewMatrix(values);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void setProjectionMatrix(const float *values) {
+  g_app.setProjectionMatrix(values);
+}
+
 }

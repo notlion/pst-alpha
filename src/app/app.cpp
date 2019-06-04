@@ -7,8 +7,6 @@
 using namespace std::string_literals;
 
 bool App::init() {
-  // randSeed(uint32_t(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-
   {
     const auto sim_marker = "{simulation}"s;
     const auto sim_src = std::string_view(shader_source_simulate);
@@ -60,7 +58,8 @@ bool App::init() {
     });
   }
 
-  m_camera.target = gl::vec3(0.0f);
+  m_view_matrix = gl::lookAt(gl::vec3(0.0f, 0.0f, 3.0f), gl::vec3(0.0f), gl::vec3(0.0f, 1.0f, 0.0f));
+  m_projection_matrix = gl::perspective(radians(60.0f), 1.0f, 0.01f, 1000.0f);
 
   return true;
 }
@@ -70,8 +69,6 @@ void App::cleanup() {
 
 void App::update(double time_seconds) {
   m_clock.tick(time_seconds);
- 
-  m_camera.position = gl::vec3(std::cos(m_clock.elapsed_seconds), std::sin(m_clock.elapsed_seconds), 3.0f);
 
   {
     std::rotate(m_particle_fbs.rbegin(), m_particle_fbs.rbegin() + 1, m_particle_fbs.rend());
@@ -112,24 +109,17 @@ void App::render(int width, int height) {
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
-  float render_aspect = float(width) / float(height);
 
-  const auto view_matrix = gl::lookAt(m_camera.position, m_camera.target, m_camera.up);
-  const auto proj_matrix = gl::perspective(radians(m_camera.fovy), render_aspect, 0.01f, 1000.0f);
-  const auto proj_view_matrix = proj_matrix * view_matrix;
-  const auto light_matrix = gl::transpose(gl::inverse(gl::mat3(proj_view_matrix)));
+  const auto proj_view_matrix = m_projection_matrix * m_view_matrix;
 
   gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
   gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
 
-  const auto model_matrix = gl::mat4();
-  const auto mvp_matrix = proj_view_matrix * model_matrix;
-  const auto normal_matrix = gl::transpose(gl::inverse(gl::mat3(mvp_matrix)));
+  // const auto normal_matrix = gl::transpose(gl::inverse(gl::mat3(proj_view_matrix)));
 
   {
     gl::useProgram(m_render_prog);
-    gl::uniform(m_render_prog, "iModelViewProjection", mvp_matrix);
+    gl::uniform(m_render_prog, "iModelViewProjection", proj_view_matrix);
 
     gl::drawVertexBuffer(m_particles_vb);
   }
@@ -144,10 +134,14 @@ std::string_view App::getShaderSource() {
 void App::setShaderSource(std::string_view shader_src) {
   m_user_shader_source = shader_src;
 
-  auto src = std::string(m_shader_source_simulate_prefix);
+  auto src = std::string();
+  auto src_size = m_shader_source_simulate_prefix.size() + m_user_shader_source.size() + m_shader_source_simulate_postfix.size() + 1;
+  src.reserve(src_size + 1);
+  src += m_shader_source_simulate_prefix;
   src += '\n';
   src += m_user_shader_source;
   src += m_shader_source_simulate_postfix;
+  assert(src.size() == src_size);
 
   auto prog = gl::createProgram(src, gl::SHADER_VERSION_300ES);
 
@@ -160,4 +154,12 @@ void App::setShaderSource(std::string_view shader_src) {
 
     m_simulate_prog = std::move(prog);
   }
+}
+
+void App::setViewMatrix(const float *values) {
+  std::copy_n(values, 16, &m_view_matrix.value[0][0]);
+}
+
+void App::setProjectionMatrix(const float *values) {
+  std::copy_n(values, 16, &m_projection_matrix.value[0][0]);
 }

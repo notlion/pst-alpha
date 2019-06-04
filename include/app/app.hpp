@@ -30,7 +30,8 @@ class App {
 
   FrameClock m_clock;
 
-  Camera m_camera;
+  gl::mat4 m_view_matrix;
+  gl::mat4 m_projection_matrix;
 
   std::string_view m_shader_source_simulate_prefix;
   std::string_view m_shader_source_simulate_postfix;
@@ -45,4 +46,7 @@ public:
 
   std::string_view getShaderSource();
   void setShaderSource(std::string_view shader_src);
+
+  void setViewMatrix(const float *values);
+  void setProjectionMatrix(const float *values);
 };
