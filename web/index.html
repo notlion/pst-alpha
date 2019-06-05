@@ -9,15 +9,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs/loader.js"></script>
   <script src="dist/wasm_webgl2.js"></script>
   <script src="main.js" type="module"></script>
-  <script>
-  </script>
 </head>
 
 <body>
   <div id="pane-right">
-    <div id="canvas-container">
-      <canvas id="canvas" width="100" height="100"></canvas>
-    </div>
+    <particle-renderer id="renderer"></particle-renderer>
     <div id="controls">
       <button id="rewind-button">Rewind</button>
       <button id="play-pause-button">Play/Pause</button>

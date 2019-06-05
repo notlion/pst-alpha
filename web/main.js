@@ -1,4 +1,6 @@
-import * as mat4 from "./lib/gl-matrix-d6156a5/mat4.js";
+import {ParticleRendererElement} from "./renderer.js"
+
+customElements.define("particle-renderer", ParticleRendererElement);
 
 const monaco_vs_path = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs';
 require.config({ paths: { 'vs': monaco_vs_path } });
@@ -14,73 +16,14 @@ window.MonacoEnvironment = {
   }
 };
 
-let canvasAspectRatio = 1;
-
-const resizeCanvas = () => {
-  const canvasContainerElem = document.getElementById("canvas-container");
-  const canvasElem = document.getElementById("canvas");
-  canvasElem.width = canvasContainerElem.clientWidth;
-  canvasElem.height = canvasContainerElem.clientHeight;
-  canvasAspectRatio = canvasElem.width / canvasElem.height;
-};
-
 const resizeEditor = () => {
   if (window.editor) window.editor.layout();
 };
 
 const updateLayout = () => {
-  resizeCanvas();
+  const rendererElem = document.getElementById("renderer");
+  rendererElem.updateLayout();
   resizeEditor();
-};
-
-const getShaderSource = () => {
-  return Module.UTF8ToString(Module._getShaderSource());
-};
-const setShaderSource = (src) => {
-  const offset = Module.allocateUTF8(src);
-  Module._setShaderSource(offset);
-  Module._free(offset);
-};
-const setViewMatrix = (viewMatrixF32) => {
-  const offset = Module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
-  Module.HEAPF32.set(viewMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
-  Module._setViewMatrix(offset);
-  Module._free(offset);
-};
-const setProjectionMatrix = (projectionMatrixF32) => {
-  const offset = Module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
-  Module.HEAPF32.set(projectionMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
-  Module._setProjectionMatrix(offset);
-  Module._free(offset);
-};
-
-let rendererPrevFrameTimeMillis = 0;
-let rendererTimeMillis = 0;
-let rendererTimeIsPaused = false;
-
-const initRenderer = () => {
-  const idStringPtr = Module.allocateUTF8("canvas");
-  Module._init(idStringPtr);
-  Module._free(idStringPtr);
-
-  const onFrame = (timestamp) => {
-    const deltaTime = rendererPrevFrameTimeMillis === 0 ? 0 : timestamp - rendererPrevFrameTimeMillis;
-    rendererPrevFrameTimeMillis = timestamp;
-
-    if (!rendererTimeIsPaused) {
-      rendererTimeMillis += deltaTime;
-    }
-
-    setViewMatrix(mat4.lookAt(mat4.create(), [0, 0, 3], [0, 0, 0], [0, 1, 0]));
-    const DEG_TO_RAD = Math.PI / 180;
-    setProjectionMatrix(mat4.perspective(mat4.create(), 60.0 * DEG_TO_RAD, canvasAspectRatio, 0.01, 1000));
-
-    Module._update(rendererTimeMillis / 1000.0);
-    Module._render();
-    window.requestAnimationFrame(onFrame);
-  };
-
-  window.requestAnimationFrame(onFrame);
 };
 
 const init = () => {
@@ -147,9 +90,11 @@ const init = () => {
     rendererTimeIsPaused = !rendererTimeIsPaused;
   });
 
+  const rendererElem = document.getElementById("renderer");
+
   require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(paneLeftElem, {
-      value: getShaderSource(),
+      value: rendererElem.getShaderSource(),
       theme: "vs-dark",
       fontFamily: "Hack",
       language: "c",
@@ -166,7 +111,7 @@ const init = () => {
       contextMenuGroupId: "shader",
       contextMenuOrder: 0,
       run: (editor) => {
-        setShaderSource(editor.getValue());
+        rendererElem.setShaderSource(editor.getValue());
       }
     });
 
@@ -179,8 +124,6 @@ const init = () => {
 
   updateLayout();
 };
-
-Module.onRuntimeInitialized = initRenderer;
 
 window.addEventListener("load", init);
 window.addEventListener("resize", updateLayout);

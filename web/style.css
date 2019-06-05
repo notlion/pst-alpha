@@ -25,7 +25,7 @@ body {
   flex-direction: column;
 }
 
-#canvas-container {
+#renderer {
   flex: 1 1 0px;
 
   /* Prevent the enclosed canvas from increasing the min-height every time the layout is recalculated */
