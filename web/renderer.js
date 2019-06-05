@@ -1,3 +1,4 @@
+import ParticleRenderer from "./particle-renderer.js";
 import * as mat4 from "./lib/gl-matrix-d6156a5/mat4.js";
 
 const DEG_TO_RAD = Math.PI / 180;
@@ -22,18 +23,18 @@ export class ParticleRendererElement extends HTMLElement {
       };
     
       window.requestAnimationFrame(onFrame);
-    };;
+    };
 
     this.canvasAspectRatio = 1;
 
-    this.prevFrameTimeMillis = 0;
+    this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
     this.timeIsPaused = false;
   }
 
   _renderFrame(timestamp) {
-    const deltaTime = this.prevFrameTimeMillis === 0 ? 0 : timestamp - this.prevFrameTimeMillis;
-    this.prevFrameTimeMillis = timestamp;
+    const deltaTime = this._prevFrameTimeMillis === 0 ? 0 : timestamp - this._prevFrameTimeMillis;
+    this._prevFrameTimeMillis = timestamp;
 
     if (!this.timeIsPaused) {
       this.timeMillis += deltaTime;
@@ -44,6 +45,11 @@ export class ParticleRendererElement extends HTMLElement {
 
     this.module._update(this.timeMillis / 1000.0);
     this.module._render();
+  }
+
+  rewind() {
+    this._prevFrameTimeMillis = 0;
+    this.timeMillis = 0;
   }
 
   updateLayout() {

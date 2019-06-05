@@ -82,15 +82,14 @@ const init = () => {
   resizeHandleElem.addEventListener("mousedown", onMouseDown);
   resizeHandleElem.addEventListener("click", onClick);
 
+  const rendererElem = document.getElementById("renderer");
+
   document.getElementById("rewind-button").addEventListener("click", (event) => {
-    rendererPrevFrameTimeMillis = 0;
-    rendererTimeMillis = 0;
+    rendererElem.rewind();
   });
   document.getElementById("play-pause-button").addEventListener("click", (event) => {
-    rendererTimeIsPaused = !rendererTimeIsPaused;
+    rendererElem.timeIsPaused = !rendererElem.timeIsPaused;
   });
-
-  const rendererElem = document.getElementById("renderer");
 
   require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(paneLeftElem, {

@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(APP_TARGET wasm_webgl2)
+set(APP_TARGET particle-renderer)
 
-project(${APP_TARGET}_project)
+project(${APP_TARGET}-project)
 
 set(BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
 set(ASSETS_DIR ${PROJECT_SOURCE_DIR}/assets)
@@ -20,11 +20,11 @@ if (EMSCRIPTEN)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS=\"['_free']\"")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS=\"['allocateUTF8', 'UTF8ToString']\"")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s MODULARIZE=1 -s EXPORT_NAME=\"ParticleRenderer\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ENVIRONMENT=web -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=\"ParticleRenderer\"")
   set(CMAKE_CXX_FLAGS_DEBUG "-g4 -s DEMANGLE_SUPPORT=1")
   set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Oz -DNDEBUG --llvm-lto 1")
 
-  set(BIN_DIR ${PROJECT_SOURCE_DIR}/web/dist)
+  set(BIN_DIR ${PROJECT_SOURCE_DIR}/web)
 
   file(GLOB PLATFORM_SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/emscripten/*.cpp)
 endif ()
