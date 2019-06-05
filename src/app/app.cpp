@@ -70,7 +70,6 @@ void App::cleanup() {
 void App::update(double time_seconds) {
   m_clock.tick(time_seconds);
 
-  m_uniform_resolution = gl::vec2(m_particle_framebuffer_resolution);
   m_uniform_frame = GLint(m_clock.elapsed_frames);
   m_uniform_time = m_clock.elapsed_seconds;
   m_uniform_time_delta = m_clock.elapsed_seconds_delta;
@@ -93,7 +92,7 @@ void App::update(double time_seconds) {
     gl::bindTexture(m_particle_fbs[2]->textures[1], GL_TEXTURE3);
 
     gl::useProgram(m_simulate_prog);
-    gl::uniform(m_simulate_prog, "iResolution", m_uniform_resolution);
+    gl::uniform(m_simulate_prog, "iResolution", gl::vec2(m_particle_framebuffer_resolution));
     gl::uniform(m_simulate_prog, "iFrame", m_uniform_frame);
     gl::uniform(m_simulate_prog, "iTime", m_uniform_time);
     gl::uniform(m_simulate_prog, "iTimeDelta", m_uniform_time_delta);
@@ -125,7 +124,7 @@ void App::render(int width, int height) {
   {
     gl::useProgram(m_texture_prog);
     gl::uniform(m_texture_prog, "iModelViewProjection", proj_view_matrix);
-    gl::uniform(m_texture_prog, "iResolution", m_uniform_resolution);
+    gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
     gl::uniform(m_texture_prog, "iFrame", m_uniform_frame);
     gl::uniform(m_texture_prog, "iTime", m_uniform_time);
     gl::uniform(m_texture_prog, "iTimeDelta", m_uniform_time_delta);

@@ -33,7 +33,6 @@ class App {
   gl::mat4 m_view_matrix;
   gl::mat4 m_projection_matrix;
 
-  gl::vec2 m_uniform_resolution;
   GLint m_uniform_frame;
   GLfloat m_uniform_time;
   GLfloat m_uniform_time_delta;
