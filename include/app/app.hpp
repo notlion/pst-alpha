@@ -26,17 +26,25 @@ class App {
   gl::VertexBuffer m_particles_vb;
 
   gl::Program m_simulate_prog;
-  gl::Program m_render_prog;
+  gl::Program m_texture_prog;
 
   FrameClock m_clock;
 
   gl::mat4 m_view_matrix;
   gl::mat4 m_projection_matrix;
 
-  std::string_view m_shader_source_simulate_prefix;
-  std::string_view m_shader_source_simulate_postfix;
+  gl::vec2 m_uniform_resolution;
+  GLint m_uniform_frame;
+  GLfloat m_uniform_time;
+  GLfloat m_uniform_time_delta;
 
-  std::string m_user_shader_source;
+  std::string_view m_simulation_shader_source_prefix;
+  std::string_view m_simulation_shader_source_postfix;
+  std::string m_user_simulation_shader_source;
+
+  std::string_view m_texture_shader_source_prefix;
+  std::string_view m_texture_shader_source_postfix;
+  std::string m_user_texture_shader_source;
 
 public:
   bool init();
@@ -44,8 +52,11 @@ public:
   void update(double time_seconds);
   void render(int width, int height);
 
-  std::string_view getShaderSource();
-  void setShaderSource(std::string_view shader_src);
+  std::string_view getSimulationShaderSource();
+  void setSimulationShaderSource(std::string_view shader_src);
+
+  std::string_view getTextureShaderSource();
+  void setTextureShaderSource(std::string_view shader_src);
 
   void setViewMatrix(const float *values);
   void setProjectionMatrix(const float *values);

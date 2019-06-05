@@ -93,7 +93,7 @@ const init = () => {
 
   require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(paneLeftElem, {
-      value: rendererElem.getShaderSource(),
+      value: rendererElem.getSimulationShaderSource(),
       theme: "vs-dark",
       fontFamily: "Hack",
       language: "c",
@@ -110,12 +110,12 @@ const init = () => {
       contextMenuGroupId: "shader",
       contextMenuOrder: 0,
       run: (editor) => {
-        rendererElem.setShaderSource(editor.getValue());
+        rendererElem.setSimulationShaderSource(editor.getValue());
       }
     });
 
     window.editor.onDidChangeModelContent((event) => {
-      // setShaderSource(window.editor.getValue());
+      // setSimulationShaderSource(window.editor.getValue());
     });
 
     resizeEditor();

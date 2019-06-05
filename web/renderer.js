@@ -1,5 +1,5 @@
+import {mat4} from "./lib/gl-matrix-d6156a5/index.js";
 import ParticleRenderer from "./particle-renderer.js";
-import * as mat4 from "./lib/gl-matrix-d6156a5/mat4.js";
 
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -58,12 +58,12 @@ export class ParticleRendererElement extends HTMLElement {
     this.canvasAspectRatio = this.canvasElem.width / this.canvasElem.height;  
   }
 
-  getShaderSource() {
-    return this.module.UTF8ToString(this.module._getShaderSource());
+  getSimulationShaderSource() {
+    return this.module.UTF8ToString(this.module._getSimulationShaderSource());
   }
-  setShaderSource(src) {
+  setSimulationShaderSource(src) {
     const offset = this.module.allocateUTF8(src);
-    this.module._setShaderSource(offset);
+    this.module._setSimulationShaderSource(offset);
     this.module._free(offset);
   }
 

@@ -27,7 +27,7 @@ void init(const char *canvas_id) {
   EmscriptenWebGLContextAttributes attrs;
   attrs.explicitSwapControl = EM_FALSE;
   attrs.depth = EM_TRUE;
-  attrs.stencil = EM_TRUE;
+  attrs.stencil = EM_FALSE;
   attrs.antialias = EM_TRUE;
   attrs.enableExtensionsByDefault = EM_TRUE;
   attrs.majorVersion = 2;
@@ -79,14 +79,14 @@ void render() {
 }
 
 EMSCRIPTEN_KEEPALIVE
-const char *getShaderSource() {
-  auto src = g_app.getShaderSource();
+const char *getSimulationShaderSource() {
+  auto src = g_app.getSimulationShaderSource();
   return src.data();
 }
 
 EMSCRIPTEN_KEEPALIVE
-void setShaderSource(const char *shader_src) {
-  return g_app.setShaderSource(shader_src);
+void setSimulationShaderSource(const char *shader_src) {
+  return g_app.setSimulationShaderSource(shader_src);
 }
 
 EMSCRIPTEN_KEEPALIVE

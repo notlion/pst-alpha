@@ -43,38 +43,6 @@ void main() {
 #endif
 )GLSL";
 
-const char *shader_source_render = R"GLSL(precision highp float;
-
-#ifdef VERTEX_SHADER
-
-uniform sampler2D iPosition;
-uniform sampler2D iColor;
-
-uniform mat4 iModelViewProjection;
-
-layout(location = 0) in ivec2 aTexcoord;
-
-out vec4 vColor;
-
-void main() {
-  vColor = texelFetch(iColor, aTexcoord, 0);
-  gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
-  gl_PointSize = 3.0;
-}
-
-#endif
-
-#ifdef FRAGMENT_SHADER
-in vec4 vColor;
-
-out vec4 oFragColor;
-
-void main() {
-  oFragColor = vColor;
-}
-#endif
-)GLSL";
-
 const char *shader_source_simulate = R"GLSL(precision highp float;
 
 #ifdef VERTEX_SHADER
@@ -111,7 +79,46 @@ void main() {
 #endif
 )GLSL";
 
-const char *shader_source_user_default = R"GLSL(// Yet more IQ https://www.shadertoy.com/view/ll2GD3
+const char *shader_source_texture = R"GLSL(precision highp float;
+
+#ifdef VERTEX_SHADER
+
+uniform sampler2D iPosition;
+uniform sampler2D iColor;
+
+uniform mat4 iModelViewProjection;
+
+layout(location = 0) in ivec2 aTexcoord;
+
+out vec4 vColor;
+
+void main() {
+  vColor = texelFetch(iColor, aTexcoord, 0);
+  gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
+  gl_PointSize = 3.0;
+}
+
+#endif
+
+#ifdef FRAGMENT_SHADER
+uniform vec2  iResolution;
+uniform int   iFrame;
+uniform float iTime;
+uniform float iTimeDelta;
+
+// {texture}
+
+in vec4 vColor;
+
+out vec4 oFragColor;
+
+void main() {
+  mainTexture(oFragColor, gl_PointCoord, vColor);
+}
+#endif
+)GLSL";
+
+const char *shader_source_user_default_simulation = R"GLSL(// Yet more IQ https://www.shadertoy.com/view/ll2GD3
 vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
   return a + b * cos(6.28318 * (c * t + d));
 }
@@ -150,5 +157,10 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
 
   vec3 ld = normalize(vec3(-1.0, -1.0, -2.0));
   fragColor.rgb *= mix(0.4, 1.5, max(0.0, dot(ld, normal)));
+}
+)GLSL";
+
+const char *shader_source_user_default_texture = R"GLSL(void mainTexture(out vec4 fragColor, in vec2 fragCoord, in vec4 elemColor) {
+  fragColor = elemColor * 1.0 + 0.2 * sin(iTime);
 }
 )GLSL";

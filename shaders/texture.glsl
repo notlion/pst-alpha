@@ -20,11 +20,18 @@ void main() {
 #endif
 
 #ifdef FRAGMENT_SHADER
+uniform vec2  iResolution;
+uniform int   iFrame;
+uniform float iTime;
+uniform float iTimeDelta;
+
+// {texture}
+
 in vec4 vColor;
 
 out vec4 oFragColor;
 
 void main() {
-  oFragColor = vColor;
+  mainTexture(oFragColor, gl_PointCoord, vColor);
 }
 #endif
