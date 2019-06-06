@@ -82,7 +82,19 @@ const init = () => {
   resizeHandleElem.addEventListener("mousedown", onMouseDown);
   resizeHandleElem.addEventListener("click", onClick);
 
+  let defaultSimulationShaderSource = "";
   const rendererElem = document.getElementById("renderer");
+  if (rendererElem.isReady) {
+    defaultSimulationShaderSource = rendererElem.getSimulationShaderSource();
+  }
+  else {
+    rendererElem.addEventListener("ready", () => {
+      defaultSimulationShaderSource = rendererElem.getSimulationShaderSource();
+      if (window.editor) {
+        window.editor.setValue(defaultSimulationShaderSource);
+      }
+    });
+  }
 
   document.getElementById("rewind-button").addEventListener("click", (event) => {
     rendererElem.rewind();
@@ -93,7 +105,7 @@ const init = () => {
 
   require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(paneLeftElem, {
-      value: rendererElem.getSimulationShaderSource(),
+      value: defaultSimulationShaderSource,
       theme: "vs-dark",
       fontFamily: "Hack",
       language: "c",

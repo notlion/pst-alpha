@@ -8,14 +8,19 @@ export class ParticleRendererElement extends HTMLElement {
     super();
 
     this.canvasElem = document.createElement("canvas");
-    this.canvasElem.id = "canvas" + 0;
+    this.canvasElem.id = "particle-renderer-canvas";
     this.appendChild(this.canvasElem);
+
+    this.isReady = false;
 
     this.module = ParticleRenderer();
     this.module.onRuntimeInitialized = () => {
       const offset = this.module.allocateUTF8("#" + this.canvasElem.id);
       this.module._init(offset);
       this.module._free(offset);
+
+      this.isReady = true;
+      this.dispatchEvent(new Event("ready"));
     
       const onFrame = (timestamp) => {
         this._renderFrame(timestamp);
