@@ -18,6 +18,12 @@ uniform sampler2D iColor;
 uniform sampler2D iColorPrev;
 
 uniform vec2  iResolution;
+uniform mat4  iModelViewProjection;
+uniform mat4  iModelView;
+uniform mat4  iProjection;
+uniform mat4  iInverseModelViewProjection;
+uniform mat4  iInverseModelView;
+uniform mat4  iInverseProjection;
 uniform int   iFrame;
 uniform float iTime;
 uniform float iTimeDelta;

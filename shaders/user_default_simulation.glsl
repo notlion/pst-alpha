@@ -13,7 +13,7 @@ float getDepth(vec2 p) {
   return d;
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
+void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {//, out vec3 fragRight, out vec3 fragUp) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   int count = int(iResolution.x) * int(iResolution.y);

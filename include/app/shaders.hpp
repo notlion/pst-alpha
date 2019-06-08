@@ -63,6 +63,12 @@ uniform sampler2D iColor;
 uniform sampler2D iColorPrev;
 
 uniform vec2  iResolution;
+uniform mat4  iModelViewProjection;
+uniform mat4  iModelView;
+uniform mat4  iProjection;
+uniform mat4  iInverseModelViewProjection;
+uniform mat4  iInverseModelView;
+uniform mat4  iInverseProjection;
 uniform int   iFrame;
 uniform float iTime;
 uniform float iTimeDelta;
@@ -102,6 +108,12 @@ void main() {
 
 #ifdef FRAGMENT_SHADER
 uniform vec2  iResolution;
+uniform mat4  iModelViewProjection;
+uniform mat4  iModelView;
+uniform mat4  iProjection;
+uniform mat4  iInverseModelViewProjection;
+uniform mat4  iInverseModelView;
+uniform mat4  iInverseProjection;
 uniform int   iFrame;
 uniform float iTime;
 uniform float iTimeDelta;
@@ -133,7 +145,7 @@ float getDepth(vec2 p) {
   return d;
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
+void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {//, out vec3 fragRight, out vec3 fragUp) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   int count = int(iResolution.x) * int(iResolution.y);

@@ -69,11 +69,22 @@ void App::cleanup() {
 
 void App::update(double time_seconds) {
   m_clock.tick(time_seconds);
+}
 
-  m_uniform_frame = GLint(m_clock.elapsed_frames);
-  m_uniform_time = m_clock.elapsed_seconds;
-  m_uniform_time_delta = m_clock.elapsed_seconds_delta;
+void App::render(int width, int height) {
+  const auto setCommonShaderUniforms = [&](gl::Program &prog) {
+    gl::uniform(prog, "iModelViewProjection", m_view_projection_matrix);
+    gl::uniform(prog, "iModelView", m_view_matrix);
+    gl::uniform(prog, "iProjection", m_projection_matrix);
+    gl::uniform(prog, "iInverseModelViewProjection", m_inverse_view_projection_matrix);
+    gl::uniform(prog, "iInverseModelView", m_inverse_view_matrix);
+    gl::uniform(prog, "iInverseProjection", m_inverse_projection_matrix);
+    gl::uniform(prog, "iFrame", GLint(m_clock.elapsed_frames));
+    gl::uniform(prog, "iTime", GLfloat(m_clock.elapsed_seconds));
+    gl::uniform(prog, "iTimeDelta", GLfloat(m_clock.elapsed_seconds_delta));
+  };
 
+  // Simulate
   {
     std::rotate(m_particle_fbs.rbegin(), m_particle_fbs.rbegin() + 1, m_particle_fbs.rend());
 
@@ -93,46 +104,36 @@ void App::update(double time_seconds) {
 
     gl::useProgram(m_simulate_prog);
     gl::uniform(m_simulate_prog, "iResolution", gl::vec2(m_particle_framebuffer_resolution));
-    gl::uniform(m_simulate_prog, "iFrame", m_uniform_frame);
-    gl::uniform(m_simulate_prog, "iTime", m_uniform_time);
-    gl::uniform(m_simulate_prog, "iTimeDelta", m_uniform_time_delta);
+    setCommonShaderUniforms(m_simulate_prog);
 
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
     gl::unbindFramebuffer();
+
+    CHECK_GL_ERROR();
   }
 
-  CHECK_GL_ERROR();
-}
-
-void App::render(int width, int height) {
-  glViewport(0, 0, width, height);
-
-  gl::enableBlendAlphaPremult();
-  gl::enableDepth();
-
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  const auto proj_view_matrix = m_projection_matrix * m_view_matrix;
-
-  gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
-  gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
-
-  // const auto normal_matrix = gl::transpose(gl::inverse(gl::mat3(proj_view_matrix)));
-
+  // Texture
   {
+    glViewport(0, 0, width, height);
+
+    gl::enableBlendAlphaPremult();
+    gl::enableDepth();
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
+    gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
+
     gl::useProgram(m_texture_prog);
-    gl::uniform(m_texture_prog, "iModelViewProjection", proj_view_matrix);
     gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
-    gl::uniform(m_texture_prog, "iFrame", m_uniform_frame);
-    gl::uniform(m_texture_prog, "iTime", m_uniform_time);
-    gl::uniform(m_texture_prog, "iTimeDelta", m_uniform_time_delta);
+    setCommonShaderUniforms(m_texture_prog);
 
     gl::drawVertexBuffer(m_particles_vb);
-  }
 
-  CHECK_GL_ERROR();
+    CHECK_GL_ERROR();
+  }
 }
 
 static std::string concatenateShaderSource(std::string_view prefix, std::string_view user_source, std::string_view postfix) {
@@ -187,10 +188,19 @@ void App::setTextureShaderSource(std::string_view shader_src) {
   }
 }
 
+void App::updateViewProjectionMatrices() {
+  m_view_projection_matrix = m_projection_matrix * m_view_matrix;
+  m_inverse_view_projection_matrix = gl::inverse(m_view_projection_matrix);
+}
+
 void App::setViewMatrix(const float *values) {
   std::copy_n(values, 16, &m_view_matrix.value[0][0]);
+  m_inverse_view_matrix = gl::inverse(m_view_matrix);
+  updateViewProjectionMatrices();
 }
 
 void App::setProjectionMatrix(const float *values) {
   std::copy_n(values, 16, &m_projection_matrix.value[0][0]);
+  m_inverse_projection_matrix = gl::inverse(m_projection_matrix);
+  updateViewProjectionMatrices();
 }

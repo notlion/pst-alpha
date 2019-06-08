@@ -32,10 +32,10 @@ class App {
 
   gl::mat4 m_view_matrix;
   gl::mat4 m_projection_matrix;
-
-  GLint m_uniform_frame;
-  GLfloat m_uniform_time;
-  GLfloat m_uniform_time_delta;
+  gl::mat4 m_view_projection_matrix;
+  gl::mat4 m_inverse_view_matrix;
+  gl::mat4 m_inverse_projection_matrix;
+  gl::mat4 m_inverse_view_projection_matrix;
 
   std::string_view m_simulation_shader_source_prefix;
   std::string_view m_simulation_shader_source_postfix;
@@ -44,6 +44,8 @@ class App {
   std::string_view m_texture_shader_source_prefix;
   std::string_view m_texture_shader_source_postfix;
   std::string m_user_texture_shader_source;
+
+  void updateViewProjectionMatrices();
 
 public:
   bool init();
