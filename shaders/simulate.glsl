@@ -29,8 +29,10 @@ uniform float iTimeDelta;
 
 layout(location = 0) out vec4 oPosition;
 layout(location = 1) out vec4 oColor;
+layout(location = 2) out vec4 oRightVector;
+layout(location = 3) out vec4 oUpVector;
 
 void main() {
-  mainSimulation(oPosition, oColor);
+  mainSimulation(oPosition, oColor, oRightVector.xyz, oUpVector.xyz);
 }
 #endif

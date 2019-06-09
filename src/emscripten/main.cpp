@@ -28,7 +28,7 @@ void init(const char *canvas_id) {
   attrs.explicitSwapControl = EM_FALSE;
   attrs.depth = EM_TRUE;
   attrs.stencil = EM_FALSE;
-  attrs.antialias = EM_FALSE;
+  attrs.antialias = EM_TRUE;
   attrs.enableExtensionsByDefault = EM_TRUE;
   attrs.majorVersion = 2;
   attrs.minorVersion = 0;

@@ -74,9 +74,11 @@ uniform float iTimeDelta;
 
 layout(location = 0) out vec4 oPosition;
 layout(location = 1) out vec4 oColor;
+layout(location = 2) out vec4 oRightVector;
+layout(location = 3) out vec4 oUpVector;
 
 void main() {
-  mainSimulation(oPosition, oColor);
+  mainSimulation(oPosition, oColor, oRightVector.xyz, oUpVector.xyz);
 }
 #endif
 )GLSL";
@@ -86,6 +88,8 @@ const char *shader_source_texture = R"GLSL(precision highp float;
 #ifdef VERTEX_SHADER
 uniform sampler2D iPosition;
 uniform sampler2D iColor;
+uniform sampler2D iRight;
+uniform sampler2D iUp;
 
 uniform mat4 iModelViewProjection;
 
@@ -100,8 +104,12 @@ out vec2 vTexcoord;
 void main() {
   vColor = texelFetch(iColor, aParticleTexcoord, 0);
   vTexcoord = aQuadTexcoord;
-  gl_Position = iModelViewProjection * texelFetch(iPosition, aParticleTexcoord, 0);
-  gl_Position.xyz += aQuadPosition * 0.02;
+
+  vec4 particlePos = texelFetch(iPosition, aParticleTexcoord, 0);
+  particlePos.xyz += texelFetch(iRight, aParticleTexcoord, 0).xyz * aQuadPosition.x +
+                     texelFetch(iUp, aParticleTexcoord, 0).xyz * aQuadPosition.y;
+
+  gl_Position = iModelViewProjection * particlePos;
 }
 #endif
 
@@ -145,7 +153,7 @@ float getDepth(vec2 p) {
   return d;
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {//, out vec3 fragRight, out vec3 fragUp) {
+void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRightVector, out vec3 fragUpVector) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   int count = int(iResolution.x) * int(iResolution.y);
@@ -156,9 +164,12 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {//, out vec3 fra
   fragPosition.z = getDepth(fp);
 
   vec2 o = vec2(0.0, 0.01);
-  vec3 normal = normalize(cross(
-    vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)),
-    vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx))));
+  vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
+  vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
+  vec3 normal = cross(tx, ty);
+
+  fragRightVector = tx * 0.005;
+  fragUpVector = ty * 0.005;
 
   float d = length(fp);
   vec3 c0 = mix(vec3(147, 165, 0) / 255.0, vec3(139, 43, 21) / 255.0, d * 0.4);
@@ -175,6 +186,5 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {//, out vec3 fra
 const char *shader_source_user_default_texture = R"GLSL(void mainTexture(out vec4 fragColor, in vec2 fragCoord, in vec4 baseColor, in vec2 texcoord) {
   fragColor = baseColor;
   fragColor.rgb *= 1.2 * smoothstep(1.0, 0.2, distance(vec2(0.5), gl_FragCoord.xy / iResolution));
-  fragColor.rg *= texcoord;
 }
 )GLSL";

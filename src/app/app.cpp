@@ -69,8 +69,8 @@ bool App::init() {
       gl::createFramebuffer(*m_particle_fbs[i], m_particle_framebuffer_resolution, m_particle_framebuffer_resolution, {
         { GL_COLOR_ATTACHMENT0, particle_tex_opts },
         { GL_COLOR_ATTACHMENT1, particle_tex_opts },
-        // { GL_COLOR_ATTACHMENT2, particle_tex_opts },
-        // { GL_COLOR_ATTACHMENT3, particle_tex_opts },
+        { GL_COLOR_ATTACHMENT2, particle_tex_opts },
+        { GL_COLOR_ATTACHMENT3, particle_tex_opts },
       });
     }
   }
@@ -142,6 +142,8 @@ void App::render(int width, int height) {
 
     gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
     gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
+    gl::bindTexture(m_particle_fbs[0]->textures[2], GL_TEXTURE2);
+    gl::bindTexture(m_particle_fbs[0]->textures[3], GL_TEXTURE3);
 
     gl::useProgram(m_texture_prog);
     gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
@@ -213,6 +215,8 @@ void App::setTextureShaderSource(std::string_view shader_src) {
     gl::useProgram(prog);
     gl::uniform(prog, "iPosition", 0);
     gl::uniform(prog, "iColor", 1);
+    gl::uniform(prog, "iRight", 2);
+    gl::uniform(prog, "iUp", 3);
 
     m_texture_prog = std::move(prog);
   }

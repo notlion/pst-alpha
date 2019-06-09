@@ -13,7 +13,7 @@ float getDepth(vec2 p) {
   return d;
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {//, out vec3 fragRight, out vec3 fragUp) {
+void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRightVector, out vec3 fragUpVector) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   int count = int(iResolution.x) * int(iResolution.y);
@@ -24,9 +24,12 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {//, out vec3 fra
   fragPosition.z = getDepth(fp);
 
   vec2 o = vec2(0.0, 0.01);
-  vec3 normal = normalize(cross(
-    vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)),
-    vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx))));
+  vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
+  vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
+  vec3 normal = cross(tx, ty);
+
+  fragRightVector = tx * 0.005;
+  fragUpVector = ty * 0.005;
 
   float d = length(fp);
   vec3 c0 = mix(vec3(147, 165, 0) / 255.0, vec3(139, 43, 21) / 255.0, d * 0.4);

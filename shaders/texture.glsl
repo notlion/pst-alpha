@@ -3,6 +3,8 @@ precision highp float;
 #ifdef VERTEX_SHADER
 uniform sampler2D iPosition;
 uniform sampler2D iColor;
+uniform sampler2D iRight;
+uniform sampler2D iUp;
 
 uniform mat4 iModelViewProjection;
 
@@ -17,8 +19,12 @@ out vec2 vTexcoord;
 void main() {
   vColor = texelFetch(iColor, aParticleTexcoord, 0);
   vTexcoord = aQuadTexcoord;
-  gl_Position = iModelViewProjection * texelFetch(iPosition, aParticleTexcoord, 0);
-  gl_Position.xyz += aQuadPosition * 0.02;
+
+  vec4 particlePos = texelFetch(iPosition, aParticleTexcoord, 0);
+  particlePos.xyz += texelFetch(iRight, aParticleTexcoord, 0).xyz * aQuadPosition.x +
+                     texelFetch(iUp, aParticleTexcoord, 0).xyz * aQuadPosition.y;
+
+  gl_Position = iModelViewProjection * particlePos;
 }
 #endif
 
