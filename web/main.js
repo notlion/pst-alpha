@@ -115,6 +115,10 @@ const init = () => {
       minimap: { enabled: false },
     });
 
+    window.editor.getModel().updateOptions({
+      tabSize: 2,
+    });
+
     window.editor.addAction({
       id: "shader-run",
       label: "Run Shader",

@@ -4,10 +4,11 @@ vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
 }
 
 float getDepth(vec2 p) {
-  float d = sin(p.x * 2.653 + iTime) * 0.3;
-  d += sin(p.y * 1.951 + iTime) * 0.3;
+  float t0 = iTime * 0.1;
+  float d = sin(p.x * 2.653 + t0) * 0.3;
+  d += sin(p.y * 1.951 + t0) * 0.3;
   float l = length(p);
-  d += 0.2 * smoothstep(0.98, 1.0, abs(fract(l * 0.05 - iTime * 0.1) * 2.0 - 1.0));
+  d += 0.3 * smoothstep(0.96, 1.0, abs(fract(l * 0.1 - iTime * 0.1) * 2.0 - 1.0));
   d += l * l * l * 0.008 * cos(12.0 * atan(p.x, p.y) + iTime);
   d *= smoothstep(10.0, 0.0, l);
   return d;
@@ -35,7 +36,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
   vec3 c0 = mix(vec3(147, 165, 0) / 255.0, vec3(139, 43, 21) / 255.0, d * 0.4);
   vec3 c1 = mix(vec3(36, 38, 33) / 255.0, vec3(36, 58, 122) / 255.0, d * 0.3);
   c1 = mix(vec3(132, 26, 27) / 255.0, c1, smoothstep(0.0, 1.0, d));
-  fragColor.rgb = mix(c0, c1, smoothstep(0.4, 0.6, abs(fract(d * 7.0 - iTime) * 2.0 - 1.0)));
+  fragColor.rgb = mix(c0, c1, smoothstep(0.4, 0.6, abs(fract(d * 7.0 - iTime * 0.5) * 2.0 - 1.0)));
   fragColor.a = 1.0;
 
   vec3 ld = normalize(vec3(-1.0, -1.0, -2.0));

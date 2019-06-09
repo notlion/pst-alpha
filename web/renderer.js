@@ -3,6 +3,12 @@ import ParticleRenderer from "./particle-renderer.js";
 
 const DEG_TO_RAD = Math.PI / 180;
 
+class Camera {
+  constructor() {
+    
+  }
+}
+
 export class ParticleRendererElement extends HTMLElement {
   constructor() {
     super();

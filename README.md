@@ -8,16 +8,17 @@ vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
 }
 
 float getDepth(vec2 p) {
-  float d = sin(p.x * 2.653 + iTime) * 0.3;
-  d += sin(p.y * 1.951 + iTime) * 0.3;
+  float t0 = iTime * 0.1;
+  float d = sin(p.x * 2.653 + t0) * 0.3;
+  d += sin(p.y * 1.951 + t0) * 0.3;
   float l = length(p);
-  d += 0.2 * smoothstep(0.98, 1.0, abs(fract(l * 0.05 - iTime * 0.1) * 2.0 - 1.0));
+  d += 0.3 * smoothstep(0.96, 1.0, abs(fract(l * 0.1 - iTime * 0.1) * 2.0 - 1.0));
   d += l * l * l * 0.008 * cos(12.0 * atan(p.x, p.y) + iTime);
   d *= smoothstep(10.0, 0.0, l);
   return d;
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
+void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRightVector, out vec3 fragUpVector) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   int count = int(iResolution.x) * int(iResolution.y);
@@ -28,15 +29,18 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
   fragPosition.z = getDepth(fp);
 
   vec2 o = vec2(0.0, 0.01);
-  vec3 normal = normalize(cross(
-    vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)),
-    vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx))));
+  vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
+  vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
+  vec3 normal = cross(tx, ty);
+
+  fragRightVector = tx * 0.005;
+  fragUpVector = ty * 0.005;
 
   float d = length(fp);
   vec3 c0 = mix(vec3(147, 165, 0) / 255.0, vec3(139, 43, 21) / 255.0, d * 0.4);
   vec3 c1 = mix(vec3(36, 38, 33) / 255.0, vec3(36, 58, 122) / 255.0, d * 0.3);
   c1 = mix(vec3(132, 26, 27) / 255.0, c1, smoothstep(0.0, 1.0, d));
-  fragColor.rgb = mix(c0, c1, smoothstep(0.4, 0.6, abs(fract(d * 7.0 - iTime) * 2.0 - 1.0)));
+  fragColor.rgb = mix(c0, c1, smoothstep(0.4, 0.6, abs(fract(d * 7.0 - iTime * 0.5) * 2.0 - 1.0)));
   fragColor.a = 1.0;
 
   vec3 ld = normalize(vec3(-1.0, -1.0, -2.0));
@@ -62,7 +66,7 @@ vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
   return a + b * cos(6.28318 * (c * t + d));
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
+void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRightVector, out vec3 fragUpVector) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int count = int(iResolution.x) * int(iResolution.y);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
@@ -71,6 +75,10 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
 
   vec3 pos = texelFetch(iPosition, texcoord, 0).xyz;
   vec3 pos_prev = texelFetch(iPositionPrev, texcoord, 0).xyz;
+
+  float r = sin(iTime * 2.0) * 0.05 + 1.3;
+  float d = length(pos) - r;
+  vec3 n = normalize(pos);
 
   vec3 vel = (pos - pos_prev) * 0.99;
 
@@ -84,8 +92,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
     fragPosition = vec4(pos + vel, 1.0);
   }
   else {
-    float r = sin(iTime * 2.0) * 0.05 + 1.4;
-    if (length(pos) > r) pos = r * normalize(pos);
+    if (d > 0.0) pos = r * n;
     vel.y -= 0.002;
     fragPosition = vec4(pos + vel, 1.0);
   }
@@ -93,5 +100,15 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor) {
   float u = float(id) / float(count);
   fragColor = vec4(pal(u, vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.0, 0.33, 0.67)), 1.0);
   fragColor.rgb *= min(1.0, length(vel) * 20.0);
+
+  vec3 lightDir = normalize(vec3(8.0, 3.0, 2.0));
+  fragColor.rgb *= mix(1.0, 1.0 + dot(n, lightDir), smoothstep(-1.0, 0.0, d));
+
+  vec3 z = normalize(vel);
+  vec3 x = cross(z, vec3(0.0, 1.0, 0.0));
+  vec3 y = cross(x, z);
+
+  fragRightVector = vel * 0.1;
+  fragUpVector = y * 0.005;
 }
 ```
