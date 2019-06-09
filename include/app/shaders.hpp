@@ -46,17 +46,14 @@ void main() {
 const char *shader_source_simulate = R"GLSL(precision highp float;
 
 #ifdef VERTEX_SHADER
-
 layout(location = 0) in vec4 aPosition;
 
 void main() {
   gl_Position = aPosition;
 }
-
 #endif
 
 #ifdef FRAGMENT_SHADER
-
 uniform sampler2D iPosition;
 uniform sampler2D iPositionPrev;
 uniform sampler2D iColor;
@@ -81,14 +78,12 @@ layout(location = 1) out vec4 oColor;
 void main() {
   mainSimulation(oPosition, oColor);
 }
-
 #endif
 )GLSL";
 
 const char *shader_source_texture = R"GLSL(precision highp float;
 
 #ifdef VERTEX_SHADER
-
 uniform sampler2D iPosition;
 uniform sampler2D iColor;
 
@@ -103,7 +98,6 @@ void main() {
   gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
   gl_PointSize = 3.0;
 }
-
 #endif
 
 #ifdef FRAGMENT_SHADER

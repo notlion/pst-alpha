@@ -34,28 +34,38 @@ bool App::init() {
   gl::createVertexBuffer(m_fullscreen_triangle_vb, fs_tri_mesh);
   gl::assignVertexBufferAttributeLocations(m_fullscreen_triangle_vb, { 0, -1, -1 });
 
+  // Create particle vertex buffer
   {
-    std::vector<GLint> texcoords;
-    texcoords.reserve(m_particle_framebuffer_resolution);
+    const auto vertex_count = m_particle_framebuffer_resolution * m_particle_framebuffer_resolution;
+
+    std::vector<gl::ivec2> vertices;
+    vertices.reserve(vertex_count);
     for (GLint y = 0; y < m_particle_framebuffer_resolution; ++y) {
       for (GLint x = 0; x < m_particle_framebuffer_resolution; ++x) {
-        texcoords.emplace_back(x);
-        texcoords.emplace_back(y);
+        vertices.emplace_back(x, y);
       }
     }
 
-    gl::createVertexBuffer(m_particles_vb, GL_POINTS, sizeof(GLint) * texcoords.size(), texcoords.size() / 2, texcoords.data(), {
-      { GL_INT, 2, 0, 0, 0 }
-    });
+    const std::vector<gl::VertexAttribute> attribs{
+      { GL_INT, 2, 0, 0, 0 },
+    };
+
+    gl::createVertexBuffer(m_particles_vb, GL_POINTS, sizeof(gl::ivec2) * vertices.size(), vertices.size(), vertices.data(), GL_STATIC_DRAW, attribs);
   }
 
-  gl::TextureOpts particle_tex_opts{ GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST };
-  for (size_t i = 0; i < m_particle_fbs.size(); ++i) {
-    m_particle_fbs[i] = std::make_unique<gl::Framebuffer>();
-    gl::createFramebuffer(*m_particle_fbs[i], m_particle_framebuffer_resolution, m_particle_framebuffer_resolution, {
-      { GL_COLOR_ATTACHMENT0, particle_tex_opts },
-      { GL_COLOR_ATTACHMENT1, particle_tex_opts }
-    });
+  // Create particle data framebuffers
+  {
+    gl::TextureOpts particle_tex_opts{ GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST };
+
+    for (size_t i = 0; i < m_particle_fbs.size(); ++i) {
+      m_particle_fbs[i] = std::make_unique<gl::Framebuffer>();
+      gl::createFramebuffer(*m_particle_fbs[i], m_particle_framebuffer_resolution, m_particle_framebuffer_resolution, {
+        { GL_COLOR_ATTACHMENT0, particle_tex_opts },
+        { GL_COLOR_ATTACHMENT1, particle_tex_opts },
+        // { GL_COLOR_ATTACHMENT2, particle_tex_opts },
+        // { GL_COLOR_ATTACHMENT3, particle_tex_opts },
+      });
+    }
   }
 
   m_view_matrix = gl::lookAt(gl::vec3(0.0f, 0.0f, 3.0f), gl::vec3(0.0f), gl::vec3(0.0f, 1.0f, 0.0f));
@@ -67,22 +77,20 @@ bool App::init() {
 void App::cleanup() {
 }
 
-void App::update(double time_seconds) {
-  m_clock.tick(time_seconds);
+void App::setCommonShaderUniforms(gl::Program &prog) {
+  gl::uniform(prog, "iModelViewProjection", m_view_projection_matrix);
+  gl::uniform(prog, "iModelView", m_view_matrix);
+  gl::uniform(prog, "iProjection", m_projection_matrix);
+  gl::uniform(prog, "iInverseModelViewProjection", m_inverse_view_projection_matrix);
+  gl::uniform(prog, "iInverseModelView", m_inverse_view_matrix);
+  gl::uniform(prog, "iInverseProjection", m_inverse_projection_matrix);
+  gl::uniform(prog, "iFrame", GLint(m_clock.elapsed_frames));
+  gl::uniform(prog, "iTime", GLfloat(m_clock.elapsed_seconds));
+  gl::uniform(prog, "iTimeDelta", GLfloat(m_clock.elapsed_seconds_delta));
 }
 
-void App::render(int width, int height) {
-  const auto setCommonShaderUniforms = [&](gl::Program &prog) {
-    gl::uniform(prog, "iModelViewProjection", m_view_projection_matrix);
-    gl::uniform(prog, "iModelView", m_view_matrix);
-    gl::uniform(prog, "iProjection", m_projection_matrix);
-    gl::uniform(prog, "iInverseModelViewProjection", m_inverse_view_projection_matrix);
-    gl::uniform(prog, "iInverseModelView", m_inverse_view_matrix);
-    gl::uniform(prog, "iInverseProjection", m_inverse_projection_matrix);
-    gl::uniform(prog, "iFrame", GLint(m_clock.elapsed_frames));
-    gl::uniform(prog, "iTime", GLfloat(m_clock.elapsed_seconds));
-    gl::uniform(prog, "iTimeDelta", GLfloat(m_clock.elapsed_seconds_delta));
-  };
+void App::update(double time_seconds) {
+  m_clock.tick(time_seconds);
 
   // Simulate
   {
@@ -112,7 +120,9 @@ void App::render(int width, int height) {
 
     CHECK_GL_ERROR();
   }
+}
 
+void App::render(int width, int height) {
   // Texture
   {
     glViewport(0, 0, width, height);

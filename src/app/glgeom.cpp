@@ -47,15 +47,47 @@ vec3 calcCenter(const BoundingBox &box) {
 }
 
 
-void createVertexBuffer(VertexBuffer &vb, GLenum primitive, std::size_t data_size, std::size_t count, const void *data, const std::vector<VertexAttribute> &attribs) {
+void createVertexBuffer(VertexBuffer &vb,
+                        GLenum primitive,
+                        std::size_t vertex_data_size_bytes,
+                        std::size_t vertex_count,
+                        const void *data,
+                        GLenum usage,
+                        const std::vector<VertexAttribute> &attribs) {
   deleteVertexBuffer(vb);
 
   glGenBuffers(1, &vb.buffer);
   glBindBuffer(GL_ARRAY_BUFFER, vb.buffer);
-  glBufferData(GL_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, vertex_data_size_bytes, data, usage);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   vb.primitive = primitive;
-  vb.count = count;
+  vb.count = vertex_count;
+  vb.attribs = attribs;
+}
+
+void createIndexedVertexBuffer(VertexBuffer &vb,
+                               GLenum primitive,
+                               std::size_t vertex_data_size_bytes,
+                               const GLvoid *vertex_data,
+                               std::size_t index_count,
+                               const GLushort *index_data,
+                               GLenum usage,
+                               const std::vector<VertexAttribute> &attribs) {
+  deleteVertexBuffer(vb);
+
+  glGenBuffers(1, &vb.buffer);
+  glBindBuffer(GL_ARRAY_BUFFER, vb.buffer);
+  glBufferData(GL_ARRAY_BUFFER, vertex_data_size_bytes, vertex_data, usage);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  glGenBuffers(1, &vb.element_buffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vb.element_buffer);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(GLushort), index_data, GL_STATIC_DRAW);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+  vb.primitive = primitive;
+  vb.count = index_count;
   vb.attribs = attribs;
 }
 
@@ -64,11 +96,16 @@ void deleteVertexBuffer(VertexBuffer &vb) noexcept {
     glDeleteBuffers(1, &vb.buffer);
     vb.buffer = 0;
   }
+  if (vb.element_buffer > 0) {
+    glDeleteBuffers(1, &vb.element_buffer);
+    vb.element_buffer = 0;
+  }
   vb.count = 0;
 }
 
 
 void enableVertexBuffer(VertexBuffer &vb) {
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vb.element_buffer);
   glBindBuffer(GL_ARRAY_BUFFER, vb.buffer);
 
   for (const auto &attr : vb.attribs) {
@@ -99,13 +136,21 @@ void disableVertexBuffer(VertexBuffer &vb) {
     }
   }
 
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
   CHECK_GL_ERROR();
 }
 
 void drawVertexBuffer(VertexBuffer &vb) {
   enableVertexBuffer(vb);
 
-  glDrawArrays(vb.primitive, 0, vb.count);
+  if (vb.element_buffer) {
+    glDrawElements(vb.primitive, vb.count, GL_UNSIGNED_SHORT, nullptr);
+  }
+  else {
+    glDrawArrays(vb.primitive, 0, vb.count);
+  }
 
   CHECK_GL_ERROR();
 

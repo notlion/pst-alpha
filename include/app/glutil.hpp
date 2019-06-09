@@ -40,6 +40,10 @@ namespace gl {
   ClassName() noexcept = default;                   \
   ~ClassName() noexcept;
 
+using ivec2 = tvec2<GLint>;
+using ivec3 = tvec3<GLint>;
+using ivec4 = tvec4<GLint>;
+
 struct Uniform {
   GLint loc = -1;
   GLint count;

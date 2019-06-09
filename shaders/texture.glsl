@@ -1,7 +1,6 @@
 precision highp float;
 
 #ifdef VERTEX_SHADER
-
 uniform sampler2D iPosition;
 uniform sampler2D iColor;
 
@@ -16,7 +15,6 @@ void main() {
   gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
   gl_PointSize = 3.0;
 }
-
 #endif
 
 #ifdef FRAGMENT_SHADER

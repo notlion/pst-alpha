@@ -16,8 +16,6 @@ struct Camera {
 };
 
 class App {
-  GLuint m_particle_buffer_id;
-  GLuint m_particle_vertex_array_id;
   GLint m_particle_framebuffer_resolution = 512;
 
   std::array<std::unique_ptr<gl::Framebuffer>, 3> m_particle_fbs;
@@ -46,6 +44,7 @@ class App {
   std::string m_user_texture_shader_source;
 
   void updateViewProjectionMatrices();
+  void setCommonShaderUniforms(gl::Program &prog);
 
 public:
   bool init();
