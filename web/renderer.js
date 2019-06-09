@@ -5,7 +5,6 @@ const DEG_TO_RAD = Math.PI / 180;
 
 class Camera {
   constructor() {
-    
   }
 }
 
@@ -27,12 +26,12 @@ export class ParticleRendererElement extends HTMLElement {
 
       this.isReady = true;
       this.dispatchEvent(new Event("ready"));
-    
+
       const onFrame = (timestamp) => {
         this._renderFrame(timestamp);
         window.requestAnimationFrame(onFrame);
       };
-    
+
       window.requestAnimationFrame(onFrame);
     };
 
@@ -47,14 +46,14 @@ export class ParticleRendererElement extends HTMLElement {
     const deltaTime = this._prevFrameTimeMillis === 0 ? 0 : timestamp - this._prevFrameTimeMillis;
     this._prevFrameTimeMillis = timestamp;
 
-    if (!this.timeIsPaused) {
-      this.timeMillis += deltaTime;
-    }
-
-    this.setViewMatrix(mat4.lookAt(mat4.create(), [0, 0, 3], [0, 0, 0], [0, 1, 0]));
+    this.setViewMatrix(mat4.lookAt(mat4.create(), [ 0, 0, 3 ], [ 0, 0, 0 ], [ 0, 1, 0 ]));
     this.setProjectionMatrix(mat4.perspective(mat4.create(), 60.0 * DEG_TO_RAD, this.canvasAspectRatio, 0.01, 1000));
 
-    this.module._update(this.timeMillis / 1000.0);
+    if (!this.timeIsPaused) {
+      this.timeMillis += deltaTime;
+      this.module._update(this.timeMillis / 1000.0);
+    }
+
     this.module._render();
   }
 
@@ -66,7 +65,7 @@ export class ParticleRendererElement extends HTMLElement {
   updateLayout() {
     this.canvasElem.width = this.clientWidth;
     this.canvasElem.height = this.clientHeight;
-    this.canvasAspectRatio = this.canvasElem.width / this.canvasElem.height;  
+    this.canvasAspectRatio = this.canvasElem.width / this.canvasElem.height;
   }
 
   getSimulationShaderSource() {
@@ -90,5 +89,5 @@ export class ParticleRendererElement extends HTMLElement {
     this.module.HEAPF32.set(projectionMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
     this.module._setProjectionMatrix(offset);
     this.module._free(offset);
-  }  
+  }
 }
