@@ -53,6 +53,13 @@ bool App::init() {
     gl::createVertexBuffer(m_particles_vb, GL_POINTS, sizeof(gl::ivec2) * vertices.size(), vertices.size(), vertices.data(), GL_STATIC_DRAW, attribs);
   }
 
+  // Create particle quad vertex buffer
+  {
+    auto particle_quad_mesh = gl::createQuad();
+    gl::createVertexBuffer(m_particle_quad_vb, particle_quad_mesh, GL_STATIC_DRAW);
+    gl::assignVertexBufferAttributeLocations(m_particle_quad_vb, { 1, 2, 3 });
+  }
+
   // Create particle data framebuffers
   {
     gl::TextureOpts particle_tex_opts{ GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST };
@@ -140,7 +147,20 @@ void App::render(int width, int height) {
     gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
     setCommonShaderUniforms(m_texture_prog);
 
-    gl::drawVertexBuffer(m_particles_vb);
+    gl::enableVertexBuffer(m_particles_vb);
+    gl::enableVertexBuffer(m_particle_quad_vb);
+
+    glVertexAttribDivisor(m_particles_vb.attribs[0].loc, 1);
+    glVertexAttribDivisor(m_particle_quad_vb.attribs[0].loc, 0);
+    glVertexAttribDivisor(m_particle_quad_vb.attribs[1].loc, 0);
+    glVertexAttribDivisor(m_particle_quad_vb.attribs[2].loc, 0);
+
+    glDrawArraysInstanced(GL_TRIANGLES, 0, m_particle_quad_vb.count, m_particles_vb.count);
+
+    glVertexAttribDivisor(m_particles_vb.attribs[0].loc, 0);
+
+    gl::disableVertexBuffer(m_particles_vb);
+    gl::disableVertexBuffer(m_particle_quad_vb);
 
     CHECK_GL_ERROR();
   }

@@ -6,14 +6,19 @@ uniform sampler2D iColor;
 
 uniform mat4 iModelViewProjection;
 
-layout(location = 0) in ivec2 aTexcoord;
+layout(location = 0) in ivec2 aParticleTexcoord;
+layout(location = 1) in vec3 aQuadPosition;
+layout(location = 2) in vec3 aQuadNormal;
+layout(location = 3) in vec2 aQuadTexcoord;
 
 out vec4 vColor;
+out vec2 vTexcoord;
 
 void main() {
-  vColor = texelFetch(iColor, aTexcoord, 0);
-  gl_Position = iModelViewProjection * texelFetch(iPosition, aTexcoord, 0);
-  gl_PointSize = 3.0;
+  vColor = texelFetch(iColor, aParticleTexcoord, 0);
+  vTexcoord = aQuadTexcoord;
+  gl_Position = iModelViewProjection * texelFetch(iPosition, aParticleTexcoord, 0);
+  gl_Position.xyz += aQuadPosition * 0.02;
 }
 #endif
 
@@ -32,10 +37,11 @@ uniform float iTimeDelta;
 // {texture}
 
 in vec4 vColor;
+in vec2 vTexcoord;
 
 out vec4 oFragColor;
 
 void main() {
-  mainTexture(oFragColor, gl_PointCoord, vColor);
+  mainTexture(oFragColor, gl_PointCoord, vColor, vTexcoord);
 }
 #endif

@@ -22,6 +22,7 @@ class App {
 
   gl::VertexBuffer m_fullscreen_triangle_vb;
   gl::VertexBuffer m_particles_vb;
+  gl::VertexBuffer m_particle_quad_vb;
 
   gl::Program m_simulate_prog;
   gl::Program m_texture_prog;
