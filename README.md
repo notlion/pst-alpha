@@ -97,18 +97,24 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
     fragPosition = vec4(pos + vel, 1.0);
   }
 
+  if (frame == 0) {
+    fragRightVector = vec3(0.0);
+    fragUpVector = vec3(0.0);
+  }
+  else {
+    vec3 z = normalize(vel);
+    vec3 x = cross(z, vec3(0.0, 1.0, 0.0));
+    vec3 y = cross(x, z);
+
+    fragRightVector = vel * 0.4;
+    fragUpVector = y * 0.004;
+  }
+
   float u = float(id) / float(count);
   fragColor = vec4(pal(u, vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.0, 0.33, 0.67)), 1.0);
   fragColor.rgb *= min(1.0, length(vel) * 20.0);
 
   vec3 lightDir = normalize(vec3(8.0, 3.0, 2.0));
   fragColor.rgb *= mix(1.0, 1.0 + dot(n, lightDir), smoothstep(-1.0, 0.0, d));
-
-  vec3 z = normalize(vel);
-  vec3 x = cross(z, vec3(0.0, 1.0, 0.0));
-  vec3 y = cross(x, z);
-
-  fragRightVector = vel * 0.1;
-  fragUpVector = y * 0.005;
 }
 ```
