@@ -48,6 +48,7 @@ export class ParticleRendererElement extends HTMLElement {
     this.canvasElem.addEventListener("keydown", event => this._onCanvasKeyDown(event));
     this.canvasElem.addEventListener("keyup", event => this._onCanvasKeyUp(event));
     this._canvasMouseMoveCallback = (event) => this._onCanvasMouseMove(event);
+    this._canvasMouseIsDown = false;
 
     this.isReady = false;
 
@@ -69,7 +70,7 @@ export class ParticleRendererElement extends HTMLElement {
     };
 
     this.camera = new Camera();
-    this.cameraMovementDirection = vec3.create();
+    this._cameraMovementDirection = vec3.create();
 
     this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
@@ -80,7 +81,7 @@ export class ParticleRendererElement extends HTMLElement {
     const deltaTime = this._prevFrameTimeMillis === 0 ? 0 : timestamp - this._prevFrameTimeMillis;
     this._prevFrameTimeMillis = timestamp;
 
-    this.camera.translateWithLocalOrientation(this.cameraMovementDirection, 0.025);
+    this.camera.translateWithLocalOrientation(this._cameraMovementDirection, 0.025);
     this.camera.updateMatrices();
     this.setViewMatrix(this.camera.viewMatrix);
     this.setProjectionMatrix(this.camera.projectionMatrix);
@@ -94,9 +95,14 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   _onCanvasMouseDown(event) {
+    this._canvasMouseIsDown = true;
+
     this.canvasElem.requestPointerLock();
     this.canvasElem.addEventListener("mousemove", this._canvasMouseMoveCallback);
     document.addEventListener("mouseup", (event) => {
+      this._canvasMouseIsDown = false;
+      vec3.zero(this._cameraMovementDirection);
+
       this.canvasElem.removeEventListener("mousemove", this._canvasMouseMoveCallback);
       document.exitPointerLock();
     }, { once : true });
@@ -109,50 +115,52 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   _onCanvasKeyDown(event) {
-    console.log(event.key);
-    switch (event.key) {
-      case "w":
-        this.cameraMovementDirection[2] = 1;
-        break;
-      case "s":
-        this.cameraMovementDirection[2] = -1;
-        break;
-      case "a":
-        this.cameraMovementDirection[0] = 1;
-        break;
-      case "d":
-        this.cameraMovementDirection[0] = -1;
-        break;
-      case "q":
-        this.cameraMovementDirection[1] = 1;
-        break;
-      case "e":
-        this.cameraMovementDirection[1] = -1;
-        break;
+    if (this._canvasMouseIsDown) {
+      switch (event.key) {
+        case "w":
+          this._cameraMovementDirection[2] = 1;
+          break;
+        case "s":
+          this._cameraMovementDirection[2] = -1;
+          break;
+        case "a":
+          this._cameraMovementDirection[0] = 1;
+          break;
+        case "d":
+          this._cameraMovementDirection[0] = -1;
+          break;
+        case "q":
+          this._cameraMovementDirection[1] = 1;
+          break;
+        case "e":
+          this._cameraMovementDirection[1] = -1;
+          break;
+      }
     }
   }
 
   _onCanvasKeyUp(event) {
-    console.log(event.key);
-    switch (event.key) {
-      case "w":
-        if (this.cameraMovementDirection[2] > 0) this.cameraMovementDirection[2] = 0;
-        break;
-      case "s":
-        if (this.cameraMovementDirection[2] < 0) this.cameraMovementDirection[2] = 0;
-        break;
-      case "a":
-        if (this.cameraMovementDirection[0] > 0) this.cameraMovementDirection[0] = 0;
-        break;
-      case "d":
-        if (this.cameraMovementDirection[0] < 0) this.cameraMovementDirection[0] = 0;
-        break;
-      case "q":
-        if (this.cameraMovementDirection[1] > 0) this.cameraMovementDirection[1] = 0;
-        break;
-      case "e":
-        if (this.cameraMovementDirection[1] < 0) this.cameraMovementDirection[1] = 0;
-        break;
+    if (this._canvasMouseIsDown) {
+      switch (event.key) {
+        case "w":
+          if (this._cameraMovementDirection[2] > 0) this._cameraMovementDirection[2] = 0;
+          break;
+        case "s":
+          if (this._cameraMovementDirection[2] < 0) this._cameraMovementDirection[2] = 0;
+          break;
+        case "a":
+          if (this._cameraMovementDirection[0] > 0) this._cameraMovementDirection[0] = 0;
+          break;
+        case "d":
+          if (this._cameraMovementDirection[0] < 0) this._cameraMovementDirection[0] = 0;
+          break;
+        case "q":
+          if (this._cameraMovementDirection[1] > 0) this._cameraMovementDirection[1] = 0;
+          break;
+        case "e":
+          if (this._cameraMovementDirection[1] < 0) this._cameraMovementDirection[1] = 0;
+          break;
+      }
     }
   }
 

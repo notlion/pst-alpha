@@ -22,7 +22,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
 
   fragPosition = vec4(gl_FragCoord.xy / iResolution * 7.0 - 3.5, 0.0, 1.0);
   vec2 fp = fragPosition.xy + 0.5 * vec2(cos(iTime * 0.1), sin(iTime * 0.1));
-  fragPosition.z = getDepth(fp);
+  fragPosition.z = getDepth(fp) - 3.0;
 
   vec2 o = vec2(0.0, 0.01);
   vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
