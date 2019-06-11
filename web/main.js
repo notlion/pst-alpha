@@ -102,6 +102,9 @@ const init = () => {
   document.getElementById("play-pause-button").addEventListener("click", (event) => {
     rendererElem.timeIsPaused = !rendererElem.timeIsPaused;
   });
+  document.getElementById("reset-camera-button").addEventListener("click", (event) => {
+    rendererElem.resetCamera();
+  });
 
   require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(paneLeftElem, {

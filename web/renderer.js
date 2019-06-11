@@ -83,8 +83,8 @@ export class ParticleRendererElement extends HTMLElement {
 
     this.camera.translateWithLocalOrientation(this._cameraMovementDirection, 0.025);
     this.camera.updateMatrices();
-    this.setViewMatrix(this.camera.viewMatrix);
-    this.setProjectionMatrix(this.camera.projectionMatrix);
+    this._setViewMatrix(this.camera.viewMatrix);
+    this._setProjectionMatrix(this.camera.projectionMatrix);
 
     if (!this.timeIsPaused) {
       this.timeMillis += deltaTime;
@@ -164,9 +164,29 @@ export class ParticleRendererElement extends HTMLElement {
     }
   }
 
+  _setViewMatrix(viewMatrixF32) {
+    const offset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
+    this.module.HEAPF32.set(viewMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
+    this.module._setViewMatrix(offset);
+    this.module._free(offset);
+  }
+
+  _setProjectionMatrix(projectionMatrixF32) {
+    const offset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
+    this.module.HEAPF32.set(projectionMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
+    this.module._setProjectionMatrix(offset);
+    this.module._free(offset);
+  }
+
   rewind() {
     this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
+  }
+
+  resetCamera() {
+    vec3.zero(this.camera.position);
+    vec3.zero(this.camera.positionPrev);
+    quat.identity(this.camera.orientation);
   }
 
   updateLayout() {
@@ -181,20 +201,6 @@ export class ParticleRendererElement extends HTMLElement {
   setSimulationShaderSource(src) {
     const offset = this.module.allocateUTF8(src);
     this.module._setSimulationShaderSource(offset);
-    this.module._free(offset);
-  }
-
-  setViewMatrix(viewMatrixF32) {
-    const offset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
-    this.module.HEAPF32.set(viewMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
-    this.module._setViewMatrix(offset);
-    this.module._free(offset);
-  }
-
-  setProjectionMatrix(projectionMatrixF32) {
-    const offset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
-    this.module.HEAPF32.set(projectionMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
-    this.module._setProjectionMatrix(offset);
     this.module._free(offset);
   }
 }
