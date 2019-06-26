@@ -33,8 +33,8 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
   vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
   vec3 normal = cross(tx, ty);
 
-  fragRightVector = tx * 0.005;
-  fragUpVector = ty * 0.005;
+  fragRightVector = tx * 0.01;
+  fragUpVector = ty * 0.01;
 
   float d = length(fp);
   vec3 c0 = mix(vec3(147, 165, 0) / 255.0, vec3(139, 43, 21) / 255.0, d * 0.4);

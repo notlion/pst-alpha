@@ -4,7 +4,6 @@
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
-static EMSCRIPTEN_WEBGL_CONTEXT_HANDLE g_webgl_context;
 static App g_app;
 
 static const char *emscripten_result_to_string(EMSCRIPTEN_RESULT result) {
@@ -23,59 +22,18 @@ static const char *emscripten_result_to_string(EMSCRIPTEN_RESULT result) {
 extern "C" {
 
 EMSCRIPTEN_KEEPALIVE
-void init(const char *canvas_id) {
-  EmscriptenWebGLContextAttributes attrs;
-  attrs.explicitSwapControl = EM_FALSE;
-  attrs.depth = EM_TRUE;
-  attrs.stencil = EM_FALSE;
-  attrs.antialias = EM_TRUE;
-  attrs.enableExtensionsByDefault = EM_TRUE;
-  attrs.majorVersion = 2;
-  attrs.minorVersion = 0;
-
-  g_webgl_context = emscripten_webgl_create_context(canvas_id, &attrs);
-  
-  const auto res = emscripten_webgl_make_context_current(g_webgl_context);
-  if (res != EMSCRIPTEN_RESULT_SUCCESS) {
-    PRINT_ERROR("Could not make WebGL context current: %s\n", emscripten_result_to_string(res));
-  }
-
+void init() {
   g_app.init();
 }
 
 EMSCRIPTEN_KEEPALIVE
 void update(double time_seconds) {
-  const auto res = emscripten_webgl_make_context_current(g_webgl_context);
-  if (res != EMSCRIPTEN_RESULT_SUCCESS) {
-    PRINT_ERROR("Could not make WebGL context current: %s\n", emscripten_result_to_string(res));
-    return;
-  }
-
   g_app.update(time_seconds);
 }
 
 EMSCRIPTEN_KEEPALIVE
-void render() {
-  {
-    const auto res = emscripten_webgl_make_context_current(g_webgl_context);
-    if (res != EMSCRIPTEN_RESULT_SUCCESS) {
-      PRINT_ERROR("Could not make WebGL context current: %s\n", emscripten_result_to_string(res));
-      return;
-    }
-  }
-
-  int width;
-  int height;
-
-  {
-    const auto res = emscripten_webgl_get_drawing_buffer_size(g_webgl_context, &width, &height);
-    if (res != EMSCRIPTEN_RESULT_SUCCESS) {
-      PRINT_ERROR("Could not get WebGL context drawing buffer size: %s\n", emscripten_result_to_string(res));
-      return;
-    }
-  }
-
-  g_app.render(width, height);
+void render(double width, double height) {
+  g_app.render(int(width), int(height));
 }
 
 EMSCRIPTEN_KEEPALIVE

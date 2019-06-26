@@ -43,6 +43,19 @@ export class ParticleRendererElement extends HTMLElement {
     this.canvasElem.id = "particle-renderer-canvas";
     this.appendChild(this.canvasElem);
 
+    const contextAttribs = {
+      antialias: true,
+      alpha: false,
+      depth: true,
+      powerPreference: "high-performance",
+      xrCompatible: true,
+    };
+
+    this.webglContext = this.canvasElem.getContext("webgl2", contextAttribs);
+    if (!this.webglContext) {
+      console.error("Could not create a WebGL2 context");
+    }
+
     this.canvasElem.tabIndex = 0;
     this.canvasElem.addEventListener("mousedown", event => this._onCanvasMouseDown(event));
     this.canvasElem.addEventListener("keydown", event => this._onCanvasKeyDown(event));
@@ -54,9 +67,10 @@ export class ParticleRendererElement extends HTMLElement {
 
     this.module = ParticleRenderer();
     this.module.onRuntimeInitialized = () => {
-      const offset = this.module.allocateUTF8("#" + this.canvasElem.id);
-      this.module._init(offset);
-      this.module._free(offset);
+      this._webglContextHandle = this.module.GL.registerContext(this.webglContext, contextAttribs);
+      
+      this.module.GL.makeContextCurrent(this._webglContextHandle);
+      this.module._init();
 
       this.isReady = true;
       this.dispatchEvent(new Event("ready"));
@@ -86,12 +100,14 @@ export class ParticleRendererElement extends HTMLElement {
     this._setViewMatrix(this.camera.viewMatrix);
     this._setProjectionMatrix(this.camera.projectionMatrix);
 
+    this.module.GL.makeContextCurrent(this._webglContextHandle);
+
     if (!this.timeIsPaused) {
       this.timeMillis += deltaTime;
       this.module._update(this.timeMillis / 1000.0);
     }
 
-    this.module._render();
+    this.module._render(this.canvasElem.width, this.canvasElem.height);
   }
 
   _onCanvasMouseDown(event) {
