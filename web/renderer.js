@@ -63,6 +63,8 @@ export class ParticleRendererElement extends HTMLElement {
     this._canvasMouseMoveCallback = (event) => this._onCanvasMouseMove(event);
     this._canvasMouseIsDown = false;
 
+    window.addEventListener("vrdisplaypresentchange", () => this._onVRDisplayPresentChange(), false);
+
     this.isReady = false;
 
     this.module = ParticleRenderer();
@@ -256,7 +258,7 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   updateLayout() {
-    if (this.vrDisplay) {
+    if (this.vrDisplay && this.vrDisplay.isPresenting) {
       const eyeL = this.vrDisplay.getEyeParameters("left");
       const eyeR = this.vrDisplay.getEyeParameters("right");
       this.canvasElem.width = Math.max(eyeL.renderWidth, eyeR.renderWidth) * 2;
@@ -278,23 +280,29 @@ export class ParticleRendererElement extends HTMLElement {
         this.vrDisplay = displays[0];
 
         await this.vrDisplay.requestPresent([{ source: this.canvasElem }]);
-
-        this.updateLayout();
-        this._startVRAnimation();
       }
-
-      // this.xrSession = await navigator.xr.requestSession("immersive-vr");
-      // this.xrReferenceSpace = await this.xrSession.requestReferenceSpace("local-floor");
-
-      // // Update to an XR compatible WebGL context.
-      // await this.webglContext.makeXRCompatible();
-
-      // this.xrSession.updateRenderState({
-      //   baseLayer: new XRWebGLLayer(this.xrSession, this.webglContext)
-      // });
     }
     catch (err) {
       console.error(err);
+    }
+  }
+
+  async stopVRSession() {
+    if (this.vrDisplay && this.vrDisplay.isPresenting) {
+      await this.vrDisplay.exitPresent();
+    }
+
+    this._startAnimation();
+  }
+
+  _onVRDisplayPresentChange() {
+    this.updateLayout();
+
+    if (this.vrDisplay && this.vrDisplay.isPresenting) {
+      this._startVRAnimation();
+    }
+    else {
+      this._startAnimation();
     }
   }
 

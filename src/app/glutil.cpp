@@ -228,8 +228,6 @@ void createProgram(Program &prog, std::string_view vert_shader_src, std::string_
 
     cacheActiveUniforms(prog);
     cacheActiveAttribs(prog);
-
-    PRINT_DEBUG("Created program %u\n", prog.id);
   }
 
   CHECK_GL_ERROR();
