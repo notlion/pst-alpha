@@ -75,7 +75,7 @@ canvas {
   transition: none;
 }
 .controls > button > .shortcut-hint {
-  color: rgba(212, 212, 212, 0.25);
+  color: rgba(212, 212, 212, 0.3);
 }
 
 #pane-resize-handle {
