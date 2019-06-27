@@ -70,7 +70,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
   ivec2 texcoord = ivec2(gl_FragCoord);
   int count = int(iResolution.x) * int(iResolution.y);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
-  int rate = 2000;
+  int rate = 500;
   int frame = (iFrame - id / rate) % (count / rate);
 
   vec3 pos = texelFetch(iPosition, texcoord, 0).xyz;

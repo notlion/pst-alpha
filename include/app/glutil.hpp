@@ -26,8 +26,10 @@
 
 #if defined(NDEBUG)
   #define CHECK_GL_ERROR() ((void)0)
+  #define DEBUG_PRINT_GL_STATS() ((void)0)
 #else
   #define CHECK_GL_ERROR() gl::checkError()
+  #define DEBUG_PRINT_GL_STATS() gl::printStats();
 #endif
 
 namespace gl {
@@ -147,6 +149,8 @@ struct Framebuffer {
 void checkError();
 void clearErrorLog();
 const std::vector<std::string> &getErrorLog();
+
+void printStats();
 
 GLuint createShader(std::string_view shader_src, GLenum type);
 

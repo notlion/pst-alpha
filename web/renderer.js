@@ -47,8 +47,8 @@ export class ParticleRendererElement extends HTMLElement {
       antialias: true,
       alpha: false,
       depth: true,
+      stencil: false,
       powerPreference: "high-performance",
-      xrCompatible: true,
     };
 
     this.webglContext = this.canvasElem.getContext("webgl2", contextAttribs);
@@ -68,19 +68,14 @@ export class ParticleRendererElement extends HTMLElement {
     this.module = ParticleRenderer();
     this.module.onRuntimeInitialized = () => {
       this._webglContextHandle = this.module.GL.registerContext(this.webglContext, contextAttribs);
-      
+
       this.module.GL.makeContextCurrent(this._webglContextHandle);
       this.module._init();
 
       this.isReady = true;
       this.dispatchEvent(new Event("ready"));
 
-      const onFrame = (timestamp) => {
-        this._renderFrame(timestamp);
-        window.requestAnimationFrame(onFrame);
-      };
-
-      window.requestAnimationFrame(onFrame);
+      this._startAnimation();
     };
 
     this.camera = new Camera();
@@ -91,23 +86,79 @@ export class ParticleRendererElement extends HTMLElement {
     this.timeIsPaused = false;
   }
 
-  _renderFrame(timestamp) {
+  _startAnimation() {
+    const onFrame = (timestamp) => {
+      if (this._animationFrameCallback === onFrame) {
+        window.requestAnimationFrame(onFrame);
+        this._updateFrame(timestamp);
+        this._renderFrame();
+      }
+    };
+    this._animationFrameCallback = onFrame;
+    window.requestAnimationFrame(onFrame);
+  }
+
+  _startVRAnimation() {
+    const onVRFrame = (timestamp) => {
+      if (this._animationFrameCallback === onVRFrame) {
+        this.vrDisplay.requestAnimationFrame(onVRFrame);
+        this._updateFrame(timestamp);
+        this._renderVRFrame();
+      }
+    };
+    this._animationFrameCallback = onVRFrame;
+    this.vrDisplay.requestAnimationFrame(onVRFrame);
+  }
+
+  _updateFrame(timestamp) {
     const deltaTime = this._prevFrameTimeMillis === 0 ? 0 : timestamp - this._prevFrameTimeMillis;
     this._prevFrameTimeMillis = timestamp;
 
     this.camera.translateWithLocalOrientation(this._cameraMovementDirection, 0.025);
     this.camera.updateMatrices();
-    this._setViewMatrix(this.camera.viewMatrix);
-    this._setProjectionMatrix(this.camera.projectionMatrix);
-
-    this.module.GL.makeContextCurrent(this._webglContextHandle);
+    this._setViewAndProjectionMatrices(this.camera.viewMatrix, this.camera.projectionMatrix);
 
     if (!this.timeIsPaused) {
+      this.module.GL.makeContextCurrent(this._webglContextHandle);
+
       this.timeMillis += deltaTime;
       this.module._update(this.timeMillis / 1000.0);
     }
+  }
+
+  _renderFrame() {
+    this.module.GL.makeContextCurrent(this._webglContextHandle);
+
+    const gl = this.webglContext;
+    gl.viewport(0, 0, this.canvasElem.width, this.canvasElem.height);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     this.module._render(this.canvasElem.width, this.canvasElem.height);
+  }
+
+  _renderVRFrame() {
+    this.module.GL.makeContextCurrent(this._webglContextHandle);
+
+    const width = this.canvasElem.width;
+    const height = this.canvasElem.height;
+
+    const gl = this.webglContext;
+    gl.viewport(0, 0, width, height);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    this.vrDisplay.getFrameData(this.vrFrameData);
+
+    gl.viewport(0, 0, width * 0.5, height);
+    this._setViewAndProjectionMatrices(this.vrFrameData.leftViewMatrix, this.vrFrameData.leftProjectionMatrix);
+    this.module._render(width * 0.5, height);
+
+    gl.viewport(width * 0.5, 0, width * 0.5, height);
+    this._setViewAndProjectionMatrices(this.vrFrameData.rightViewMatrix, this.vrFrameData.rightProjectionMatrix);
+    this.module._render(width * 0.5, height);
+
+    this.vrDisplay.submitFrame();
   }
 
   _onCanvasMouseDown(event) {
@@ -121,7 +172,7 @@ export class ParticleRendererElement extends HTMLElement {
 
       this.canvasElem.removeEventListener("mousemove", this._canvasMouseMoveCallback);
       document.exitPointerLock();
-    }, { once : true });
+    }, { once: true });
   }
 
   _onCanvasMouseMove(event) {
@@ -180,18 +231,17 @@ export class ParticleRendererElement extends HTMLElement {
     }
   }
 
-  _setViewMatrix(viewMatrixF32) {
-    const offset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
-    this.module.HEAPF32.set(viewMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
-    this.module._setViewMatrix(offset);
-    this.module._free(offset);
-  }
+  _setViewAndProjectionMatrices(viewMatrixF32, projectionMatrixF32) {
+    const viewMatrixOffset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
+    this.module.HEAPF32.set(viewMatrixF32, viewMatrixOffset / Float32Array.BYTES_PER_ELEMENT);
 
-  _setProjectionMatrix(projectionMatrixF32) {
-    const offset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
-    this.module.HEAPF32.set(projectionMatrixF32, offset / Float32Array.BYTES_PER_ELEMENT);
-    this.module._setProjectionMatrix(offset);
-    this.module._free(offset);
+    const projectionMatrixOffset = this.module._malloc(16 * Float32Array.BYTES_PER_ELEMENT);
+    this.module.HEAPF32.set(projectionMatrixF32, projectionMatrixOffset / Float32Array.BYTES_PER_ELEMENT);
+
+    this.module._setViewAndProjectionMatrices(viewMatrixOffset, projectionMatrixOffset);
+
+    this.module._free(viewMatrixOffset);
+    this.module._free(projectionMatrixOffset);
   }
 
   rewind() {
@@ -206,9 +256,46 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   updateLayout() {
-    this.canvasElem.width = this.clientWidth;
-    this.canvasElem.height = this.clientHeight;
-    this.camera.viewportAspectRatio = this.canvasElem.width / this.canvasElem.height;
+    if (this.vrDisplay) {
+      const eyeL = this.vrDisplay.getEyeParameters("left");
+      const eyeR = this.vrDisplay.getEyeParameters("right");
+      this.canvasElem.width = Math.max(eyeL.renderWidth, eyeR.renderWidth) * 2;
+      this.canvasElem.height = Math.max(eyeL.renderHeight, eyeR.renderHeight);
+    }
+    else {
+      this.canvasElem.width = this.clientWidth;
+      this.canvasElem.height = this.clientHeight;
+      this.camera.viewportAspectRatio = this.canvasElem.width / this.canvasElem.height;
+    }
+  }
+
+  async startVRSession() {
+    try {
+      const displays = await navigator.getVRDisplays();
+
+      if (displays.length > 0) {
+        this.vrFrameData = new VRFrameData();
+        this.vrDisplay = displays[0];
+
+        await this.vrDisplay.requestPresent([{ source: this.canvasElem }]);
+
+        this.updateLayout();
+        this._startVRAnimation();
+      }
+
+      // this.xrSession = await navigator.xr.requestSession("immersive-vr");
+      // this.xrReferenceSpace = await this.xrSession.requestReferenceSpace("local-floor");
+
+      // // Update to an XR compatible WebGL context.
+      // await this.webglContext.makeXRCompatible();
+
+      // this.xrSession.updateRenderState({
+      //   baseLayer: new XRWebGLLayer(this.xrSession, this.webglContext)
+      // });
+    }
+    catch (err) {
+      console.error(err);
+    }
   }
 
   getSimulationShaderSource() {

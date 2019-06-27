@@ -40,4 +40,5 @@ SpaceBeforeParens: ControlStatements
 SpaceAfterCStyleCast: false
 SpaceAfterTemplateKeyword: true
 BreakBeforeInheritanceComma: false
+SpacesInContainerLiterals: false
 ...

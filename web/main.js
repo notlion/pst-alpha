@@ -105,6 +105,9 @@ const init = () => {
   document.getElementById("reset-camera-button").addEventListener("click", (event) => {
     rendererElem.resetCamera();
   });
+  document.getElementById("enter-vr-button").addEventListener("click", (event) => {
+    rendererElem.startVRSession();
+  });
 
   require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(paneLeftElem, {

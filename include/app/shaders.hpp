@@ -44,6 +44,7 @@ void main() {
 )GLSL";
 
 const char *shader_source_simulate = R"GLSL(precision highp float;
+precision highp int;
 
 #ifdef VERTEX_SHADER
 layout(location = 0) in vec4 aPosition;
@@ -186,6 +187,6 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
 
 const char *shader_source_user_default_texture = R"GLSL(void mainTexture(out vec4 fragColor, in vec2 fragCoord, in vec4 baseColor, in vec2 texcoord) {
   fragColor = baseColor;
-  fragColor.rgb *= 1.2 * smoothstep(1.0, 0.2, distance(vec2(0.5), gl_FragCoord.xy / iResolution));
+  // fragColor.rgb *= 1.2 * smoothstep(1.0, 0.2, distance(vec2(0.5), gl_FragCoord.xy / iResolution));
 }
 )GLSL";

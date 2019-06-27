@@ -16,6 +16,8 @@ static void splitShaderSource(std::string_view source,
 }
 
 bool App::init() {
+  DEBUG_PRINT_GL_STATS();
+
   splitShaderSource(shader_source_simulate, "{simulation}", m_simulation_shader_source_prefix, m_simulation_shader_source_postfix);
   splitShaderSource(shader_source_texture, "{texture}", m_texture_shader_source_prefix, m_texture_shader_source_postfix);
 
@@ -132,13 +134,8 @@ void App::update(double time_seconds) {
 void App::render(int width, int height) {
   // Texture
   {
-    glViewport(0, 0, width, height);
-
     gl::enableBlendAlphaPremult();
     gl::enableDepth();
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
     gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
@@ -222,19 +219,13 @@ void App::setTextureShaderSource(std::string_view shader_src) {
   }
 }
 
-void App::updateViewProjectionMatrices() {
+void App::setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {
+  std::copy_n(view_matrix_values, 16, &m_view_matrix.value[0][0]);
+  m_inverse_view_matrix = gl::inverse(m_view_matrix);
+
+  std::copy_n(projection_matrix_values, 16, &m_projection_matrix.value[0][0]);
+  m_inverse_projection_matrix = gl::inverse(m_projection_matrix);
+
   m_view_projection_matrix = m_projection_matrix * m_view_matrix;
   m_inverse_view_projection_matrix = gl::inverse(m_view_projection_matrix);
-}
-
-void App::setViewMatrix(const float *values) {
-  std::copy_n(values, 16, &m_view_matrix.value[0][0]);
-  m_inverse_view_matrix = gl::inverse(m_view_matrix);
-  updateViewProjectionMatrices();
-}
-
-void App::setProjectionMatrix(const float *values) {
-  std::copy_n(values, 16, &m_projection_matrix.value[0][0]);
-  m_inverse_projection_matrix = gl::inverse(m_projection_matrix);
-  updateViewProjectionMatrices();
 }

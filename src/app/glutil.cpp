@@ -67,6 +67,36 @@ const std::vector<std::string> &getErrorLog() {
 }
 
 
+void printStats() {
+  {
+    GLint range[2];
+    GLint precision;
+
+    const auto printShaderPrecisionFormat = [&](GLenum shader_type) {
+      glGetShaderPrecisionFormat(shader_type, GL_LOW_FLOAT, range, &precision);
+      PRINT_INFO("  Low Float\n    Range Min: %i\tRange Max: %i\tPrecision: %i\n", range[0], range[1], precision);
+      glGetShaderPrecisionFormat(shader_type, GL_MEDIUM_FLOAT, range, &precision);
+      PRINT_INFO("  Medium Float\n    Range Min: %i\tRange Max: %i\tPrecision: %i\n", range[0], range[1], precision);
+      glGetShaderPrecisionFormat(shader_type, GL_HIGH_FLOAT, range, &precision);
+      PRINT_INFO("  High Float\n    Range Min: %i\tRange Max: %i\tPrecision: %i\n", range[0], range[1], precision);
+
+      glGetShaderPrecisionFormat(shader_type, GL_LOW_INT, range, &precision);
+      PRINT_INFO("  Low Int\n    Range Min: %i\tRange Max: %i\n", range[0], range[1]);
+      glGetShaderPrecisionFormat(shader_type, GL_MEDIUM_INT, range, &precision);
+      PRINT_INFO("  Medium Int\n    Range Min: %i\tRange Max: %i\n", range[0], range[1]);
+      glGetShaderPrecisionFormat(shader_type, GL_HIGH_INT, range, &precision);
+      PRINT_INFO("  High Int\n    Range Min: %i\tRange Max: %i\n", range[0], range[1]);
+    };
+
+    PRINT_INFO("Vertex Shader Precision Formats\n");
+    printShaderPrecisionFormat(GL_VERTEX_SHADER);
+
+    PRINT_INFO("Fragment Shader Precision Formats\n");
+    printShaderPrecisionFormat(GL_FRAGMENT_SHADER);
+  }
+}
+
+
 GLuint createShader(std::string_view shader_src, GLenum type) {
   auto shader = glCreateShader(type);
 

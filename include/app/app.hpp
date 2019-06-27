@@ -44,7 +44,6 @@ class App {
   std::string_view m_texture_shader_source_postfix;
   std::string m_user_texture_shader_source;
 
-  void updateViewProjectionMatrices();
   void setCommonShaderUniforms(gl::Program &prog);
 
 public:
@@ -59,6 +58,5 @@ public:
   std::string_view getTextureShaderSource();
   void setTextureShaderSource(std::string_view shader_src);
 
-  void setViewMatrix(const float *values);
-  void setProjectionMatrix(const float *values);
+  void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
 };

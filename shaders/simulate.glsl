@@ -1,4 +1,5 @@
 precision highp float;
+precision highp int;
 
 #ifdef VERTEX_SHADER
 layout(location = 0) in vec4 aPosition;
