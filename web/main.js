@@ -26,6 +26,11 @@ const updateLayout = () => {
   resizeEditor();
 };
 
+const updateSimulationShader = () => {
+  const rendererElem = document.getElementById("renderer");
+  rendererElem.setSimulationShaderSource(window.editor.getValue());
+};
+
 const init = () => {
   const paneLeftElem = document.getElementById("pane-left");
   const paneRightElem = document.getElementById("pane-right");
@@ -96,6 +101,22 @@ const init = () => {
     });
   }
 
+  const timeTextElem = document.getElementById("time-text");
+  const fpsTextElem = document.getElementById("fps-text");
+
+  const onAnimationFrame = () => {
+    window.requestAnimationFrame(onAnimationFrame);
+
+    if (rendererElem.isReady) {
+      timeTextElem.textContent = (rendererElem.timeMillis / 1000).toFixed(2).toString();
+      fpsTextElem.textContent = rendererElem.module._getAverageFramesPerSecond().toFixed(2).toString();
+    }
+  };
+  window.requestAnimationFrame(onAnimationFrame);
+
+  document.getElementById("save-shader-button").addEventListener("click", (event) => {
+    updateSimulationShader();
+  });
   document.getElementById("rewind-button").addEventListener("click", (event) => {
     rendererElem.rewind();
   });
@@ -110,7 +131,9 @@ const init = () => {
   });
 
   require(["vs/editor/editor.main"], () => {
-    window.editor = monaco.editor.create(paneLeftElem, {
+    const editorContainerElem = document.getElementById("editor-container");
+
+    window.editor = monaco.editor.create(editorContainerElem, {
       value: defaultSimulationShaderSource,
       theme: "vs-dark",
       fontFamily: "Hack",
@@ -131,13 +154,7 @@ const init = () => {
       keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.Enter, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
       contextMenuGroupId: "shader",
       contextMenuOrder: 0,
-      run: (editor) => {
-        rendererElem.setSimulationShaderSource(editor.getValue());
-      }
-    });
-
-    window.editor.onDidChangeModelContent((event) => {
-      // setSimulationShaderSource(window.editor.getValue());
+      run: editor => updateSimulationShader()
     });
 
     resizeEditor();

@@ -59,4 +59,6 @@ public:
   void setTextureShaderSource(std::string_view shader_src);
 
   void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
+
+  double getAverageFramesPerSecond() const;
 };

@@ -17,6 +17,8 @@ canvas {
   left: 0;
   right: 50%;
   bottom: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 #pane-right {
@@ -36,24 +38,44 @@ canvas {
   min-height: 0;
 }
 
-#controls {
+#editor-container {
+  flex: 1 1 0px;
+}
+
+.controls {
   flex: 0 0 32px;
   display: flex;
+  align-items: center;
 }
-#controls > button {
-  flex: 0 0 auto;
-  margin: 4px 4px 4px 0;
+.controls > button {
+  height: 24px;
+  margin: 4px 0 4px 4px;
   border: 0;
   border-radius: 4px;
   color: rgb(212, 212, 212);
   background-color: #2c2c2c;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.05s ease-out;
+}
+.controls > button, .controls > .text {
+  flex: 0 0 auto;
   font-family: "Hack";
   font-size: 12px;
-  cursor: pointer;
-  transition: transform 0.025s ease-out;
 }
-#controls > button:active {
+.controls > .text {
+  margin: 0 0 0 12px;
+  color: rgba(212, 212, 212, 0.5);
+}
+.controls > .text > .unit {
+  color: rgba(212, 212, 212, 0.3);
+}
+.controls > button:active {
   transform: scale(0.9);
+  transition: none;
+}
+.controls > button > .shortcut-hint {
+  color: rgba(212, 212, 212, 0.25);
 }
 
 #pane-resize-handle {

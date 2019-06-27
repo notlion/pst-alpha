@@ -261,8 +261,6 @@ void createProgram(Program &prog, std::string_view shader_src, ShaderVersion ver
 
 void deleteProgram(Program &prog) noexcept {
   if (prog.id) {
-    PRINT_DEBUG("Deleting program %u\n", prog.id);
-
     glDeleteProgram(prog.id);
 
     prog.id = 0;

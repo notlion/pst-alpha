@@ -13,14 +13,20 @@
 <body>
   <div id="pane-right">
     <particle-renderer id="renderer"></particle-renderer>
-    <div id="controls">
+    <div id="viewport-controls" class="controls">
       <button id="rewind-button">Rewind</button>
       <button id="play-pause-button">Play/Pause</button>
       <button id="reset-camera-button">Reset Camera</button>
       <button id="enter-vr-button">Enter VR</button>
+      <div class="text"><span id="time-text"></span><span class="unit">s</span></div>
+      <div class="text"><span id="fps-text"></span><span class="unit">fps</span></div>
     </div>
   </div>
   <div id="pane-left">
+    <div id="editor-container"></div>
+    <div id="editor-controls" class="controls">
+      <button id="save-shader-button">Save Shader <span class="shortcut-hint">S</span></button>
+    </div>
     <div id="pane-resize-handle"></div>
   </div>
 </body>

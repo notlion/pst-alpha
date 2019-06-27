@@ -39,4 +39,9 @@ void setViewAndProjectionMatrices(const float *view_matrix_values, const float *
   g_app.setViewAndProjectionMatrices(view_matrix_values, projection_matrix_values);
 }
 
+EMSCRIPTEN_KEEPALIVE
+double getAverageFramesPerSecond() {
+  return g_app.getAverageFramesPerSecond();
+}
+
 } // extern "C"

@@ -229,3 +229,7 @@ void App::setViewAndProjectionMatrices(const float *view_matrix_values, const fl
   m_view_projection_matrix = m_projection_matrix * m_view_matrix;
   m_inverse_view_projection_matrix = gl::inverse(m_view_projection_matrix);
 }
+
+double App::getAverageFramesPerSecond() const {
+  return m_clock.average_fps;
+}
