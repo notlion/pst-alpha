@@ -140,7 +140,7 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   _renderVRFrame() {
-    console.log(this.module._getAverageFramesPerSecond());
+    // console.log(this.module._getAverageFramesPerSecond());
 
     this.module.GL.makeContextCurrent(this._webglContextHandle);
 

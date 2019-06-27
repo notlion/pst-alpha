@@ -38,12 +38,12 @@ bool App::init() {
 
   // Create particle vertex buffer
   {
-    const auto vertex_count = m_particle_framebuffer_resolution * m_particle_framebuffer_resolution;
+    const auto vertex_count = m_particle_framebuffer_resolution.x * m_particle_framebuffer_resolution.y;
 
     std::vector<gl::ivec2> vertices;
     vertices.reserve(vertex_count);
-    for (GLint y = 0; y < m_particle_framebuffer_resolution; ++y) {
-      for (GLint x = 0; x < m_particle_framebuffer_resolution; ++x) {
+    for (GLint y = 0; y < m_particle_framebuffer_resolution.y; ++y) {
+      for (GLint x = 0; x < m_particle_framebuffer_resolution.x; ++x) {
         vertices.emplace_back(x, y);
       }
     }
@@ -68,7 +68,7 @@ bool App::init() {
 
     for (size_t i = 0; i < m_particle_fbs.size(); ++i) {
       m_particle_fbs[i] = std::make_unique<gl::Framebuffer>();
-      gl::createFramebuffer(*m_particle_fbs[i], m_particle_framebuffer_resolution, m_particle_framebuffer_resolution, {
+      gl::createFramebuffer(*m_particle_fbs[i], m_particle_framebuffer_resolution.x, m_particle_framebuffer_resolution.y, {
         { GL_COLOR_ATTACHMENT0, particle_tex_opts },
         { GL_COLOR_ATTACHMENT1, particle_tex_opts },
         { GL_COLOR_ATTACHMENT2, particle_tex_opts },
@@ -110,7 +110,7 @@ void App::update(double time_seconds) {
     gl::disableBlend();
     gl::disableDepth();
 
-    glViewport(0, 0, m_particle_framebuffer_resolution, m_particle_framebuffer_resolution);
+    glViewport(0, 0, m_particle_framebuffer_resolution.x, m_particle_framebuffer_resolution.y);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 

@@ -16,7 +16,7 @@ struct Camera {
 };
 
 class App {
-  GLint m_particle_framebuffer_resolution = 256;
+  gl::ivec2 m_particle_framebuffer_resolution{ 256, 128 };
 
   std::array<std::unique_ptr<gl::Framebuffer>, 3> m_particle_fbs;
 

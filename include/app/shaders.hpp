@@ -139,9 +139,10 @@ void main() {
 #endif
 )GLSL";
 
-const char *shader_source_user_default_simulation = R"GLSL(// Yet more IQ https://www.shadertoy.com/view/ll2GD3
-vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
-  return a + b * cos(6.28318 * (c * t + d));
+const char *shader_source_user_default_simulation = R"GLSL(float hash1(uint n) {
+	n = (n << 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  return float( n & uvec3(0x7fffffffU))/float(0x7fffffff);
 }
 
 float getDepth(vec2 p) {
@@ -160,33 +161,30 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   int count = int(iResolution.x) * int(iResolution.y);
   float u = float(id) / float(count);
+  float r = hash1(uint(id));
 
+  float t = iTime + r * 20.0;
   fragPosition = vec4(gl_FragCoord.xy / iResolution * 7.0 - 3.5, 0.0, 1.0);
-  vec2 fp = fragPosition.xy + 0.5 * vec2(cos(iTime * 0.1), sin(iTime * 0.1));
-  fragPosition.z = getDepth(fp) - 3.0;
+  vec2 fp = fragPosition.xy + 0.5 * vec2(cos(t * 0.1), sin(t * 0.1));
+
+  fragPosition.z += getDepth(fp) - 4.0;
 
   vec2 o = vec2(0.0, 0.01);
   vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
   vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
   vec3 normal = cross(tx, ty);
 
-  fragRightVector = tx * 0.01;
-  fragUpVector = ty * 0.01;
+  fragRightVector = tx * r * 0.1;
+  fragUpVector = ty * (1.0 - r) * 0.1;
 
-  float d = length(fp);
-  vec3 c0 = mix(vec3(147, 165, 0) / 255.0, vec3(139, 43, 21) / 255.0, d * 0.4);
-  vec3 c1 = mix(vec3(36, 38, 33) / 255.0, vec3(36, 58, 122) / 255.0, d * 0.3);
-  c1 = mix(vec3(132, 26, 27) / 255.0, c1, smoothstep(0.0, 1.0, d));
-  fragColor.rgb = mix(c0, c1, smoothstep(0.4, 0.6, abs(fract(d * 7.0 - iTime * 0.5) * 2.0 - 1.0)));
+  fragColor.rg = vec2(texcoord) / iResolution;
+  fragColor.b = r * 0.4;
+  fragColor.rgb *= smoothstep(4.0, 2.0, length(fp)) * 1.5;
   fragColor.a = 1.0;
-
-  vec3 ld = normalize(vec3(-1.0, -1.0, -2.0));
-  fragColor.rgb *= mix(0.4, 1.5, max(0.0, dot(ld, normal)));
 }
 )GLSL";
 
 const char *shader_source_user_default_texture = R"GLSL(void mainTexture(out vec4 fragColor, in vec2 fragCoord, in vec4 baseColor, in vec2 texcoord) {
   fragColor = baseColor;
-  // fragColor.rgb *= 1.2 * smoothstep(1.0, 0.2, distance(vec2(0.5), gl_FragCoord.xy / iResolution));
 }
 )GLSL";
