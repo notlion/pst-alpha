@@ -164,18 +164,19 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
   float r = hash1(uint(id));
 
   float t = iTime + r * 20.0;
-  fragPosition = vec4(gl_FragCoord.xy / iResolution * 7.0 - 3.5, 0.0, 1.0);
-  vec2 fp = fragPosition.xy + 0.5 * vec2(cos(t * 0.1), sin(t * 0.1));
+  vec2 xy = gl_FragCoord.xy / iResolution * 7.0 - 3.5;
+  vec2 fp = xy + 0.5 * vec2(cos(t * 0.1), sin(t * 0.1));
 
-  fragPosition.z += getDepth(fp) - 4.0;
+  fragPosition = vec4(xy.x, 0.0, xy.y, 1.0);
+  fragPosition.y += getDepth(fp) - 1.0;
+  fragPosition.z -= 4.0;
 
   vec2 o = vec2(0.0, 0.01);
   vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
   vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
-  vec3 normal = cross(tx, ty);
 
-  fragRightVector = tx * r * 0.1;
-  fragUpVector = ty * (1.0 - r) * 0.1;
+  fragRightVector = tx.xzy * r * 0.1 + 0.005;
+  fragUpVector = ty.xzy * (1.0 - r) * 0.1 + 0.005;
 
   fragColor.rg = vec2(texcoord) / iResolution;
   fragColor.b = r * 0.4;
