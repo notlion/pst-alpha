@@ -20,10 +20,6 @@ let shaderEditor = null;
 let rendererElem = null;
 let selectedShaderSourceIndex = 0;
 
-const resizeEditor = () => {
-  if (shaderEditor) shaderEditor.layout();
-};
-
 const initEditorShaders = () => {
   shaderEditorStates.forEach((editorState, i) => {
     editorState.model.setValue(rendererElem.getShaderSourceAtIndex(i));
@@ -43,9 +39,14 @@ const setEditorShaderIndex = (index) => {
 };
 
 const updateRendererShader = () => {
-  if (shaderEditor) {
-    rendererElem.setShaderSourceAtIndex(shaderEditor.getValue(), selectedShaderSourceIndex);
+  if (shaderEditorStates) {
+    const shaderSource = shaderEditorStates[selectedShaderSourceIndex].model.getValue();
+    rendererElem.setShaderSourceAtIndex(shaderSource, selectedShaderSourceIndex);
   }
+};
+
+const resizeEditor = () => {
+  if (shaderEditor) shaderEditor.layout();
 };
 
 const updateLayout = () => {
@@ -86,7 +87,8 @@ const init = () => {
   const onMouseUp = (event) => {
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
-  } const onMouseMove = (event) => {
+  };
+  const onMouseMove = (event) => {
     resizeHandleHasMovedSinceLastClick = true;
     const handleX = event.clientX + resizeHandleDragOffsetX;
     setEditorWidthFraction(handleX / document.body.clientWidth);

@@ -178,12 +178,12 @@ static std::string concatenateShaderSource(std::string_view prefix, std::string_
 }
 
 std::string_view App::getUserShaderSourceAtIndex(int index) {
-  assert(index > 0 && index < arraySize(m_user_shader_sources));
+  assert(index >= 0 && index < arraySize(m_user_shader_sources));
   return m_user_shader_sources[index];
 }
 
 void App::setUserShaderSourceAtIndex(std::string_view shader_src, int index) {
-  assert(index > 0 && index < arraySize(m_user_shader_sources));
+  assert(index >= 0 && index < arraySize(m_user_shader_sources));
 
   m_user_shader_sources[index] = shader_src;
 
