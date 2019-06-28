@@ -314,13 +314,13 @@ export class ParticleRendererElement extends HTMLElement {
     }
   }
 
-  getSimulationShaderSource() {
-    return this.module.UTF8ToString(this.module._getSimulationShaderSource());
+  getShaderSourceAtIndex(index) {
+    return this.module.UTF8ToString(this.module._getUserShaderSourceAtIndex(index));
   }
 
-  setSimulationShaderSource(src) {
+  setShaderSourceAtIndex(src, index) {
     const offset = this.module.allocateUTF8(src);
-    this.module._setSimulationShaderSource(offset);
+    this.module._setUserShaderSourceAtIndex(offset, index);
     this.module._free(offset);
   }
 }

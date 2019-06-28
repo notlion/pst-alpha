@@ -36,13 +36,9 @@ class App {
   gl::mat4 m_inverse_projection_matrix;
   gl::mat4 m_inverse_view_projection_matrix;
 
-  std::string_view m_simulation_shader_source_prefix;
-  std::string_view m_simulation_shader_source_postfix;
-  std::string m_user_simulation_shader_source;
-
-  std::string_view m_texture_shader_source_prefix;
-  std::string_view m_texture_shader_source_postfix;
-  std::string m_user_texture_shader_source;
+  std::string m_user_shader_sources[2];
+  std::string_view m_user_shader_source_prefixes[2];
+  std::string_view m_user_shader_source_postfixes[2];
 
   void setCommonShaderUniforms(gl::Program &prog);
 
@@ -52,11 +48,8 @@ public:
   void update(double time_seconds);
   void render(int width, int height);
 
-  std::string_view getSimulationShaderSource();
-  void setSimulationShaderSource(std::string_view shader_src);
-
-  std::string_view getTextureShaderSource();
-  void setTextureShaderSource(std::string_view shader_src);
+  std::string_view getUserShaderSourceAtIndex(int index);
+  void setUserShaderSourceAtIndex(std::string_view shader_src, int index);
 
   void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
 

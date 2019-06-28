@@ -11,24 +11,47 @@ window.MonacoEnvironment = {
       self.MonacoEnvironment = {
         baseUrl: '${monaco_vs_path}'
       };
-      importScripts('${monaco_vs_path}/base/worker/workerMain.js');`
-    )}`;
+      importScripts('${monaco_vs_path}/base/worker/workerMain.js');`)}`;
   }
 };
 
+let shaderEditorStates = null;
+let shaderEditor = null;
+let rendererElem = null;
+let selectedShaderSourceIndex = 0;
+
 const resizeEditor = () => {
-  if (window.editor) window.editor.layout();
+  if (shaderEditor) shaderEditor.layout();
+};
+
+const initEditorShaders = () => {
+  shaderEditorStates.forEach((editorState, i) => {
+    editorState.model.setValue(rendererElem.getShaderSourceAtIndex(i));
+  });
+}
+
+const setEditorShaderIndex = (index) => {
+  if (shaderEditor) {
+    const nextState = shaderEditorStates[index];
+    shaderEditorStates[selectedShaderSourceIndex].viewState = shaderEditor.saveViewState();
+    shaderEditor.setModel(nextState.model);
+    if (nextState.viewState) {
+      shaderEditor.restoreViewState(nextState.viewState);
+    }
+    selectedShaderSourceIndex = index;
+  }
+};
+
+const updateRendererShader = () => {
+  if (shaderEditor) {
+    rendererElem.setShaderSourceAtIndex(shaderEditor.getValue(), selectedShaderSourceIndex);
+  }
 };
 
 const updateLayout = () => {
   const rendererElem = document.getElementById("renderer");
   rendererElem.updateLayout();
   resizeEditor();
-};
-
-const updateSimulationShader = () => {
-  const rendererElem = document.getElementById("renderer");
-  rendererElem.setSimulationShaderSource(window.editor.getValue());
 };
 
 const init = () => {
@@ -63,8 +86,7 @@ const init = () => {
   const onMouseUp = (event) => {
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
-  }
-  const onMouseMove = (event) => {
+  } const onMouseMove = (event) => {
     resizeHandleHasMovedSinceLastClick = true;
     const handleX = event.clientX + resizeHandleDragOffsetX;
     setEditorWidthFraction(handleX / document.body.clientWidth);
@@ -87,19 +109,28 @@ const init = () => {
   resizeHandleElem.addEventListener("mousedown", onMouseDown);
   resizeHandleElem.addEventListener("click", onClick);
 
-  let defaultSimulationShaderSource = "";
-  const rendererElem = document.getElementById("renderer");
-  if (rendererElem.isReady) {
-    defaultSimulationShaderSource = rendererElem.getSimulationShaderSource();
-  }
-  else {
+  rendererElem = document.getElementById("renderer");
+  if (!rendererElem.isReady) {
     rendererElem.addEventListener("ready", () => {
-      defaultSimulationShaderSource = rendererElem.getSimulationShaderSource();
-      if (window.editor) {
-        window.editor.setValue(defaultSimulationShaderSource);
+      if (shaderEditor) {
+        initEditorShaders();
+        setEditorShaderIndex(0);
       }
     });
   }
+
+  const editorTabElems = document.querySelectorAll("#editor-tabs>button");
+  const updateSelectedTab = () => {
+    editorTabElems.forEach((tabElem, i) => {
+      tabElem.classList.toggle("selected", i === selectedShaderSourceIndex);
+    });
+  };
+  editorTabElems.forEach((tabElem, i) => {
+    tabElem.addEventListener("click", (event) => {
+      setEditorShaderIndex(i);
+      updateSelectedTab();
+    });
+  });
 
   const timeTextElem = document.getElementById("time-text");
   const fpsTextElem = document.getElementById("fps-text");
@@ -115,7 +146,7 @@ const init = () => {
   window.requestAnimationFrame(onAnimationFrame);
 
   document.getElementById("save-shader-button").addEventListener("click", (event) => {
-    updateSimulationShader();
+    updateRendererShader();
   });
   document.getElementById("rewind-button").addEventListener("click", (event) => {
     rendererElem.rewind();
@@ -133,31 +164,38 @@ const init = () => {
   require(["vs/editor/editor.main"], () => {
     const editorContainerElem = document.getElementById("editor-container");
 
-    window.editor = monaco.editor.create(editorContainerElem, {
-      value: defaultSimulationShaderSource,
+    shaderEditor = monaco.editor.create(editorContainerElem, {
       theme: "vs-dark",
       fontFamily: "Hack",
-      language: "c",
       dragAndDrop: false,
       folding: false,
       scrollBeyondLastLine: false,
       minimap: { enabled: false },
     });
 
-    window.editor.getModel().updateOptions({
-      tabSize: 2,
+    shaderEditorStates = new Array(2).fill().map((_, i) => {
+      const model = monaco.editor.createModel("", "c");
+      model.updateOptions({
+        tabSize: 2,
+      });
+      return { model: model, viewState: null };
     });
 
-    window.editor.addAction({
+    shaderEditor.addAction({
       id: "shader-run",
       label: "Run Shader",
       keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.Enter, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
       contextMenuGroupId: "shader",
       contextMenuOrder: 0,
-      run: editor => updateSimulationShader()
+      run: editor => updateRendererShader()
     });
 
     resizeEditor();
+
+    if (rendererElem.isReady) {
+      initEditorShaders();
+      setEditorShaderIndex(0);
+    }
   });
 
   updateLayout();

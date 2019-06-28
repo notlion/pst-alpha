@@ -24,14 +24,14 @@ void render(int width, int height) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-const char *getSimulationShaderSource() {
-  auto src = g_app.getSimulationShaderSource();
+const char *getUserShaderSourceAtIndex(int index) {
+  auto src = g_app.getUserShaderSourceAtIndex(index);
   return src.data();
 }
 
 EMSCRIPTEN_KEEPALIVE
-void setSimulationShaderSource(const char *shader_src) {
-  return g_app.setSimulationShaderSource(shader_src);
+void setUserShaderSourceAtIndex(const char *shader_src, int index) {
+  return g_app.setUserShaderSourceAtIndex(shader_src, index);
 }
 
 EMSCRIPTEN_KEEPALIVE

@@ -1,8 +1,8 @@
 #include "app/app.hpp"
 
 #include "app/log.hpp"
-#include "app/util.hpp"
 #include "app/shaders.hpp"
+#include "app/util.hpp"
 
 using namespace std::string_literals;
 
@@ -18,16 +18,16 @@ static void splitShaderSource(std::string_view source,
 bool App::init() {
   DEBUG_PRINT_GL_STATS();
 
-  splitShaderSource(shader_source_simulate, "{simulation}", m_simulation_shader_source_prefix, m_simulation_shader_source_postfix);
-  splitShaderSource(shader_source_texture, "{texture}", m_texture_shader_source_prefix, m_texture_shader_source_postfix);
+  splitShaderSource(shader_source_simulate, "{simulation}", m_user_shader_source_prefixes[0], m_user_shader_source_postfixes[0]);
+  splitShaderSource(shader_source_texture, "{texture}", m_user_shader_source_prefixes[1], m_user_shader_source_postfixes[1]);
 
-  setSimulationShaderSource(shader_source_user_default_simulation);
-  setTextureShaderSource(shader_source_user_default_texture);
+  setUserShaderSourceAtIndex(shader_source_user_default_simulation, 0);
+  setUserShaderSourceAtIndex(shader_source_user_default_texture, 1);
 
   gl::DefaultVertex fs_tri_verts[]{
     { gl::vec3(-1.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
-    { gl::vec3( 3.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
-    { gl::vec3(-1.0f,  3.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) }
+    { gl::vec3(3.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
+    { gl::vec3(-1.0f, 3.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) }
   };
   gl::DefaultTriangleMesh fs_tri_mesh{
     { { fs_tri_verts[0], fs_tri_verts[1], fs_tri_verts[2] } },
@@ -69,11 +69,11 @@ bool App::init() {
     for (size_t i = 0; i < m_particle_fbs.size(); ++i) {
       m_particle_fbs[i] = std::make_unique<gl::Framebuffer>();
       gl::createFramebuffer(*m_particle_fbs[i], m_particle_framebuffer_resolution.x, m_particle_framebuffer_resolution.y, {
-        { GL_COLOR_ATTACHMENT0, particle_tex_opts },
-        { GL_COLOR_ATTACHMENT1, particle_tex_opts },
-        { GL_COLOR_ATTACHMENT2, particle_tex_opts },
-        { GL_COLOR_ATTACHMENT3, particle_tex_opts },
-      });
+                                                                                                                              { GL_COLOR_ATTACHMENT0, particle_tex_opts },
+                                                                                                                              { GL_COLOR_ATTACHMENT1, particle_tex_opts },
+                                                                                                                              { GL_COLOR_ATTACHMENT2, particle_tex_opts },
+                                                                                                                              { GL_COLOR_ATTACHMENT3, particle_tex_opts },
+                                                                                                                          });
     }
   }
 
@@ -177,45 +177,43 @@ static std::string concatenateShaderSource(std::string_view prefix, std::string_
   return src;
 }
 
-std::string_view App::getSimulationShaderSource() {
-  return m_user_simulation_shader_source;
+std::string_view App::getUserShaderSourceAtIndex(int index) {
+  assert(index > 0 && index < arraySize(m_user_shader_sources));
+  return m_user_shader_sources[index];
 }
 
-void App::setSimulationShaderSource(std::string_view shader_src) {
-  m_user_simulation_shader_source = shader_src;
+void App::setUserShaderSourceAtIndex(std::string_view shader_src, int index) {
+  assert(index > 0 && index < arraySize(m_user_shader_sources));
 
-  auto src = concatenateShaderSource(m_simulation_shader_source_prefix, m_user_simulation_shader_source, m_simulation_shader_source_postfix);
+  m_user_shader_sources[index] = shader_src;
+
+  auto src = concatenateShaderSource(m_user_shader_source_prefixes[index], m_user_shader_sources[index], m_user_shader_source_postfixes[index]);
   auto prog = gl::createProgram(src, gl::SHADER_VERSION_300ES);
 
   if (prog.id) {
     gl::useProgram(prog);
-    gl::uniform(prog, "iPosition", 0);
-    gl::uniform(prog, "iPositionPrev", 1);
-    gl::uniform(prog, "iColor", 2);
-    gl::uniform(prog, "iColorPrev", 3);
 
-    m_simulate_prog = std::move(prog);
-  }
-}
+    switch (index) {
+      // Simulate
+      case 0: {
+        gl::uniform(prog, "iPosition", 0);
+        gl::uniform(prog, "iPositionPrev", 1);
+        gl::uniform(prog, "iColor", 2);
+        gl::uniform(prog, "iColorPrev", 3);
 
-std::string_view App::getTextureShaderSource() {
-  return m_user_texture_shader_source;
-}
+        m_simulate_prog = std::move(prog);
+      } break;
 
-void App::setTextureShaderSource(std::string_view shader_src) {
-  m_user_texture_shader_source = shader_src;
+      // Shade
+      case 1: {
+        gl::uniform(prog, "iPosition", 0);
+        gl::uniform(prog, "iColor", 1);
+        gl::uniform(prog, "iRight", 2);
+        gl::uniform(prog, "iUp", 3);
 
-  auto src = concatenateShaderSource(m_texture_shader_source_prefix, m_user_texture_shader_source, m_texture_shader_source_postfix);
-  auto prog = gl::createProgram(src, gl::SHADER_VERSION_300ES);
-
-  if (prog.id) {
-    gl::useProgram(prog);
-    gl::uniform(prog, "iPosition", 0);
-    gl::uniform(prog, "iColor", 1);
-    gl::uniform(prog, "iRight", 2);
-    gl::uniform(prog, "iUp", 3);
-
-    m_texture_prog = std::move(prog);
+        m_texture_prog = std::move(prog);
+      } break;
+    }
   }
 }
 
