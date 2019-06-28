@@ -82,6 +82,8 @@ export class ParticleRendererElement extends HTMLElement {
 
     this.camera = new Camera();
     this._cameraMovementDirection = vec3.create();
+    this._cameraRollDirection = 0;
+    this._cameraRollQuat = quat.create();
 
     this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
@@ -117,6 +119,9 @@ export class ParticleRendererElement extends HTMLElement {
     this._prevFrameTimeMillis = timestamp;
 
     this.camera.translateWithLocalOrientation(this._cameraMovementDirection, 0.025);
+    quat.identity(this._cameraRollQuat);
+    quat.rotateZ(this._cameraRollQuat, this._cameraRollQuat, this._cameraRollDirection * 0.02);
+    quat.mul(this.camera.orientation, this._cameraRollQuat, this.camera.orientation);
     this.camera.updateMatrices();
     this._setViewAndProjectionMatrices(this.camera.viewMatrix, this.camera.projectionMatrix);
 
@@ -173,6 +178,7 @@ export class ParticleRendererElement extends HTMLElement {
     document.addEventListener("mouseup", (event) => {
       this._canvasMouseIsDown = false;
       vec3.zero(this._cameraMovementDirection);
+      this._cameraRollDirection = 0;
 
       this.canvasElem.removeEventListener("mousemove", this._canvasMouseMoveCallback);
       document.exitPointerLock();
@@ -200,11 +206,11 @@ export class ParticleRendererElement extends HTMLElement {
         case "d":
           this._cameraMovementDirection[0] = -1;
           break;
-        case "q":
-          this._cameraMovementDirection[1] = 1;
-          break;
         case "e":
-          this._cameraMovementDirection[1] = -1;
+          this._cameraRollDirection = 1;
+          break;
+        case "q":
+          this._cameraRollDirection = -1;
           break;
       }
     }
@@ -225,11 +231,11 @@ export class ParticleRendererElement extends HTMLElement {
         case "d":
           if (this._cameraMovementDirection[0] < 0) this._cameraMovementDirection[0] = 0;
           break;
-        case "q":
-          if (this._cameraMovementDirection[1] > 0) this._cameraMovementDirection[1] = 0;
-          break;
         case "e":
-          if (this._cameraMovementDirection[1] < 0) this._cameraMovementDirection[1] = 0;
+          if (this._cameraRollDirection > 0) this._cameraRollDirection = 0;
+          break;
+        case "q":
+          if (this._cameraRollDirection < 0) this._cameraRollDirection = 0;
           break;
       }
     }
@@ -311,6 +317,7 @@ export class ParticleRendererElement extends HTMLElement {
   getSimulationShaderSource() {
     return this.module.UTF8ToString(this.module._getSimulationShaderSource());
   }
+
   setSimulationShaderSource(src) {
     const offset = this.module.allocateUTF8(src);
     this.module._setSimulationShaderSource(offset);
