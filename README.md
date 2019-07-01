@@ -50,7 +50,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
 
 ### Orb Fountain
 ```
-// Integer Hash by IQ https://www.shadertoy.com/view/XlXcW4
+// IQ Integer Hash https://www.shadertoy.com/view/XlXcW4
 vec3 hash33(uvec3 x) {
   for (int i = 0; i < 3; ++i) x = ((x >> 8U) ^ x.yzx) * 1103515245U;
   return vec3(x) * (1.0 / float(0xffffffffU));
@@ -61,16 +61,22 @@ float hash12(uvec2 x) {
   return float(n) * (1.0 / float(0xffffffffU));
 }
 
-// Yet more IQ https://www.shadertoy.com/view/ll2GD3
+// IQ Cosine palette https://www.shadertoy.com/view/ll2GD3
 vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
   return a + b * cos(6.28318 * (c * t + d));
+}
+
+// Branchless orthogonal vector http://lolengine.net/blog/2013/09/21/picking-orthogonal-vector-combing-coconuts
+vec3 orthogonal(vec3 v) {
+  float k = fract(abs(v.x) + 0.5);
+  return vec3(-v.y, v.x - k * v.z, k * v.y);
 }
 
 void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRightVector, out vec3 fragUpVector) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int count = int(iResolution.x) * int(iResolution.y);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
-  int rate = 500;
+  int rate = 200;
   int frame = (iFrame - id / rate) % (count / rate);
 
   vec3 pos = texelFetch(iPosition, texcoord, 0).xyz;
@@ -103,8 +109,7 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
   }
   else {
     vec3 z = normalize(vel);
-    vec3 x = cross(z, vec3(0.0, 1.0, 0.0));
-    vec3 y = cross(x, z);
+    vec3 y = orthogonal(z);
 
     fragRightVector = vel * 0.4;
     fragUpVector = y * 0.004;
