@@ -15,16 +15,21 @@ uniform sampler2D iPositionPrev;
 uniform sampler2D iColor;
 uniform sampler2D iColorPrev;
 
-uniform vec2  iResolution;
-uniform mat4  iModelViewProjection;
-uniform mat4  iModelView;
-uniform mat4  iProjection;
-uniform mat4  iInverseModelViewProjection;
-uniform mat4  iInverseModelView;
-uniform mat4  iInverseProjection;
-uniform int   iFrame;
-uniform float iTime;
-uniform float iTimeDelta;
+layout(std140) uniform CommonUniforms {
+  mat4 iModelViewProjection;
+  mat4 iModelView;
+  mat4 iProjection;
+  mat4 iInverseModelViewProjection;
+  mat4 iInverseModelView;
+  mat4 iInverseProjection;
+  vec4 iControllerPosition[2]; // [Left, Right]
+  vec4 iControllerVelocity[2];
+  float iTime;
+  float iTimeDelta;
+  float iFrame;
+};
+
+uniform vec2 iResolution;
 
 // {simulation}
 

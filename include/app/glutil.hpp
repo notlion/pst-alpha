@@ -76,6 +76,12 @@ struct Program {
   GL_UTIL_MOVE_ONLY_CLASS(Program)
 };
 
+struct UniformBuffer {
+  GLuint id = 0;
+
+  GL_UTIL_MOVE_ONLY_CLASS(UniformBuffer)
+};
+
 struct TextureData {
   int width = 0;
   int height = 0;
@@ -110,7 +116,7 @@ struct Texture {
 
 struct RenderbufferOpts {
   GLenum target = GL_RENDERBUFFER;
-  GLenum format = GL_DEPTH_COMPONENT24;  
+  GLenum format = GL_DEPTH_COMPONENT24;
 };
 
 struct Renderbuffer {
@@ -163,6 +169,20 @@ void deleteProgram(Program &prog) noexcept;
 GLint getUniformLocation(const Program &prog, const GLchar *name);
 GLint getAttribLocation(const Program &prog, const GLchar *name);
 
+void createUniformBuffer(UniformBuffer &ub, std::size_t uniform_data_size_bytes, const void *data, GLenum usage = GL_DYNAMIC_DRAW);
+void updateUniformBuffer(UniformBuffer &ub, std::size_t uniform_data_size_bytes, const void *data);
+void deleteUniformBuffer(UniformBuffer &ub);
+
+template <typename UniformData>
+void createUniformBuffer(UniformBuffer &ub, const UniformData &uniform_data, GLenum usage = GL_STATIC_DRAW) {
+  createUniformBuffer(ub, sizeof(UniformData), &uniform_data, usage);
+}
+
+template <typename UniformData>
+void updateUniformBuffer(UniformBuffer &ub, const UniformData &uniform_data) {
+  updateUniformBuffer(ub, sizeof(UniformData), &uniform_data);
+}
+
 Texture createTexture(int width, int height, const TextureOpts &opts = {});
 Texture createTexture(const TextureData &data, const TextureOpts &opts = {});
 void createTexture(Texture &tex, int width, int height, const TextureOpts &opts = {});
@@ -173,10 +193,8 @@ Renderbuffer createRenderbuffer(int width, int height, const RenderbufferOpts &o
 void createRenderbuffer(Renderbuffer &rb, int width, int height, const RenderbufferOpts &opts = {});
 void deleteRenderbuffer(Renderbuffer &rb) noexcept;
 
-Framebuffer createFramebuffer(int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                              const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
-void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                       const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
+Framebuffer createFramebuffer(int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments, const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
+void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments, const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments = {});
 void deleteFramebuffer(Framebuffer &fb) noexcept;
 
 inline void uniform(GLint loc, GLint x) {

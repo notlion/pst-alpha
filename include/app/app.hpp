@@ -15,6 +15,24 @@ struct Camera {
   float fovy = 60.0f;
 };
 
+struct CommonShaderUniforms {
+  gl::mat4 model_view_projection;
+  gl::mat4 model_view;
+  gl::mat4 projection;
+  gl::mat4 inverse_model_view_projection;
+  gl::mat4 inverse_model_view;
+  gl::mat4 inverse_projection;
+
+  gl::vec4 controller_position[2]; // [Left, Right]
+  gl::vec4 controller_velocity[2];
+
+  float time;
+  float time_delta;
+  float frame;
+
+  float _pad; // Required to make the struct size a multiple of 16 bytes.
+};
+
 class App {
   gl::ivec2 m_particle_framebuffer_resolution{ 128, 128 };
 
@@ -24,23 +42,20 @@ class App {
   gl::VertexBuffer m_particles_vb;
   gl::VertexBuffer m_particle_quad_vb;
 
+  CommonShaderUniforms m_common_uniforms;
+  gl::UniformBuffer m_common_uniforms_buffer;
+
   gl::Program m_simulate_prog;
   gl::Program m_texture_prog;
 
   FrameClock m_clock;
 
-  gl::mat4 m_view_matrix;
-  gl::mat4 m_projection_matrix;
-  gl::mat4 m_view_projection_matrix;
-  gl::mat4 m_inverse_view_matrix;
-  gl::mat4 m_inverse_projection_matrix;
-  gl::mat4 m_inverse_view_projection_matrix;
-
   std::string m_user_shader_sources[2];
   std::string_view m_user_shader_source_prefixes[2];
   std::string_view m_user_shader_source_postfixes[2];
 
-  void setCommonShaderUniforms(gl::Program &prog);
+  void bindCommonShaderUniforms(gl::Program &prog);
+  void updateCommonShaderUniformMatrices();
 
 public:
   bool init();
@@ -49,9 +64,10 @@ public:
   void render(int width, int height);
 
   std::string_view getUserShaderSourceAtIndex(int index);
-  void setUserShaderSourceAtIndex(std::string_view shader_src, int index);
+  void setUserShaderSourceAtIndex(int index, std::string_view shader_src);
 
   void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
+  void setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values);
 
   double getAverageFramesPerSecond() const;
 };

@@ -21,8 +21,8 @@ bool App::init() {
   splitShaderSource(shader_source_simulate, "{simulation}", m_user_shader_source_prefixes[0], m_user_shader_source_postfixes[0]);
   splitShaderSource(shader_source_texture, "{texture}", m_user_shader_source_prefixes[1], m_user_shader_source_postfixes[1]);
 
-  setUserShaderSourceAtIndex(shader_source_user_default_simulation, 0);
-  setUserShaderSourceAtIndex(shader_source_user_default_texture, 1);
+  setUserShaderSourceAtIndex(0, shader_source_user_default_simulation);
+  setUserShaderSourceAtIndex(1, shader_source_user_default_texture);
 
   gl::DefaultVertex fs_tri_verts[]{
     { gl::vec3(-1.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
@@ -68,17 +68,26 @@ bool App::init() {
 
     for (size_t i = 0; i < m_particle_fbs.size(); ++i) {
       m_particle_fbs[i] = std::make_unique<gl::Framebuffer>();
-      gl::createFramebuffer(*m_particle_fbs[i], m_particle_framebuffer_resolution.x, m_particle_framebuffer_resolution.y, {
-                                                                                                                              { GL_COLOR_ATTACHMENT0, particle_tex_opts },
-                                                                                                                              { GL_COLOR_ATTACHMENT1, particle_tex_opts },
-                                                                                                                              { GL_COLOR_ATTACHMENT2, particle_tex_opts },
-                                                                                                                              { GL_COLOR_ATTACHMENT3, particle_tex_opts },
-                                                                                                                          });
+      gl::createFramebuffer(*m_particle_fbs[i],
+                            m_particle_framebuffer_resolution.x,
+                            m_particle_framebuffer_resolution.y,
+                            {
+                                { GL_COLOR_ATTACHMENT0, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT1, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT2, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT3, particle_tex_opts },
+                            });
     }
   }
 
-  m_view_matrix = gl::lookAt(gl::vec3(0.0f, 0.0f, 3.0f), gl::vec3(0.0f), gl::vec3(0.0f, 1.0f, 0.0f));
-  m_projection_matrix = gl::perspective(radians(60.0f), 1.0f, 0.01f, 1000.0f);
+  {
+    m_common_uniforms.model_view = gl::lookAt(gl::vec3(0.0f, 0.0f, 3.0f), gl::vec3(0.0f), gl::vec3(0.0f, 1.0f, 0.0f));
+    m_common_uniforms.projection = gl::perspective(radians(60.0f), 1.0f, 0.01f, 1000.0f);
+
+    updateCommonShaderUniformMatrices();
+
+    gl::createUniformBuffer(m_common_uniforms_buffer, m_common_uniforms, GL_DYNAMIC_DRAW);
+  }
 
   return true;
 }
@@ -86,20 +95,30 @@ bool App::init() {
 void App::cleanup() {
 }
 
-void App::setCommonShaderUniforms(gl::Program &prog) {
-  gl::uniform(prog, "iModelViewProjection", m_view_projection_matrix);
-  gl::uniform(prog, "iModelView", m_view_matrix);
-  gl::uniform(prog, "iProjection", m_projection_matrix);
-  gl::uniform(prog, "iInverseModelViewProjection", m_inverse_view_projection_matrix);
-  gl::uniform(prog, "iInverseModelView", m_inverse_view_matrix);
-  gl::uniform(prog, "iInverseProjection", m_inverse_projection_matrix);
-  gl::uniform(prog, "iFrame", GLint(m_clock.elapsed_frames));
-  gl::uniform(prog, "iTime", GLfloat(m_clock.elapsed_seconds));
-  gl::uniform(prog, "iTimeDelta", GLfloat(m_clock.elapsed_seconds_delta));
+void App::bindCommonShaderUniforms(gl::Program &prog) {
+  GLuint block_index = glGetUniformBlockIndex(prog.id, "CommonUniforms");
+  glUniformBlockBinding(prog.id, block_index, 1);
+  glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_common_uniforms_buffer.id);
+}
+
+void App::updateCommonShaderUniformMatrices() {
+  m_common_uniforms.inverse_model_view = gl::inverse(m_common_uniforms.model_view);
+  m_common_uniforms.inverse_projection = gl::inverse(m_common_uniforms.projection);
+  m_common_uniforms.model_view_projection = m_common_uniforms.projection * m_common_uniforms.model_view;
+  m_common_uniforms.inverse_model_view_projection = gl::inverse(m_common_uniforms.model_view_projection);
 }
 
 void App::update(double time_seconds) {
   m_clock.tick(time_seconds);
+
+  // Update common uniforms
+  {
+    m_common_uniforms.time = float(m_clock.elapsed_seconds);
+    m_common_uniforms.time_delta = float(m_clock.elapsed_seconds_delta);
+    m_common_uniforms.frame = float(m_clock.elapsed_frames);
+
+    gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
+  }
 
   // Simulate
   {
@@ -121,7 +140,7 @@ void App::update(double time_seconds) {
 
     gl::useProgram(m_simulate_prog);
     gl::uniform(m_simulate_prog, "iResolution", gl::vec2(m_particle_framebuffer_resolution));
-    setCommonShaderUniforms(m_simulate_prog);
+    bindCommonShaderUniforms(m_simulate_prog);
 
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
@@ -144,7 +163,7 @@ void App::render(int width, int height) {
 
     gl::useProgram(m_texture_prog);
     gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
-    setCommonShaderUniforms(m_texture_prog);
+    bindCommonShaderUniforms(m_texture_prog);
 
     gl::enableVertexBuffer(m_particles_vb);
     gl::enableVertexBuffer(m_particle_quad_vb);
@@ -182,7 +201,7 @@ std::string_view App::getUserShaderSourceAtIndex(int index) {
   return m_user_shader_sources[index];
 }
 
-void App::setUserShaderSourceAtIndex(std::string_view shader_src, int index) {
+void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
   assert(index >= 0 && index < arraySize(m_user_shader_sources));
 
   m_user_shader_sources[index] = shader_src;
@@ -218,14 +237,16 @@ void App::setUserShaderSourceAtIndex(std::string_view shader_src, int index) {
 }
 
 void App::setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {
-  std::copy_n(view_matrix_values, 16, &m_view_matrix.value[0][0]);
-  m_inverse_view_matrix = gl::inverse(m_view_matrix);
+  std::copy_n(view_matrix_values, 16, &m_common_uniforms.model_view.value[0][0]);
+  std::copy_n(projection_matrix_values, 16, &m_common_uniforms.projection.value[0][0]);
 
-  std::copy_n(projection_matrix_values, 16, &m_projection_matrix.value[0][0]);
-  m_inverse_projection_matrix = gl::inverse(m_projection_matrix);
+  updateCommonShaderUniformMatrices();
+}
 
-  m_view_projection_matrix = m_projection_matrix * m_view_matrix;
-  m_inverse_view_projection_matrix = gl::inverse(m_view_projection_matrix);
+void App::setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values) {
+  assert(index <= 0 && index < arraySize(m_common_uniforms.controller_position));
+  std::copy_n(position_values, 3, &m_common_uniforms.controller_position[index]);
+  std::copy_n(velocity_values, 3, &m_common_uniforms.controller_velocity[index]);
 }
 
 double App::getAverageFramesPerSecond() const {

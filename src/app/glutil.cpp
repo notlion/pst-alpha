@@ -284,6 +284,33 @@ GLint getAttribLocation(const Program &prog, const GLchar *name) {
 }
 
 
+void createUniformBuffer(UniformBuffer &ub, std::size_t uniform_data_size_bytes, const void *data, GLenum usage) {
+  deleteUniformBuffer(ub);
+
+  glGenBuffers(1, &ub.id);
+  glBindBuffer(GL_UNIFORM_BUFFER, ub.id);
+  glBufferData(GL_UNIFORM_BUFFER, uniform_data_size_bytes, data, usage);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+  CHECK_GL_ERROR();
+}
+
+void updateUniformBuffer(UniformBuffer &ub, std::size_t uniform_data_size_bytes, const void *data) {
+  glBindBuffer(GL_UNIFORM_BUFFER, ub.id);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, uniform_data_size_bytes, data);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+  CHECK_GL_ERROR();
+}
+
+void deleteUniformBuffer(UniformBuffer &ub) {
+  if (ub.id) {
+    glDeleteBuffers(1, &ub.id);
+    ub.id = 0;
+  }
+}
+
+
 Texture createTexture(int width, int height, const TextureOpts &opts) {
   Texture tex;
   createTexture(tex, width, height, opts);
@@ -386,17 +413,13 @@ static const char *getFramebufferStatusString(GLenum status) {
   }
 }
 
-Framebuffer createFramebuffer(int width, int height,
-                              const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                              const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
+Framebuffer createFramebuffer(int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments, const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
   Framebuffer fb;
   createFramebuffer(fb, width, height, texture_attachments, renderbuffer_attachments);
   return fb;
 }
 
-void createFramebuffer(Framebuffer &fb, int width, int height,
-                       const std::vector<FramebufferTextureAttachment> &texture_attachments,
-                       const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
+void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector<FramebufferTextureAttachment> &texture_attachments, const std::vector<FramebufferRenderbufferAttachment> &renderbuffer_attachments) {
   deleteFramebuffer(fb);
 
   fb.width = width;
@@ -476,6 +499,27 @@ Program::~Program() noexcept {
 }
 
 
+UniformBuffer::UniformBuffer(UniformBuffer &&ub) noexcept
+: id(std::move(ub.id)) {
+  deleteUniformBuffer(*this);
+  id = ub.id;
+  ub.id = 0;
+}
+
+UniformBuffer &UniformBuffer::operator=(UniformBuffer &&ub) noexcept {
+  if (this != &ub) {
+    deleteUniformBuffer(*this);
+    id = ub.id;
+    ub.id = 0;
+  }
+  return *this;
+}
+
+UniformBuffer::~UniformBuffer() noexcept {
+  deleteUniformBuffer(*this);
+}
+
+
 Texture::Texture(Texture &&tex) noexcept
 : width(std::move(tex.width)), height(std::move(tex.height)), opts(std::move(tex.opts)) {
   deleteTexture(*this);
@@ -528,9 +572,7 @@ Renderbuffer::~Renderbuffer() noexcept {
 
 
 Framebuffer::Framebuffer(Framebuffer &&fb) noexcept
-: width(std::move(fb.width)),
-  height(std::move(fb.height)),
-  buffers(std::move(fb.buffers)) {
+: width(std::move(fb.width)), height(std::move(fb.height)), buffers(std::move(fb.buffers)) {
   deleteFramebuffer(*this);
   id = fb.id;
 

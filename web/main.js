@@ -41,7 +41,7 @@ const setEditorShaderIndex = (index) => {
 const updateRendererShader = () => {
   if (shaderEditorStates) {
     const shaderSource = shaderEditorStates[selectedShaderSourceIndex].model.getValue();
-    rendererElem.setShaderSourceAtIndex(shaderSource, selectedShaderSourceIndex);
+    rendererElem.setShaderSourceAtIndex(selectedShaderSourceIndex, shaderSource);
   }
 };
 

@@ -118,12 +118,27 @@ export class ParticleRendererElement extends HTMLElement {
     const deltaTime = this._prevFrameTimeMillis === 0 ? 0 : timestamp - this._prevFrameTimeMillis;
     this._prevFrameTimeMillis = timestamp;
 
-    this.camera.translateWithLocalOrientation(this._cameraMovementDirection, 0.025);
-    quat.identity(this._cameraRollQuat);
-    quat.rotateZ(this._cameraRollQuat, this._cameraRollQuat, this._cameraRollDirection * 0.02);
-    quat.mul(this.camera.orientation, this._cameraRollQuat, this.camera.orientation);
-    this.camera.updateMatrices();
-    this._setViewAndProjectionMatrices(this.camera.viewMatrix, this.camera.projectionMatrix);
+    if (!this.vrDisplay) {
+      this.camera.translateWithLocalOrientation(this._cameraMovementDirection, 0.025);
+      quat.identity(this._cameraRollQuat);
+      quat.rotateZ(this._cameraRollQuat, this._cameraRollQuat, this._cameraRollDirection * 0.02);
+      quat.mul(this.camera.orientation, this._cameraRollQuat, this.camera.orientation);
+      this.camera.updateMatrices();
+      this._setViewAndProjectionMatrices(this.camera.viewMatrix, this.camera.projectionMatrix);
+    }
+
+    if (navigator.getGamepads) {
+      const gamepads = navigator.getGamepads();
+      const controllers = Array.prototype.filter.call(gamepads, gp => gp && gp.displayId === this.vrDisplay.displayId);
+      const controllerLeft = controllers.find(gp => gp.hand === "left");
+      if (controllerLeft) {
+        this.setControllerPoseAtIndex(0, controllerLeft);
+      }
+      const controllerRight = controllers.find(gp => gp.hand === "right");
+      if (controllerRight) {
+        this.setControllerPoseAtIndex(1, controllerRight);
+      }
+    }
 
     if (!this.timeIsPaused) {
       this.module.GL.makeContextCurrent(this._webglContextHandle);
@@ -318,9 +333,26 @@ export class ParticleRendererElement extends HTMLElement {
     return this.module.UTF8ToString(this.module._getUserShaderSourceAtIndex(index));
   }
 
-  setShaderSourceAtIndex(src, index) {
+  setShaderSourceAtIndex(index, src) {
     const offset = this.module.allocateUTF8(src);
-    this.module._setUserShaderSourceAtIndex(offset, index);
+    this.module._setUserShaderSourceAtIndex(index, offset);
     this.module._free(offset);
+  }
+
+  setControllerPoseAtIndex(index, pose) {
+    const positionOffset = this.module._malloc(3 * Float32Array.BYTES_PER_ELEMENT);
+    if (pose.position) {
+      this.module.HEAPF32.set(pose.position, positionOffset / Float32Array.BYTES_PER_ELEMENT);
+    }
+
+    const velocityOffset = this.module._malloc(3 * Float32Array.BYTES_PER_ELEMENT);
+    if (pose.linearVelocity) {
+      this.module.HEAPF32.set(pose.linearVelocity, positionOffset / Float32Array.BYTES_PER_ELEMENT);
+    }
+
+    this.module._setControllerPoseAtIndex(index, positionOffset, velocityOffset);
+
+    this.module._free(positionOffset);
+    this.module._free(velocityOffset);
   }
 }

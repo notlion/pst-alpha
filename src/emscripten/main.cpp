@@ -30,13 +30,18 @@ const char *getUserShaderSourceAtIndex(int index) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void setUserShaderSourceAtIndex(const char *shader_src, int index) {
-  return g_app.setUserShaderSourceAtIndex(shader_src, index);
+void setUserShaderSourceAtIndex(int index, const char *shader_src) {
+  return g_app.setUserShaderSourceAtIndex(index, shader_src);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {
   g_app.setViewAndProjectionMatrices(view_matrix_values, projection_matrix_values);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values) {
+  g_app.setControllerPoseAtIndex(index, position_values, velocity_values);
 }
 
 EMSCRIPTEN_KEEPALIVE
