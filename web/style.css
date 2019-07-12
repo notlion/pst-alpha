@@ -54,9 +54,11 @@ canvas {
   border-radius: 4px;
   color: rgb(212, 212, 212);
   background-color: #303030;
-  cursor: pointer;
   outline: none;
   transition: transform 0.05s ease-out;
+}
+.controls > button:not(:disabled) {
+  cursor: pointer;
 }
 .controls > button, .controls > .text {
   flex: 0 0 auto;
@@ -66,13 +68,18 @@ canvas {
 .controls > .text {
   margin: 0 0 0 12px;
   color: rgba(212, 212, 212, 0.5);
+  user-select: none;
+  -moz-user-select: none;
 }
 .controls > .text > .unit {
   color: rgba(212, 212, 212, 0.3);
 }
-.controls > button:active {
+.controls > button:active:not(:disabled) {
   transform: scale(0.9);
   transition: none;
+}
+.controls > button:disabled {
+  color: rgba(212, 212, 212, 0.3);
 }
 .controls > button > .shortcut-hint {
   color: rgba(212, 212, 212, 0.3);

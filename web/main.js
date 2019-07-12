@@ -159,9 +159,16 @@ const init = () => {
   document.getElementById("reset-camera-button").addEventListener("click", (event) => {
     rendererElem.resetCamera();
   });
-  document.getElementById("enter-vr-button").addEventListener("click", (event) => {
-    rendererElem.startVRSession();
-  });
+
+  const enterVRButtonElem = document.getElementById("enter-vr-button");
+  if (navigator.getVRDisplays) {
+    enterVRButtonElem.addEventListener("click", (event) => {
+      rendererElem.startVRSession();
+    });
+  }
+  else {
+    enterVRButtonElem.disabled = true;
+  }
 
   require(["vs/editor/editor.main"], () => {
     const editorContainerElem = document.getElementById("editor-container");
