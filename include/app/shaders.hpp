@@ -60,15 +60,15 @@ uniform sampler2D iPositionPrev;
 uniform sampler2D iColor;
 uniform sampler2D iColorPrev;
 
-layout (std140) uniform CommonUniforms { 
-  mat4  iModelViewProjection;
-  mat4  iModelView;
-  mat4  iProjection;
-  mat4  iInverseModelViewProjection;
-  mat4  iInverseModelView;
-  mat4  iInverseProjection;
-  vec4  iControllerPosition[2]; // [Left, Right]
-  vec4  iControllerVelocity[2];
+layout(std140) uniform CommonUniforms {
+  mat4 iModelViewProjection;
+  mat4 iModelView;
+  mat4 iProjection;
+  mat4 iInverseModelViewProjection;
+  mat4 iInverseModelView;
+  mat4 iInverseProjection;
+  vec4 iControllerPosition[2]; // [Left, Right]
+  vec4 iControllerVelocity[2];
   float iTime;
   float iTimeDelta;
   float iFrame;
@@ -91,15 +91,15 @@ void main() {
 
 const char *shader_source_texture = R"GLSL(precision highp float;
 
-layout (std140) uniform CommonUniforms { 
-  mat4  iModelViewProjection;
-  mat4  iModelView;
-  mat4  iProjection;
-  mat4  iInverseModelViewProjection;
-  mat4  iInverseModelView;
-  mat4  iInverseProjection;
-  vec4  iControllerPosition[2]; // [Left, Right]
-  vec4  iControllerVelocity[2];
+layout(std140) uniform CommonUniforms {
+  mat4 iModelViewProjection;
+  mat4 iModelView;
+  mat4 iProjection;
+  mat4 iInverseModelViewProjection;
+  mat4 iInverseModelView;
+  mat4 iInverseProjection;
+  vec4 iControllerPosition[2]; // [Left, Right]
+  vec4 iControllerVelocity[2];
   float iTime;
   float iTimeDelta;
   float iFrame;
