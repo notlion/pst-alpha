@@ -54,7 +54,6 @@ class App {
   std::string_view m_user_shader_source_prefixes[2];
   std::string_view m_user_shader_source_postfixes[2];
 
-  void bindCommonShaderUniforms(gl::Program &prog);
   void updateCommonShaderUniformMatrices();
 
 public:

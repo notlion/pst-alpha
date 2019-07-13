@@ -147,6 +147,8 @@ void App::update(double time_seconds) {
 }
 
 void App::render(int width, int height) {
+  gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
+
   // Texture
   {
     gl::enableBlendAlphaPremult();
