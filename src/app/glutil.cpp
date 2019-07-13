@@ -133,13 +133,16 @@ static void cacheActiveUniforms(Program &prog) {
   GLint active_uniform_count;
   glGetProgramiv(prog.id, GL_ACTIVE_UNIFORMS, &active_uniform_count);
 
-  char name[512];
+  GLint max_name_length;
+  glGetProgramiv(prog.id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_name_length);
+
+  char name[max_name_length];
   GLsizei name_length;
   GLint count;
   GLenum type;
 
   for (GLint i = 0; i < active_uniform_count; ++i) {
-    glGetActiveUniform(prog.id, i, 511, &name_length, &count, &type, name);
+    glGetActiveUniform(prog.id, i, max_name_length, &name_length, &count, &type, name);
     auto loc = glGetUniformLocation(prog.id, name);
     if (loc >= 0) {
       prog.uniforms.push_back({ loc, count, type, { name, std::string::size_type(name_length) } });
@@ -149,34 +152,38 @@ static void cacheActiveUniforms(Program &prog) {
   CHECK_GL_ERROR();
 }
 
-// static void cacheActiveUniformBlocks(Program &prog) {
-//   GLint active_uniform_block_count;
-//   glGetProgramiv(prog.id, GL_ACTIVE_UNIFORM_BLOCKS, &active_uniform_block_count);
+static void cacheActiveUniformBlocks(Program &prog) {
+  GLint active_uniform_block_count;
+  glGetProgramiv(prog.id, GL_ACTIVE_UNIFORM_BLOCKS, &active_uniform_block_count);
 
-//   GLint max_name_length;
-//   glGetProgramiv(prog.id, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_length);
+  GLint max_name_length;
+  glGetProgramiv(prog.id, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_length);
 
-//   char name[max_name_length];
-//   GLsizei name_length;
+  char name[max_name_length];
+  GLsizei name_length;
 
-//   for (GLint i = 0; i < active_uniform_block_count; ++i) {
-//     glGetActiveUniformBlockName(prog.id, i, max_name_length, &name_length, &name);
-//   }
+  for (GLint i = 0; i < active_uniform_block_count; ++i) {
+    glGetActiveUniformBlockName(prog.id, i, max_name_length, &name_length, name);
+    prog.uniform_blocks.push_back({ -1, { name, static_cast<std::string::size_type>(name_length) } });
+  }
 
-//   CHECK_GL_ERROR();
-// }
+  CHECK_GL_ERROR();
+}
 
 static void cacheActiveAttribs(Program &prog) {
   GLint active_attrib_count;
   glGetProgramiv(prog.id, GL_ACTIVE_ATTRIBUTES, &active_attrib_count);
 
-  char name[512];
+  GLint max_name_length;
+  glGetProgramiv(prog.id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max_name_length);
+
+  char name[max_name_length];
   GLsizei name_length;
   GLint count;
   GLenum type;
 
   for (GLint i = 0; i < active_attrib_count; ++i) {
-    glGetActiveAttrib(prog.id, i, 511, &name_length, &count, &type, name);
+    glGetActiveAttrib(prog.id, i, max_name_length, &name_length, &count, &type, name);
     auto loc = glGetAttribLocation(prog.id, name);
     if (loc >= 0) {
       prog.attributes.push_back({ loc, type, count, { name, static_cast<std::string::size_type>(name_length) } });
@@ -227,6 +234,7 @@ void createProgram(Program &prog, std::string_view vert_shader_src, std::string_
     }
 
     cacheActiveUniforms(prog);
+    cacheActiveUniformBlocks(prog);
     cacheActiveAttribs(prog);
   }
 
@@ -269,18 +277,36 @@ void deleteProgram(Program &prog) noexcept {
   }
 }
 
-GLint getUniformLocation(const Program &prog, const GLchar *name) {
+GLint getUniformLocation(const Program &prog, std::string_view name) {
   const auto it = std::find_if(prog.uniforms.begin(),
                                prog.uniforms.end(),
                                [&](const Uniform &uniform) { return uniform.name == name; });
   return it == prog.uniforms.end() ? -1 : it->loc;
 }
 
-GLint getAttribLocation(const Program &prog, const GLchar *name) {
+GLint getAttribLocation(const Program &prog, std::string_view name) {
   const auto it = std::find_if(prog.attributes.begin(),
                                prog.attributes.end(),
                                [&](const Attribute &attrib) { return attrib.name == name; });
   return it == prog.attributes.end() ? -1 : it->loc;
+}
+
+GLint getUniformBlockIndex(const Program &prog, std::string_view name) {
+  const auto it = std::find_if(prog.uniform_blocks.begin(),
+                               prog.uniform_blocks.end(),
+                               [&](const UniformBlock &block) { return block.name == name; });
+  return it == prog.uniform_blocks.end() ? -1 : GLint(it - prog.uniform_blocks.begin());
+}
+
+
+void uniformBlockBinding(Program &prog, std::string_view uniform_block_name, GLuint uniform_block_binding) {
+  const auto index = getUniformBlockIndex(prog, uniform_block_name);
+  if (index >= 0) {
+    prog.uniform_blocks[index].binding = uniform_block_binding;
+    glUniformBlockBinding(prog.id, index, uniform_block_binding);
+
+    CHECK_GL_ERROR();
+  }
 }
 
 
@@ -301,6 +327,10 @@ void updateUniformBuffer(UniformBuffer &ub, std::size_t uniform_data_size_bytes,
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
   CHECK_GL_ERROR();
+}
+
+void bindUniformBuffer(UniformBuffer &ub, GLuint uniform_block_binding) {
+  glBindBufferBase(GL_UNIFORM_BUFFER, uniform_block_binding, ub.id);
 }
 
 void deleteUniformBuffer(UniformBuffer &ub) {

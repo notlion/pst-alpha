@@ -17,6 +17,7 @@ static void splitShaderSource(std::string_view source,
 
 bool App::init() {
   DEBUG_PRINT_GL_STATS();
+  PRINT_DEBUG("CommonUniforms Size: %lu\n", sizeof(CommonShaderUniforms));
 
   splitShaderSource(shader_source_simulate, "{simulation}", m_user_shader_source_prefixes[0], m_user_shader_source_postfixes[0]);
   splitShaderSource(shader_source_texture, "{texture}", m_user_shader_source_prefixes[1], m_user_shader_source_postfixes[1]);
@@ -95,12 +96,6 @@ bool App::init() {
 void App::cleanup() {
 }
 
-void App::bindCommonShaderUniforms(gl::Program &prog) {
-  GLuint block_index = glGetUniformBlockIndex(prog.id, "CommonUniforms");
-  glUniformBlockBinding(prog.id, block_index, 1);
-  glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_common_uniforms_buffer.id);
-}
-
 void App::updateCommonShaderUniformMatrices() {
   m_common_uniforms.inverse_model_view = gl::inverse(m_common_uniforms.model_view);
   m_common_uniforms.inverse_projection = gl::inverse(m_common_uniforms.projection);
@@ -138,9 +133,10 @@ void App::update(double time_seconds) {
     gl::bindTexture(m_particle_fbs[1]->textures[1], GL_TEXTURE2);
     gl::bindTexture(m_particle_fbs[2]->textures[1], GL_TEXTURE3);
 
+    gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
+
     gl::useProgram(m_simulate_prog);
     gl::uniform(m_simulate_prog, "iResolution", gl::vec2(m_particle_framebuffer_resolution));
-    bindCommonShaderUniforms(m_simulate_prog);
 
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
@@ -161,9 +157,10 @@ void App::render(int width, int height) {
     gl::bindTexture(m_particle_fbs[0]->textures[2], GL_TEXTURE2);
     gl::bindTexture(m_particle_fbs[0]->textures[3], GL_TEXTURE3);
 
+    gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
+
     gl::useProgram(m_texture_prog);
     gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
-    bindCommonShaderUniforms(m_texture_prog);
 
     gl::enableVertexBuffer(m_particles_vb);
     gl::enableVertexBuffer(m_particle_quad_vb);
@@ -219,6 +216,7 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
         gl::uniform(prog, "iPositionPrev", 1);
         gl::uniform(prog, "iColor", 2);
         gl::uniform(prog, "iColorPrev", 3);
+        gl::uniformBlockBinding(prog, "CommonUniforms", 0);
 
         m_simulate_prog = std::move(prog);
       } break;
@@ -229,6 +227,7 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
         gl::uniform(prog, "iColor", 1);
         gl::uniform(prog, "iRight", 2);
         gl::uniform(prog, "iUp", 3);
+        gl::uniformBlockBinding(prog, "CommonUniforms", 0);
 
         m_texture_prog = std::move(prog);
       } break;

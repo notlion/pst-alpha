@@ -54,6 +54,12 @@ struct Uniform {
   std::string name;
 };
 
+struct UniformBlock {
+  GLint binding = -1;
+
+  std::string name;
+};
+
 struct Attribute {
   GLint loc = -1;
   GLenum type;
@@ -71,6 +77,7 @@ struct Program {
   GLuint id = 0;
 
   std::vector<Uniform> uniforms;
+  std::vector<UniformBlock> uniform_blocks;
   std::vector<Attribute> attributes;
 
   GL_UTIL_MOVE_ONLY_CLASS(Program)
@@ -166,11 +173,15 @@ Program createProgram(std::string_view shader_src, ShaderVersion version = SHADE
 void createProgram(Program &prog, std::string_view shader_src, ShaderVersion version = SHADER_VERSION_100);
 void deleteProgram(Program &prog) noexcept;
 
-GLint getUniformLocation(const Program &prog, const GLchar *name);
-GLint getAttribLocation(const Program &prog, const GLchar *name);
+GLint getUniformLocation(const Program &prog, std::string_view name);
+GLint getAttribLocation(const Program &prog, std::string_view name);
+GLint getUniformBlockIndex(const Program &prog, std::string_view name);
+
+void uniformBlockBinding(Program &prog, std::string_view uniform_block_name, GLuint uniform_block_binding);
 
 void createUniformBuffer(UniformBuffer &ub, std::size_t uniform_data_size_bytes, const void *data, GLenum usage = GL_DYNAMIC_DRAW);
 void updateUniformBuffer(UniformBuffer &ub, std::size_t uniform_data_size_bytes, const void *data);
+void bindUniformBuffer(UniformBuffer &ub, GLuint uniform_block_binding);
 void deleteUniformBuffer(UniformBuffer &ub);
 
 template <typename UniformData>
@@ -244,7 +255,7 @@ inline void uniform(GLint loc, const mat4 &m) {
 }
 
 template <typename T>
-void uniform(const Program &prog, const GLchar *name, const T &x) {
+void uniform(const Program &prog, std::string_view name, const T &x) {
   uniform(getUniformLocation(prog, name), x);
 }
 
