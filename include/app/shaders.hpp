@@ -152,10 +152,12 @@ void main() {
 #endif
 )GLSL";
 
-const char *shader_source_user_default_simulation = R"GLSL(float hash1(uint n) {
-	n = (n << 13U) ^ n;
+const char *shader_source_user_default_simulation = R"GLSL(const vec3 cubeFaceNormals[6] = vec3[6](vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0), vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, -1.0));
+
+float hash1(uint n) {
+  n = (n << 13U) ^ n;
   n = n * (n * n * 15731U + 789221U) + 1376312589U;
-  return float( n & uvec3(0x7fffffffU))/float(0x7fffffff);
+  return float(n & uvec3(0x7fffffffU)) / float(0x7fffffff);
 }
 
 float getDepth(vec2 p) {
@@ -172,17 +174,18 @@ float getDepth(vec2 p) {
 void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRightVector, out vec3 fragUpVector) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
+  float r = hash1(uint(id));
 
-  if (id < 2) {
-    fragPosition = iControllerPosition[id];
-    fragColor = vec4(1.0);
-    fragRightVector = vec3(0.1, 0.0, 0.0);
-    fragUpVector = vec3(0.0, 0.1, 0.0);
+  if (id < 12) {
+    fragPosition = iControllerPosition[id / 6];
+    fragPosition.xyz += cubeFaceNormals[id % 6] * 0.1;
+    fragRightVector = 0.1 * cubeFaceNormals[(id + 1) % 6];
+    fragUpVector = 0.1 * cubeFaceNormals[(id + 2) % 6];
+    fragColor = vec4(vec3(r * 0.75 + 0.25), 1.0);
   }
   else {
     int count = int(iResolution.x) * int(iResolution.y);
     float u = float(id) / float(count);
-    float r = hash1(uint(id));
 
     float t = iTime + r * 20.0;
     vec2 xy = gl_FragCoord.xy / iResolution * 7.0 - 3.5;
