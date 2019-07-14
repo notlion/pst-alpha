@@ -87,6 +87,9 @@ bool App::init() {
 
     updateCommonShaderUniformMatrices();
 
+    m_common_uniforms.controller_position[0] = gl::vec4(-0.5f, 1.0f, 0.0f, 1.0f);
+    m_common_uniforms.controller_position[1] = gl::vec4(0.5f, 1.0f, 0.0f, 1.0f);
+
     gl::createUniformBuffer(m_common_uniforms_buffer, m_common_uniforms, GL_DYNAMIC_DRAW);
   }
 
@@ -245,9 +248,9 @@ void App::setViewAndProjectionMatrices(const float *view_matrix_values, const fl
 }
 
 void App::setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values) {
-  assert(index <= 0 && index < arraySize(m_common_uniforms.controller_position));
-  std::copy_n(position_values, 3, &m_common_uniforms.controller_position[index]);
-  std::copy_n(velocity_values, 3, &m_common_uniforms.controller_velocity[index]);
+  assert(index >= 0 && index < arraySize(m_common_uniforms.controller_position));
+  std::copy_n(position_values, 3, &m_common_uniforms.controller_position[index][0]);
+  std::copy_n(velocity_values, 3, &m_common_uniforms.controller_velocity[index][0]);
 }
 
 double App::getAverageFramesPerSecond() const {

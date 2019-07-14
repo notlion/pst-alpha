@@ -129,14 +129,13 @@ export class ParticleRendererElement extends HTMLElement {
 
     if (navigator.getGamepads) {
       const gamepads = navigator.getGamepads();
-      const controllers = Array.prototype.filter.call(gamepads, gp => gp && gp.displayId === this.vrDisplay.displayId);
-      const controllerLeft = controllers.find(gp => gp.hand === "left");
+      const controllerLeft = Array.prototype.find.call(gamepads, gp => gp && gp.hand === "left");
       if (controllerLeft) {
-        this.setControllerPoseAtIndex(0, controllerLeft);
+        this.setControllerPoseAtIndex(0, controllerLeft.pose);
       }
-      const controllerRight = controllers.find(gp => gp.hand === "right");
+      const controllerRight = Array.prototype.find.call(gamepads, gp => gp && gp.hand === "right");
       if (controllerRight) {
-        this.setControllerPoseAtIndex(1, controllerRight);
+        this.setControllerPoseAtIndex(1, controllerRight.pose);
       }
     }
 
@@ -347,7 +346,7 @@ export class ParticleRendererElement extends HTMLElement {
 
     const velocityOffset = this.module._malloc(3 * Float32Array.BYTES_PER_ELEMENT);
     if (pose.linearVelocity) {
-      this.module.HEAPF32.set(pose.linearVelocity, positionOffset / Float32Array.BYTES_PER_ELEMENT);
+      this.module.HEAPF32.set(pose.linearVelocity, velocityOffset / Float32Array.BYTES_PER_ELEMENT);
     }
 
     this.module._setControllerPoseAtIndex(index, positionOffset, velocityOffset);

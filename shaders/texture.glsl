@@ -1,4 +1,5 @@
 precision highp float;
+precision highp int;
 
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;
@@ -7,8 +8,10 @@ layout(std140) uniform CommonUniforms {
   mat4 iInverseModelViewProjection;
   mat4 iInverseModelView;
   mat4 iInverseProjection;
+
   vec4 iControllerPosition[2]; // [Left, Right]
   vec4 iControllerVelocity[2];
+
   float iTime;
   float iTimeDelta;
   float iFrame;
