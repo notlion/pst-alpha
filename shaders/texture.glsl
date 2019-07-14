@@ -10,8 +10,8 @@ layout(std140) uniform CommonUniforms {
   mat4 iInverseProjection;
 
   mat4 iControllerTransform[2]; // [Left, Right]
-  vec4 iControllerPosition[2];
   vec4 iControllerVelocity[2];
+  vec4 iControllerButtons[2];
 
   float iTime;
   float iTimeDelta;

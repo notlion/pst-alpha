@@ -88,6 +88,8 @@ export class ParticleRendererElement extends HTMLElement {
     this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
     this.timeIsPaused = false;
+
+    this._controllerButtons = new Float32Array(4);
   }
 
   _startAnimation() {
@@ -131,11 +133,11 @@ export class ParticleRendererElement extends HTMLElement {
       const gamepads = navigator.getGamepads();
       const controllerLeft = Array.prototype.find.call(gamepads, gp => gp && gp.hand === "left");
       if (controllerLeft) {
-        this.setControllerPoseAtIndex(0, controllerLeft.pose);
+        this.setControllerAtIndex(0, controllerLeft);
       }
       const controllerRight = Array.prototype.find.call(gamepads, gp => gp && gp.hand === "right");
       if (controllerRight) {
-        this.setControllerPoseAtIndex(1, controllerRight.pose);
+        this.setControllerAtIndex(1, controllerRight);
       }
     }
 
@@ -338,23 +340,33 @@ export class ParticleRendererElement extends HTMLElement {
     this.module._free(offset);
   }
 
-  setControllerPoseAtIndex(index, pose) {
+  setControllerAtIndex(index, controller) {
     const positionOffset = this.module._malloc(3 * Float32Array.BYTES_PER_ELEMENT);
-    if (pose.position) {
-      this.module.HEAPF32.set(pose.position, positionOffset / Float32Array.BYTES_PER_ELEMENT);
+    if (controller.pose.position) {
+      this.module.HEAPF32.set(controller.pose.position, positionOffset / Float32Array.BYTES_PER_ELEMENT);
     }
 
     const velocityOffset = this.module._malloc(3 * Float32Array.BYTES_PER_ELEMENT);
-    if (pose.linearVelocity) {
-      this.module.HEAPF32.set(pose.linearVelocity, velocityOffset / Float32Array.BYTES_PER_ELEMENT);
+    if (controller.pose.linearVelocity) {
+      this.module.HEAPF32.set(controller.pose.linearVelocity, velocityOffset / Float32Array.BYTES_PER_ELEMENT);
     }
 
     const orientationOffset = this.module._malloc(4 * Float32Array.BYTES_PER_ELEMENT);
-    if (pose.orientation) {
-      this.module.HEAPF32.set(pose.orientation, orientationOffset / Float32Array.BYTES_PER_ELEMENT);
+    if (controller.pose.orientation) {
+      this.module.HEAPF32.set(controller.pose.orientation, orientationOffset / Float32Array.BYTES_PER_ELEMENT);
     }
 
-    this.module._setControllerPoseAtIndex(index, positionOffset, velocityOffset, orientationOffset);
+    const buttonsOffset = this.module._malloc(4 * Float32Array.BYTES_PER_ELEMENT);
+    if (controller.buttons) {
+      if (controller.id.startsWith("Oculus Touch")) {
+        for (let i = 0; i < 4; ++i) {
+          this._controllerButtons[i] = controller.buttons[i + 1].value;
+        }
+      }
+      this.module.HEAPF32.set(this._controllerButtons, buttonsOffset / Float32Array.BYTES_PER_ELEMENT);
+    }
+
+    this.module._setControllerAtIndex(index, positionOffset, velocityOffset, orientationOffset, buttonsOffset);
 
     this.module._free(positionOffset);
     this.module._free(velocityOffset);

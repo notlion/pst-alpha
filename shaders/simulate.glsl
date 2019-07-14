@@ -24,8 +24,8 @@ layout(std140) uniform CommonUniforms {
   mat4 iInverseProjection;
 
   mat4 iControllerTransform[2]; // [Left, Right]
-  vec4 iControllerPosition[2];
   vec4 iControllerVelocity[2];
+  vec4 iControllerButtons[2];
 
   float iTime;
   float iTimeDelta;
@@ -36,12 +36,12 @@ uniform vec2 iResolution;
 
 // {simulation}
 
-layout(location = 0) out vec4 oPosition;
-layout(location = 1) out vec4 oColor;
-layout(location = 2) out vec4 oRightVector;
-layout(location = 3) out vec4 oUpVector;
+layout(location = 0) out vec4 oFragData0;
+layout(location = 1) out vec4 oFragData1;
+layout(location = 2) out vec4 oFragData2;
+layout(location = 3) out vec4 oFragData3;
 
 void main() {
-  mainSimulation(oPosition, oColor, oRightVector.xyz, oUpVector.xyz);
+  mainSimulation(oFragData0, oFragData1, oFragData2, oFragData3);
 }
 #endif

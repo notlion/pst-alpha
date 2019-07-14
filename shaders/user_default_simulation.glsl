@@ -17,7 +17,7 @@ float getDepth(vec2 p) {
   return d;
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRightVector, out vec3 fragUpVector) {
+void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec4 fragRightVector, out vec4 fragUpVector) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   float r = hash1(uint(id));
@@ -26,9 +26,19 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
     mat4 xf = iControllerTransform[id / 6];
     vec3 scale = vec3(0.025, 0.025, 0.1);
     fragPosition = xf * vec4(cubeFaceNormals[id % 6] * scale, 1.0);
-    fragRightVector = mat3(xf) * (cubeFaceNormals[(id + 1) % 6] * scale);
-    fragUpVector = mat3(xf) * (cubeFaceNormals[(id + 2) % 6] * scale);
     fragColor = vec4(vec3(r * 0.75 + 0.25), 1.0);
+    fragRightVector = xf * vec4(cubeFaceNormals[(id + 1) % 6] * scale, 0.0);
+    fragUpVector = xf * vec4(cubeFaceNormals[(id + 2) % 6] * scale, 0.0);
+  }
+  else if (id < 20) {
+    int i = id - 12;
+    int controllerId = i / 4;
+    int buttonId = i % 4;
+    mat4 xf = iControllerTransform[controllerId];
+    fragPosition = xf * vec4(0.0, 0.026, 0.022 * float(buttonId), 1.0);
+    fragColor = vec4(0.4 + 0.6 * iControllerButtons[controllerId][buttonId], 0.0, 0.0, 1.0);
+    fragRightVector = xf * vec4(0.01, 0.0, 0.0, 0.0);
+    fragUpVector = xf * vec4(0.0, 0.0, 0.009, 0.0);
   }
   else {
     int count = int(iResolution.x) * int(iResolution.y);
@@ -46,12 +56,12 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec3 fragRigh
     vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
     vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
 
-    fragRightVector = tx.xzy * r * 0.1 + 0.005;
-    fragUpVector = ty.xzy * (1.0 - r) * 0.1 + 0.005;
+    fragRightVector.xyz = tx.xzy * r * 0.1 + 0.005;
+    fragUpVector.xyz = ty.xzy * (1.0 - r) * 0.1 + 0.005;
 
     fragColor.rg = vec2(texcoord) / iResolution;
     fragColor.b = r * 0.4;
-    float controllerDist = min(distance(fragPosition.xyz, iControllerPosition[0].xyz), distance(fragPosition.xyz, iControllerPosition[1].xyz));
+    float controllerDist = min(distance(fragPosition.xyz, iControllerTransform[0][3].xyz), distance(fragPosition.xyz, iControllerTransform[1][3].xyz));
     fragColor.rgb *= smoothstep(4.0, 2.0, length(fp)) * 1.5 * smoothstep(0.0, 1.0, controllerDist);
     fragColor.a = 1.0;
   }

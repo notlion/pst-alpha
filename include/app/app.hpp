@@ -25,8 +25,8 @@ struct CommonShaderUniforms {
   gl::mat4 inverse_projection;
 
   gl::mat4 controller_transform[2]; // [Left, Right]
-  gl::vec4 controller_position[2]; 
   gl::vec4 controller_velocity[2];
+  gl::vec4 controller_buttons[2];
 
   float time;
   float time_delta;
@@ -47,6 +47,7 @@ class App {
   CommonShaderUniforms m_common_uniforms;
   gl::UniformBuffer m_common_uniforms_buffer;
 
+  gl::vec4 m_controller_position[2];
   gl::quat m_controller_orientation[2];
 
   gl::Program m_simulate_prog;
@@ -71,7 +72,7 @@ public:
   void setUserShaderSourceAtIndex(int index, std::string_view shader_src);
 
   void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
-  void setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values);
+  void setControllerAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values, const float *buttons_values);
 
   double getAverageFramesPerSecond() const;
 };

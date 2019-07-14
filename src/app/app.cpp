@@ -20,7 +20,6 @@ static void splitShaderSource(std::string_view source,
 
 bool App::init() {
   DEBUG_PRINT_GL_STATS();
-  PRINT_DEBUG("CommonUniforms Size: %lu\n", sizeof(CommonShaderUniforms));
 
   splitShaderSource(shader_source_simulate, "{simulation}", m_user_shader_source_prefixes[0], m_user_shader_source_postfixes[0]);
   splitShaderSource(shader_source_texture, "{texture}", m_user_shader_source_prefixes[1], m_user_shader_source_postfixes[1]);
@@ -90,8 +89,8 @@ bool App::init() {
 
     updateViewAndProjectionTransforms();
 
-    m_common_uniforms.controller_position[0] = gl::vec4(-0.5f, 1.0f, 0.0f, 1.0f);
-    m_common_uniforms.controller_position[1] = gl::vec4(0.5f, 1.0f, 0.0f, 1.0f);
+    m_controller_position[0] = gl::vec4(-0.5f, 1.0f, 0.0f, 1.0f);
+    m_controller_position[1] = gl::vec4(0.5f, 1.0f, 0.0f, 1.0f);
 
     gl::createUniformBuffer(m_common_uniforms_buffer, m_common_uniforms, GL_DYNAMIC_DRAW);
   }
@@ -111,7 +110,7 @@ void App::updateViewAndProjectionTransforms() {
 
 void App::updateControllerTransforms() {
   for (size_t i = 0; i < arraySize(m_common_uniforms.controller_transform); ++i) {
-    m_common_uniforms.controller_transform[i] = gl::translate(gl::mat4(1.0f), gl::vec3(m_common_uniforms.controller_position[i])) * gl::mat4_cast(m_controller_orientation[i]);
+    m_common_uniforms.controller_transform[i] = gl::translate(gl::mat4(1.0f), gl::vec3(m_controller_position[i])) * gl::mat4_cast(m_controller_orientation[i]);
   }
 }
 
@@ -258,12 +257,17 @@ void App::setViewAndProjectionMatrices(const float *view_matrix_values, const fl
   updateViewAndProjectionTransforms();
 }
 
-void App::setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values) {
-  assert(index >= 0 && index < arraySize(m_common_uniforms.controller_position));
+void App::setControllerAtIndex(int index,
+                               const float *position_values,
+                               const float *velocity_values,
+                               const float *orientation_values,
+                               const float *buttons_values) {
+  assert(index >= 0 && index < arraySize(m_controller_position));
 
-  std::copy_n(position_values, 3, &m_common_uniforms.controller_position[index][0]);
+  std::copy_n(position_values, 3, &m_controller_position[index][0]);
   std::copy_n(velocity_values, 3, &m_common_uniforms.controller_velocity[index][0]);
   std::copy_n(orientation_values, 4, &m_controller_orientation[index][0]);
+  std::copy_n(buttons_values, 4, &m_common_uniforms.controller_buttons[index][0]);
 }
 
 double App::getAverageFramesPerSecond() const {
