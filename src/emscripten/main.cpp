@@ -40,8 +40,8 @@ void setViewAndProjectionMatrices(const float *view_matrix_values, const float *
 }
 
 EMSCRIPTEN_KEEPALIVE
-void setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values) {
-  g_app.setControllerPoseAtIndex(index, position_values, velocity_values);
+void setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values) {
+  g_app.setControllerPoseAtIndex(index, position_values, velocity_values, orientation_values);
 }
 
 EMSCRIPTEN_KEEPALIVE

@@ -23,7 +23,8 @@ layout(std140) uniform CommonUniforms {
   mat4 iInverseModelView;
   mat4 iInverseProjection;
 
-  vec4 iControllerPosition[2]; // [Left, Right]
+  mat4 iControllerTransform[2]; // [Left, Right]
+  vec4 iControllerPosition[2];
   vec4 iControllerVelocity[2];
 
   float iTime;

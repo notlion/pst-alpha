@@ -349,7 +349,12 @@ export class ParticleRendererElement extends HTMLElement {
       this.module.HEAPF32.set(pose.linearVelocity, velocityOffset / Float32Array.BYTES_PER_ELEMENT);
     }
 
-    this.module._setControllerPoseAtIndex(index, positionOffset, velocityOffset);
+    const orientationOffset = this.module._malloc(4 * Float32Array.BYTES_PER_ELEMENT);
+    if (pose.orientation) {
+      this.module.HEAPF32.set(pose.orientation, orientationOffset / Float32Array.BYTES_PER_ELEMENT);
+    }
+
+    this.module._setControllerPoseAtIndex(index, positionOffset, velocityOffset, orientationOffset);
 
     this.module._free(positionOffset);
     this.module._free(velocityOffset);

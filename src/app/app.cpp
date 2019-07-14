@@ -4,8 +4,8 @@
 #include "app/shaders.hpp"
 #include "app/util.hpp"
 
-#include "ext/matrix_transform.hpp"
 #include "ext/matrix_clip_space.hpp"
+#include "ext/matrix_transform.hpp"
 
 using namespace std::string_literals;
 
@@ -88,7 +88,7 @@ bool App::init() {
     m_common_uniforms.model_view = glm::lookAt(gl::vec3(0.0f, 0.0f, 3.0f), gl::vec3(0.0f), gl::vec3(0.0f, 1.0f, 0.0f));
     m_common_uniforms.projection = glm::perspective(radians(60.0f), 1.0f, 0.01f, 1000.0f);
 
-    updateCommonShaderUniformMatrices();
+    updateViewAndProjectionTransforms();
 
     m_common_uniforms.controller_position[0] = gl::vec4(-0.5f, 1.0f, 0.0f, 1.0f);
     m_common_uniforms.controller_position[1] = gl::vec4(0.5f, 1.0f, 0.0f, 1.0f);
@@ -102,11 +102,17 @@ bool App::init() {
 void App::cleanup() {
 }
 
-void App::updateCommonShaderUniformMatrices() {
+void App::updateViewAndProjectionTransforms() {
   m_common_uniforms.inverse_model_view = gl::inverse(m_common_uniforms.model_view);
   m_common_uniforms.inverse_projection = gl::inverse(m_common_uniforms.projection);
   m_common_uniforms.model_view_projection = m_common_uniforms.projection * m_common_uniforms.model_view;
   m_common_uniforms.inverse_model_view_projection = gl::inverse(m_common_uniforms.model_view_projection);
+}
+
+void App::updateControllerTransforms() {
+  for (size_t i = 0; i < arraySize(m_common_uniforms.controller_transform); ++i) {
+    m_common_uniforms.controller_transform[i] = gl::translate(gl::mat4(1.0f), gl::vec3(m_common_uniforms.controller_position[i])) * gl::mat4_cast(m_controller_orientation[i]);
+  }
 }
 
 void App::update(double time_seconds) {
@@ -114,6 +120,8 @@ void App::update(double time_seconds) {
 
   // Update common uniforms
   {
+    updateControllerTransforms();
+
     m_common_uniforms.time = float(m_clock.elapsed_seconds);
     m_common_uniforms.time_delta = float(m_clock.elapsed_seconds_delta);
     m_common_uniforms.frame = float(m_clock.elapsed_frames);
@@ -247,13 +255,15 @@ void App::setViewAndProjectionMatrices(const float *view_matrix_values, const fl
   std::copy_n(view_matrix_values, 16, &m_common_uniforms.model_view[0][0]);
   std::copy_n(projection_matrix_values, 16, &m_common_uniforms.projection[0][0]);
 
-  updateCommonShaderUniformMatrices();
+  updateViewAndProjectionTransforms();
 }
 
-void App::setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values) {
+void App::setControllerPoseAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values) {
   assert(index >= 0 && index < arraySize(m_common_uniforms.controller_position));
+
   std::copy_n(position_values, 3, &m_common_uniforms.controller_position[index][0]);
   std::copy_n(velocity_values, 3, &m_common_uniforms.controller_velocity[index][0]);
+  std::copy_n(orientation_values, 4, &m_controller_orientation[index][0]);
 }
 
 double App::getAverageFramesPerSecond() const {
