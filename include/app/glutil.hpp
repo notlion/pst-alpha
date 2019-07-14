@@ -15,8 +15,7 @@
   #error "Unsupported Platform"
 #endif
 
-#define LC_MINIMATH_NAMESPACE gl
-#include "lc_mini_math.hpp"
+#include "glm.hpp"
 
 #include <cassert>
 #include <memory>
@@ -33,6 +32,8 @@
 #endif
 
 namespace gl {
+
+using namespace glm;
 
 #define GL_UTIL_MOVE_ONLY_CLASS(ClassName)          \
   ClassName(const ClassName &) = delete;            \

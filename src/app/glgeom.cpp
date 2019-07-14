@@ -32,7 +32,7 @@ DefaultTriangleMesh createQuad(const vec2 &min, const vec2 &max, const vec2 &uv_
 
 
 BoundingBox calcBoundingBox(const DefaultTriangleMesh &mesh) {
-  auto box = BoundingBox{ std::numeric_limits<float>::max(), -std::numeric_limits<float>::max() };
+  auto box = BoundingBox{ gl::vec3(std::numeric_limits<float>::max()), gl::vec3(-std::numeric_limits<float>::max()) };
   for (const auto &tri : mesh.triangles) {
     for (const auto &vtx : tri.vertices) {
       box.min = gl::min(box.min, vtx.position);

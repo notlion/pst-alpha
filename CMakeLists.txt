@@ -7,7 +7,10 @@ project(${APP_TARGET}-project)
 set(BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
 set(ASSETS_DIR ${PROJECT_SOURCE_DIR}/assets)
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/deps/glm/glm
+  )
 file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/app/*.cpp)
 
 if (APPLE)

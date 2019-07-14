@@ -4,6 +4,9 @@
 #include "app/shaders.hpp"
 #include "app/util.hpp"
 
+#include "ext/matrix_transform.hpp"
+#include "ext/matrix_clip_space.hpp"
+
 using namespace std::string_literals;
 
 static void splitShaderSource(std::string_view source,
@@ -82,8 +85,8 @@ bool App::init() {
   }
 
   {
-    m_common_uniforms.model_view = gl::lookAt(gl::vec3(0.0f, 0.0f, 3.0f), gl::vec3(0.0f), gl::vec3(0.0f, 1.0f, 0.0f));
-    m_common_uniforms.projection = gl::perspective(radians(60.0f), 1.0f, 0.01f, 1000.0f);
+    m_common_uniforms.model_view = glm::lookAt(gl::vec3(0.0f, 0.0f, 3.0f), gl::vec3(0.0f), gl::vec3(0.0f, 1.0f, 0.0f));
+    m_common_uniforms.projection = glm::perspective(radians(60.0f), 1.0f, 0.01f, 1000.0f);
 
     updateCommonShaderUniformMatrices();
 
@@ -241,8 +244,8 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
 }
 
 void App::setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {
-  std::copy_n(view_matrix_values, 16, &m_common_uniforms.model_view.value[0][0]);
-  std::copy_n(projection_matrix_values, 16, &m_common_uniforms.projection.value[0][0]);
+  std::copy_n(view_matrix_values, 16, &m_common_uniforms.model_view[0][0]);
+  std::copy_n(projection_matrix_values, 16, &m_common_uniforms.projection[0][0]);
 
   updateCommonShaderUniformMatrices();
 }
