@@ -6,6 +6,13 @@ float hash1(uint n) {
   return float(n & uvec3(0x7fffffffU)) / float(0x7fffffff);
 }
 
+vec3 hash3(uint n) {
+  n = (n << 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  uvec3 k = n * uvec3(n, n * 16807U, n * 48271U);
+  return vec3(k & uvec3(0x7fffffffU)) / float(0x7fffffff);
+}
+
 float getDepth(vec2 p) {
   float t0 = iTime * 0.1;
   float d = sin(p.x * 2.653 + t0) * 0.3;
@@ -39,6 +46,26 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec4 fragRigh
     fragColor = vec4(0.4 + 0.6 * iControllerButtons[controllerId][buttonId], 0.0, 0.0, 1.0);
     fragRightVector = xf * vec4(0.01, 0.0, 0.0, 0.0);
     fragUpVector = xf * vec4(0.0, 0.0, 0.009, 0.0);
+  }
+  else if (id < 120) {
+    int i = id - 20;
+    int f = int(iFrame) + i;
+    int age = f % 100;
+    if (age == 0) {
+      mat4 xf = iControllerTransform[i & 1];
+      vec3 rv = hash3(uint(i));
+      vec3 scale = vec3(0.06, 0.06, 0.21);
+      fragPosition = xf * vec4((rv - 0.5) * scale, 1.0);
+      fragColor = vec4(rv, 1.0);
+      fragRightVector = xf * vec4(0.02, 0.0, 0.0, 0.0);
+      fragUpVector = xf * vec4(0.0, 0.0, 0.02, 0.0);
+    }
+    else {
+      fragPosition = texelFetch(iFragData0, texcoord, 0);
+      fragColor = texelFetch(iFragData1, texcoord, 0);
+      fragRightVector = texelFetch(iFragData2, texcoord, 0) * 0.95;
+      fragUpVector = texelFetch(iFragData3, texcoord, 0) * 0.95;
+    }
   }
   else {
     int count = int(iResolution.x) * int(iResolution.y);
