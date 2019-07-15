@@ -146,6 +146,10 @@ void App::update(double time_seconds) {
     gl::bindTexture(m_particle_fbs[2]->textures[0], GL_TEXTURE1);
     gl::bindTexture(m_particle_fbs[1]->textures[1], GL_TEXTURE2);
     gl::bindTexture(m_particle_fbs[2]->textures[1], GL_TEXTURE3);
+    gl::bindTexture(m_particle_fbs[1]->textures[2], GL_TEXTURE4);
+    gl::bindTexture(m_particle_fbs[2]->textures[2], GL_TEXTURE5);
+    gl::bindTexture(m_particle_fbs[1]->textures[3], GL_TEXTURE6);
+    gl::bindTexture(m_particle_fbs[2]->textures[3], GL_TEXTURE7);
 
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
@@ -228,10 +232,14 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
     switch (index) {
       // Simulate
       case 0: {
-        gl::uniform(prog, "iPosition", 0);
-        gl::uniform(prog, "iPositionPrev", 1);
-        gl::uniform(prog, "iColor", 2);
-        gl::uniform(prog, "iColorPrev", 3);
+        gl::uniform(prog, "iFragData0", 0);
+        gl::uniform(prog, "iFragDataPrev0", 1);
+        gl::uniform(prog, "iFragData1", 2);
+        gl::uniform(prog, "iFragDataPrev1", 3);
+        gl::uniform(prog, "iFragData2", 4);
+        gl::uniform(prog, "iFragDataPrev2", 5);
+        gl::uniform(prog, "iFragData3", 6);
+        gl::uniform(prog, "iFragDataPrev3", 7);
         gl::uniformBlockBinding(prog, "CommonUniforms", 0);
 
         m_simulate_prog = std::move(prog);
@@ -239,10 +247,10 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
 
       // Shade
       case 1: {
-        gl::uniform(prog, "iPosition", 0);
-        gl::uniform(prog, "iColor", 1);
-        gl::uniform(prog, "iRight", 2);
-        gl::uniform(prog, "iUp", 3);
+        gl::uniform(prog, "iFragData0", 0);
+        gl::uniform(prog, "iFragData1", 1);
+        gl::uniform(prog, "iFragData2", 2);
+        gl::uniform(prog, "iFragData3", 3);
         gl::uniformBlockBinding(prog, "CommonUniforms", 0);
 
         m_texture_prog = std::move(prog);

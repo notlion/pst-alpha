@@ -10,10 +10,14 @@ void main() {
 #endif
 
 #ifdef FRAGMENT_SHADER
-uniform sampler2D iPosition;
-uniform sampler2D iPositionPrev;
-uniform sampler2D iColor;
-uniform sampler2D iColorPrev;
+uniform sampler2D iFragData0;
+uniform sampler2D iPrevFragData0;
+uniform sampler2D iFragData1;
+uniform sampler2D iPrevFragData1;
+uniform sampler2D iFragData2;
+uniform sampler2D iPrevFragData2;
+uniform sampler2D iFragData3;
+uniform sampler2D iPrevFragData3;
 
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;

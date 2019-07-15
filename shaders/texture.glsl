@@ -19,10 +19,10 @@ layout(std140) uniform CommonUniforms {
 };
 
 #ifdef VERTEX_SHADER
-uniform sampler2D iPosition;
-uniform sampler2D iColor;
-uniform sampler2D iRight;
-uniform sampler2D iUp;
+uniform sampler2D iFragData0;
+uniform sampler2D iFragData1;
+uniform sampler2D iFragData2;
+uniform sampler2D iFragData3;
 
 layout(location = 0) in ivec2 aParticleTexcoord;
 layout(location = 1) in vec3 aQuadPosition;
@@ -33,12 +33,12 @@ out vec4 vColor;
 out vec2 vTexcoord;
 
 void main() {
-  vColor = texelFetch(iColor, aParticleTexcoord, 0);
+  vColor = texelFetch(iFragData1, aParticleTexcoord, 0);
   vTexcoord = aQuadTexcoord;
 
-  vec4 particlePos = texelFetch(iPosition, aParticleTexcoord, 0);
-  particlePos.xyz += texelFetch(iRight, aParticleTexcoord, 0).xyz * aQuadPosition.x +
-                     texelFetch(iUp, aParticleTexcoord, 0).xyz * aQuadPosition.y;
+  vec4 particlePos = texelFetch(iFragData0, aParticleTexcoord, 0);
+  particlePos.xyz += texelFetch(iFragData2, aParticleTexcoord, 0).xyz * aQuadPosition.x +
+                     texelFetch(iFragData3, aParticleTexcoord, 0).xyz * aQuadPosition.y;
 
   gl_Position = iModelViewProjection * particlePos;
 }
