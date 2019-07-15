@@ -207,10 +207,10 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec4 fragRigh
     fragRightVector = xf * vec4(0.01, 0.0, 0.0, 0.0);
     fragUpVector = xf * vec4(0.0, 0.0, 0.009, 0.0);
   }
-  else if (id < 120) {
+  else if (id < 20 + 128) {
     int i = id - 20;
     int f = int(iFrame) + i;
-    int age = f % 100;
+    int age = f & 127;
     if (age == 0) {
       mat4 xf = iControllerTransform[i & 1];
       vec3 rv = hash3(uint(i));
@@ -228,9 +228,6 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec4 fragRigh
     }
   }
   else {
-    int count = int(iResolution.x) * int(iResolution.y);
-    float u = float(id) / float(count);
-
     float t = iTime + r * 20.0;
     vec2 xy = gl_FragCoord.xy / iResolution * 7.0 - 3.5;
     vec2 fp = xy + 0.5 * vec2(cos(t * 0.1), sin(t * 0.1));
@@ -238,6 +235,11 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec4 fragRigh
     fragPosition = vec4(xy.x, 0.0, xy.y, 1.0);
     fragPosition.y += getDepth(fp) - 1.0;
     fragPosition.z -= 4.0;
+
+    for (int i = 0; i < 2; ++i) {
+      vec3 o = fragPosition.xyz - iControllerTransform[i][3].xyz;
+      fragPosition.xyz -= smoothstep(1.0, 0.0, length(o)) * iControllerButtons[i][0] * 2.0 * o;
+    }
 
     vec2 o = vec2(0.0, 0.01);
     vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
