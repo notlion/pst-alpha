@@ -370,5 +370,7 @@ export class ParticleRendererElement extends HTMLElement {
 
     this.module._free(positionOffset);
     this.module._free(velocityOffset);
+    this.module._free(orientationOffset);
+    this.module._free(buttonsOffset);
   }
 }
