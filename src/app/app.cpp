@@ -69,7 +69,7 @@ bool App::init() {
   {
     gl::TextureOpts particle_tex_opts{ GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST };
 
-    for (size_t i = 0; i < m_particle_fbs.size(); ++i) {
+    for (size_t i = 0; i < arraySize(m_particle_fbs); ++i) {
       m_particle_fbs[i] = std::make_unique<gl::Framebuffer>();
       gl::createFramebuffer(*m_particle_fbs[i],
                             m_particle_framebuffer_resolution.x,
@@ -79,6 +79,8 @@ bool App::init() {
                                 { GL_COLOR_ATTACHMENT1, particle_tex_opts },
                                 { GL_COLOR_ATTACHMENT2, particle_tex_opts },
                                 { GL_COLOR_ATTACHMENT3, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT4, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT5, particle_tex_opts },
                             });
     }
   }
@@ -131,7 +133,7 @@ void App::update(double time_seconds) {
 
   // Simulate
   {
-    std::rotate(m_particle_fbs.rbegin(), m_particle_fbs.rbegin() + 1, m_particle_fbs.rend());
+    std::swap(m_particle_fbs[0], m_particle_fbs[1]);
 
     gl::bindFramebuffer(*m_particle_fbs[0]);
 
@@ -143,13 +145,11 @@ void App::update(double time_seconds) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     gl::bindTexture(m_particle_fbs[1]->textures[0], GL_TEXTURE0);
-    gl::bindTexture(m_particle_fbs[2]->textures[0], GL_TEXTURE1);
-    gl::bindTexture(m_particle_fbs[1]->textures[1], GL_TEXTURE2);
-    gl::bindTexture(m_particle_fbs[2]->textures[1], GL_TEXTURE3);
-    gl::bindTexture(m_particle_fbs[1]->textures[2], GL_TEXTURE4);
-    gl::bindTexture(m_particle_fbs[2]->textures[2], GL_TEXTURE5);
-    gl::bindTexture(m_particle_fbs[1]->textures[3], GL_TEXTURE6);
-    gl::bindTexture(m_particle_fbs[2]->textures[3], GL_TEXTURE7);
+    gl::bindTexture(m_particle_fbs[1]->textures[1], GL_TEXTURE1);
+    gl::bindTexture(m_particle_fbs[1]->textures[2], GL_TEXTURE2);
+    gl::bindTexture(m_particle_fbs[1]->textures[3], GL_TEXTURE3);
+    gl::bindTexture(m_particle_fbs[1]->textures[4], GL_TEXTURE4);
+    gl::bindTexture(m_particle_fbs[1]->textures[5], GL_TEXTURE5);
 
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
@@ -176,6 +176,8 @@ void App::render(int width, int height) {
     gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
     gl::bindTexture(m_particle_fbs[0]->textures[2], GL_TEXTURE2);
     gl::bindTexture(m_particle_fbs[0]->textures[3], GL_TEXTURE3);
+    gl::bindTexture(m_particle_fbs[0]->textures[4], GL_TEXTURE4);
+    gl::bindTexture(m_particle_fbs[0]->textures[5], GL_TEXTURE5);
 
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
@@ -229,32 +231,19 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
   if (prog.id) {
     gl::useProgram(prog);
 
-    switch (index) {
-      // Simulate
-      case 0: {
-        gl::uniform(prog, "iFragData0", 0);
-        gl::uniform(prog, "iFragDataPrev0", 1);
-        gl::uniform(prog, "iFragData1", 2);
-        gl::uniform(prog, "iFragDataPrev1", 3);
-        gl::uniform(prog, "iFragData2", 4);
-        gl::uniform(prog, "iFragDataPrev2", 5);
-        gl::uniform(prog, "iFragData3", 6);
-        gl::uniform(prog, "iFragDataPrev3", 7);
-        gl::uniformBlockBinding(prog, "CommonUniforms", 0);
+    gl::uniform(prog, "iFragData0", 0);
+    gl::uniform(prog, "iFragData1", 1);
+    gl::uniform(prog, "iFragData2", 2);
+    gl::uniform(prog, "iFragData3", 3);
+    gl::uniform(prog, "iFragData4", 4);
+    gl::uniform(prog, "iFragData5", 5);
+    gl::uniformBlockBinding(prog, "CommonUniforms", 0);
 
-        m_simulate_prog = std::move(prog);
-      } break;
-
-      // Shade
-      case 1: {
-        gl::uniform(prog, "iFragData0", 0);
-        gl::uniform(prog, "iFragData1", 1);
-        gl::uniform(prog, "iFragData2", 2);
-        gl::uniform(prog, "iFragData3", 3);
-        gl::uniformBlockBinding(prog, "CommonUniforms", 0);
-
-        m_texture_prog = std::move(prog);
-      } break;
+    if (index == 0) {
+      m_simulate_prog = std::move(prog);
+    }
+    else {
+      m_texture_prog = std::move(prog);
     }
   }
 }

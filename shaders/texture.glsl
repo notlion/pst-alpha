@@ -23,6 +23,8 @@ uniform sampler2D iFragData0;
 uniform sampler2D iFragData1;
 uniform sampler2D iFragData2;
 uniform sampler2D iFragData3;
+uniform sampler2D iFragData4;
+uniform sampler2D iFragData5;
 
 layout(location = 0) in ivec2 aParticleTexcoord;
 layout(location = 1) in vec3 aQuadPosition;

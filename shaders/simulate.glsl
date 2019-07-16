@@ -11,13 +11,11 @@ void main() {
 
 #ifdef FRAGMENT_SHADER
 uniform sampler2D iFragData0;
-uniform sampler2D iPrevFragData0;
 uniform sampler2D iFragData1;
-uniform sampler2D iPrevFragData1;
 uniform sampler2D iFragData2;
-uniform sampler2D iPrevFragData2;
 uniform sampler2D iFragData3;
-uniform sampler2D iPrevFragData3;
+uniform sampler2D iFragData4;
+uniform sampler2D iFragData5;
 
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;
@@ -44,8 +42,10 @@ layout(location = 0) out vec4 oFragData0;
 layout(location = 1) out vec4 oFragData1;
 layout(location = 2) out vec4 oFragData2;
 layout(location = 3) out vec4 oFragData3;
+layout(location = 4) out vec4 oFragData4;
+layout(location = 5) out vec4 oFragData5;
 
 void main() {
-  mainSimulation(oFragData0, oFragData1, oFragData2, oFragData3);
+  mainSimulation(oFragData0, oFragData1, oFragData2, oFragData3, oFragData4, oFragData5);
 }
 #endif

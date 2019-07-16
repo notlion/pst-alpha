@@ -56,13 +56,11 @@ void main() {
 
 #ifdef FRAGMENT_SHADER
 uniform sampler2D iFragData0;
-uniform sampler2D iPrevFragData0;
 uniform sampler2D iFragData1;
-uniform sampler2D iPrevFragData1;
 uniform sampler2D iFragData2;
-uniform sampler2D iPrevFragData2;
 uniform sampler2D iFragData3;
-uniform sampler2D iPrevFragData3;
+uniform sampler2D iFragData4;
+uniform sampler2D iFragData5;
 
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;
@@ -89,9 +87,11 @@ layout(location = 0) out vec4 oFragData0;
 layout(location = 1) out vec4 oFragData1;
 layout(location = 2) out vec4 oFragData2;
 layout(location = 3) out vec4 oFragData3;
+layout(location = 4) out vec4 oFragData4;
+layout(location = 5) out vec4 oFragData5;
 
 void main() {
-  mainSimulation(oFragData0, oFragData1, oFragData2, oFragData3);
+  mainSimulation(oFragData0, oFragData1, oFragData2, oFragData3, oFragData4, oFragData5);
 }
 #endif
 )GLSL";
@@ -121,6 +121,8 @@ uniform sampler2D iFragData0;
 uniform sampler2D iFragData1;
 uniform sampler2D iFragData2;
 uniform sampler2D iFragData3;
+uniform sampler2D iFragData4;
+uniform sampler2D iFragData5;
 
 layout(location = 0) in ivec2 aParticleTexcoord;
 layout(location = 1) in vec3 aQuadPosition;
@@ -173,41 +175,47 @@ vec3 hash3(uint n) {
   return vec3(k & uvec3(0x7fffffffU)) / float(0x7fffffff);
 }
 
-float getDepth(vec2 p) {
-  float t0 = iTime * 0.1;
-  float d = sin(p.x * 2.653 + t0) * 0.3;
-  d += sin(p.y * 1.951 + t0) * 0.3;
-  float l = length(p);
-  d += 0.3 * smoothstep(0.96, 1.0, abs(fract(l * 0.1 - iTime * 0.1) * 2.0 - 1.0));
-  d += l * l * l * 0.008 * cos(12.0 * atan(p.x, p.y) + iTime);
-  d *= smoothstep(10.0, 0.0, l);
-  return d;
+float smin(float d1, float d2, float k) {
+  float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+  return mix(d2, d1, h) - k * h * (1.0 - h);
 }
 
-void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec4 fragRightVector, out vec4 fragUpVector) {
+float map(vec3 p) {
+  return min(3.0 - distance(p, vec3(0.0, 1.0, 0.0)),
+             smin(distance(p, vec3(0.15, 0.7, -2.2)) - 0.3,
+                  smin(distance(p, vec3(-0.2, 1.0, -2.0)) - 0.35,
+                       distance(p, vec3(0.0, 1.5, -2.1)) - 0.2,
+                       0.2),
+                  0.2));
+}
+
+void mainSimulation(out vec4 oPos, out vec4 oColor, out vec4 oRight, out vec4 oUp, out vec4 oPrevPos, out vec4 oUnused) {
   ivec2 texcoord = ivec2(gl_FragCoord);
   int id = (texcoord.x + texcoord.y * int(iResolution.x));
   float r = hash1(uint(id));
 
+  // Controller Body
   if (id < 12) {
     mat4 xf = iControllerTransform[id / 6];
     vec3 scale = vec3(0.025, 0.025, 0.1);
-    fragPosition = xf * vec4(cubeFaceNormals[id % 6] * scale, 1.0);
-    fragColor = vec4(vec3(r * 0.75 + 0.25), 1.0);
-    fragRightVector = xf * vec4(cubeFaceNormals[(id + 1) % 6] * scale, 0.0);
-    fragUpVector = xf * vec4(cubeFaceNormals[(id + 2) % 6] * scale, 0.0);
+    oPos = xf * vec4(cubeFaceNormals[id % 6] * scale, 1.0);
+    oColor = vec4(vec3(r * 0.75 + 0.25), 1.0);
+    oRight = xf * vec4(cubeFaceNormals[(id + 1) % 6] * scale, 0.0);
+    oUp = xf * vec4(cubeFaceNormals[(id + 2) % 6] * scale, 0.0);
   }
+  // Controller Buttons
   else if (id < 20) {
     int i = id - 12;
     int controllerId = i / 4;
     int buttonId = i % 4;
     mat4 xf = iControllerTransform[controllerId];
-    fragPosition = xf * vec4(0.0, 0.026, 0.022 * float(buttonId), 1.0);
-    fragColor = vec4(0.4 + 0.6 * iControllerButtons[controllerId][buttonId], 0.0, 0.0, 1.0);
-    fragRightVector = xf * vec4(0.01, 0.0, 0.0, 0.0);
-    fragUpVector = xf * vec4(0.0, 0.0, 0.009, 0.0);
+    oPos = xf * vec4(0.0, 0.026, 0.022 * float(buttonId), 1.0);
+    oColor = vec4(0.4 + 0.6 * iControllerButtons[controllerId][buttonId], 0.0, 0.0, 1.0);
+    oRight = xf * vec4(0.01, 0.0, 0.0, 0.0);
+    oUp = xf * vec4(0.0, 0.0, 0.009, 0.0);
   }
-  else if (id < 20 + 128) {
+  // Controller Sparkles
+  else if (id < 148) {
     int i = id - 20;
     int f = int(iFrame) + i;
     int age = f & 127;
@@ -215,44 +223,89 @@ void mainSimulation(out vec4 fragPosition, out vec4 fragColor, out vec4 fragRigh
       mat4 xf = iControllerTransform[i & 1];
       vec3 rv = hash3(uint(i));
       vec3 scale = vec3(0.06, 0.06, 0.21);
-      fragPosition = xf * vec4((rv - 0.5) * scale, 1.0);
-      fragColor = vec4(rv, 1.0);
-      fragRightVector = xf * vec4(0.02, 0.0, 0.0, 0.0);
-      fragUpVector = xf * vec4(0.0, 0.0, 0.02, 0.0);
+      oPos = xf * vec4((rv - 0.5) * scale, 1.0);
+      oColor = vec4(rv, 1.0);
+      oRight = xf * vec4(0.02, 0.0, 0.0, 0.0);
+      oUp = xf * vec4(0.0, 0.0, 0.02, 0.0);
     }
     else {
-      fragPosition = texelFetch(iFragData0, texcoord, 0);
-      fragColor = texelFetch(iFragData1, texcoord, 0);
-      fragRightVector = texelFetch(iFragData2, texcoord, 0) * 0.95;
-      fragUpVector = texelFetch(iFragData3, texcoord, 0) * 0.95;
+      oPos = texelFetch(iFragData0, texcoord, 0);
+      oColor = texelFetch(iFragData1, texcoord, 0);
+      oRight = texelFetch(iFragData2, texcoord, 0) * 0.95;
+      oUp = texelFetch(iFragData3, texcoord, 0) * 0.95;
     }
   }
+  // Photons
   else {
-    float t = iTime + r * 20.0;
-    vec2 xy = gl_FragCoord.xy / iResolution * 7.0 - 3.5;
-    vec2 fp = xy + 0.5 * vec2(cos(t * 0.1), sin(t * 0.1));
+    int count = int(iResolution.x * iResolution.y) - 148;
+    int i = id - 148;
+    int f = int(iFrame) + i;
+    int age = f % (count / 16);
 
-    fragPosition = vec4(xy.x, 0.0, xy.y, 1.0);
-    fragPosition.y += getDepth(fp) - 1.0;
-    fragPosition.z -= 4.0;
+    const vec3 up = vec3(0.0, 1.0, 0.0);
 
-    for (int i = 0; i < 2; ++i) {
-      vec3 o = fragPosition.xyz - iControllerTransform[i][3].xyz;
-      fragPosition.xyz -= smoothstep(1.0, 0.0, length(o)) * iControllerButtons[i][0] * 2.0 * o;
+    if (age == 0) {
+      if (iControllerButtons[i & 1].x > 0.0) {
+        vec3 rv = hash3(uint(i));
+        mat4 xf = iControllerTransform[i & 1];
+        oColor = vec4(rv, 1.0);
+        oPos = xf * vec4(rv.xy * 0.04 - 0.02, -0.15 - 0.05 * rv.z, 1.0);
+        oPrevPos = xf * vec4(0.0, 0.0, 0.0, 1.0);
+        oUp = oPos - oPrevPos;
+        oRight = vec4(0.05 * cross(oUp.xyz, up), 0.0);
+      }
+      else {
+        oPos = vec4(0.0);
+        oPrevPos = vec4(0.0);
+        oUp = vec4(0.0);
+        oRight = vec4(0.0);
+      }
     }
+    else {
+      vec4 pos = texelFetch(iFragData0, texcoord, 0);
+      vec4 prevPos = texelFetch(iFragData4, texcoord, 0);
+      oPrevPos = pos;
 
-    vec2 o = vec2(0.0, 0.01);
-    vec3 tx = normalize(vec3(o.xy, getDepth(fp + o.xy) - getDepth(fp - o.xy)));
-    vec3 ty = normalize(vec3(o.yx, getDepth(fp + o.yx) - getDepth(fp - o.yx)));
+      vec4 vel = pos - prevPos;
 
-    fragRightVector.xyz = tx.xzy * r * 0.1 + 0.005;
-    fragUpVector.xyz = ty.xzy * (1.0 - r) * 0.1 + 0.005;
+      float d = map(pos.xyz);
+      float speed = length(vel);
+      if (d > 0.0 && d < speed) {
+        vec3 dir = normalize(vel.xyz);
+        float len = 0.0;
+        for (int i = 0; i < 8; ++i) {
+          if (d < 0.01) {
+            break;
+          }
+          pos.xyz += dir * d;
+          len += d;
+          if (len > speed) {
+            pos.xyz += dir * (speed - len);
+            break;
+          }
+          d = map(pos.xyz);
+        }
+      }
+      else {
+        pos += vel;
+      }
 
-    fragColor.rg = vec2(texcoord) / iResolution;
-    fragColor.b = r * 0.4;
-    float controllerDist = min(distance(fragPosition.xyz, iControllerTransform[0][3].xyz), distance(fragPosition.xyz, iControllerTransform[1][3].xyz));
-    fragColor.rgb *= smoothstep(4.0, 2.0, length(fp)) * 1.5 * smoothstep(0.0, 1.0, controllerDist);
-    fragColor.a = 1.0;
+      if (d < 0.01) {
+        const vec2 o = vec2(0.01, 0.0);
+        vec3 g = normalize(vec3(map(pos.xyz + o.xyy) - d, map(pos.xyz + o.yxy) - d, map(pos.xyz + o.yyx) - d));
+        oRight = vec4(0.02 * normalize(cross(up, g)), 0.0);
+        oUp = vec4(cross(g, oRight.xyz), 0.0);
+        oColor = texelFetch(iFragData1, texcoord, 0);
+        oPos = pos;
+        oPrevPos = pos;
+      }
+      else {
+        oPos = pos;
+        oColor = texelFetch(iFragData1, texcoord, 0);
+        oUp = oPos - oPrevPos;
+        oRight = vec4(0.05 * cross(oUp.xyz, up), 0.0);
+      }
+    }
   }
 }
 )GLSL";

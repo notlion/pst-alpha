@@ -38,7 +38,7 @@ struct CommonShaderUniforms {
 class App {
   gl::ivec2 m_particle_framebuffer_resolution{ 128, 128 };
 
-  std::array<std::unique_ptr<gl::Framebuffer>, 3> m_particle_fbs;
+  std::unique_ptr<gl::Framebuffer> m_particle_fbs[2];
 
   gl::VertexBuffer m_fullscreen_triangle_vb;
   gl::VertexBuffer m_particles_vb;
