@@ -57,11 +57,13 @@ export class ParticleRendererElement extends HTMLElement {
     }
 
     this.canvasElem.tabIndex = 0;
-    this.canvasElem.addEventListener("mousedown", event => this._onCanvasMouseDown(event));
     this.canvasElem.addEventListener("keydown", event => this._onCanvasKeyDown(event));
     this.canvasElem.addEventListener("keyup", event => this._onCanvasKeyUp(event));
+    this.canvasElem.addEventListener("mousedown", event => this._onCanvasMouseDown(event));
+    document.addEventListener("pointerlockchange", () => this._onPointerLockChange());
     this._canvasMouseMoveCallback = (event) => this._onCanvasMouseMove(event);
-    this._canvasMouseIsDown = false;
+    this._canvasMouseIgnoreFirstMovementEvent = false;
+    this._canvasHasPointerLock = false;
 
     window.addEventListener("vrdisplaypresentchange", () => this._onVRDisplayPresentChange(), false);
 
@@ -161,8 +163,6 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   _renderVRFrame() {
-    // console.log(this.module._getAverageFramesPerSecond());
-
     this.module.GL.makeContextCurrent(this._webglContextHandle);
 
     const width = this.canvasElem.width;
@@ -187,28 +187,36 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   _onCanvasMouseDown(event) {
-    this._canvasMouseIsDown = true;
-
     this.canvasElem.requestPointerLock();
-    this.canvasElem.addEventListener("mousemove", this._canvasMouseMoveCallback);
-    document.addEventListener("mouseup", (event) => {
-      this._canvasMouseIsDown = false;
-      vec3.zero(this._cameraMovementDirection);
-      this._cameraRollDirection = 0;
-
-      this.canvasElem.removeEventListener("mousemove", this._canvasMouseMoveCallback);
-      document.exitPointerLock();
-    }, { once: true });
   }
 
   _onCanvasMouseMove(event) {
-    const rotation = quat.fromEuler(quat.create(), event.movementY * 0.25, event.movementX * 0.25, 0);
-    quat.mul(this.camera.orientation, rotation, this.camera.orientation);
-    quat.normalize(this.camera.orientation, this.camera.orientation);
+    if (this._canvasMouseIgnoreFirstMovementEvent) {
+      this._canvasMouseIgnoreFirstMovementEvent = false;
+    }
+    else {
+      const rotation = quat.fromEuler(quat.create(), event.movementY * 0.25, event.movementX * 0.25, 0);
+      quat.mul(this.camera.orientation, rotation, this.camera.orientation);
+      quat.normalize(this.camera.orientation, this.camera.orientation);
+    }
+  }
+
+  _onPointerLockChange() {
+    this._canvasHasPointerLock = this.canvasElem == document.pointerLockElement;
+    if (this._canvasHasPointerLock) {
+      this._canvasMouseIgnoreFirstMovementEvent = true;
+      this.canvasElem.addEventListener("mousemove", this._canvasMouseMoveCallback);
+      document.addEventListener("mouseup", event => document.exitPointerLock(), { once: true });
+    }
+    else {
+      vec3.zero(this._cameraMovementDirection);
+      this._cameraRollDirection = 0;
+      this.canvasElem.removeEventListener("mousemove", this._canvasMouseMoveCallback);
+    }
   }
 
   _onCanvasKeyDown(event) {
-    if (this._canvasMouseIsDown) {
+    if (this._canvasHasPointerLock) {
       switch (event.key) {
         case "w":
           this._cameraMovementDirection[2] = 1;
@@ -233,7 +241,7 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   _onCanvasKeyUp(event) {
-    if (this._canvasMouseIsDown) {
+    if (this._canvasHasPointerLock) {
       switch (event.key) {
         case "w":
           if (this._cameraMovementDirection[2] > 0) this._cameraMovementDirection[2] = 0;
