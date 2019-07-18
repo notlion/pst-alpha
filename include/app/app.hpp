@@ -47,20 +47,25 @@ class App {
   CommonShaderUniforms m_common_uniforms;
   gl::UniformBuffer m_common_uniforms_buffer;
 
+  gl::Program m_programs[2];
+
   gl::vec4 m_controller_position[2];
   gl::quat m_controller_orientation[2];
 
-  gl::Program m_simulate_prog;
-  gl::Program m_texture_prog;
-
   FrameClock m_clock;
 
-  std::string m_user_shader_sources[2];
-  std::string_view m_user_shader_source_prefixes[2];
-  std::string_view m_user_shader_source_postfixes[2];
+  std::string m_user_shader_sources[3];
+  std::string m_user_shader_sources_concatenated[3];
+  std::string_view m_user_shader_source_prefixes[3];
+  std::string_view m_user_shader_source_postfixes[3];
+
+  std::string_view m_common_uniforms_shader_source;
+  std::string_view m_simulate_shader_vs_source;
 
   void updateViewAndProjectionTransforms();
   void updateControllerTransforms();
+
+  std::string concatenateShaderSourceAtIndex(int index);
 
 public:
   bool init();
@@ -70,6 +75,7 @@ public:
 
   std::string_view getUserShaderSourceAtIndex(int index);
   void setUserShaderSourceAtIndex(int index, std::string_view shader_src);
+  bool tryCompileProgramForShaderSourceAtIndex(int index);
 
   void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
   void setControllerAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values, const float *buttons_values);

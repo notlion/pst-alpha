@@ -35,6 +35,11 @@ void setUserShaderSourceAtIndex(int index, const char *shader_src) {
 }
 
 EMSCRIPTEN_KEEPALIVE
+bool tryCompileProgramForShaderSourceAtIndex(int index) {
+  return g_app.tryCompileProgramForShaderSourceAtIndex(index);
+}
+
+EMSCRIPTEN_KEEPALIVE
 void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {
   g_app.setViewAndProjectionMatrices(view_matrix_values, projection_matrix_values);
 }

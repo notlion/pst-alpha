@@ -4,58 +4,7 @@
 
 #pragma once
 
-const char *shader_source_mesh = R"GLSL(precision highp float;
-
-#ifdef VERTEX_SHADER
-
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec3 a_normal;
-layout(location = 2) in vec2 a_texcoord;
-
-out vec3 v_normal;
-out vec2 v_texcoord;
-
-uniform mat4 u_mvp_matrix;
-uniform mat3 u_normal_matrix;
-
-void main() {
-  v_texcoord = a_texcoord;
-  v_normal = normalize(u_normal_matrix * a_normal);
-
-  gl_Position = u_mvp_matrix * vec4(a_position, 1.0);
-}
-
-#endif
-
-#ifdef FRAGMENT_SHADER
-
-in vec3 v_normal;
-in vec2 v_texcoord;
-
-out vec4 fragColor;
-
-uniform sampler2D u_texture;
-
-void main() {
-  fragColor = vec4(texture(u_texture, v_texcoord).rgb, 1.0);
-}
-
-#endif
-)GLSL";
-
-const char *shader_source_simulate = R"GLSL(precision highp float;
-precision highp int;
-
-#ifdef VERTEX_SHADER
-layout(location = 0) in vec4 aPosition;
-
-void main() {
-  gl_Position = aPosition;
-}
-#endif
-
-#ifdef FRAGMENT_SHADER
-uniform sampler2D iFragData0;
+const char *shader_source_common_uniforms = R"GLSL(uniform sampler2D iFragData0;
 uniform sampler2D iFragData1;
 uniform sampler2D iFragData2;
 uniform sampler2D iFragData3;
@@ -78,60 +27,35 @@ layout(std140) uniform CommonUniforms {
   float iTimeDelta;
   float iFrame;
 };
+)GLSL";
+
+const char *shader_source_shade_fs = R"GLSL(#version 300 es
+
+precision highp float;
+precision highp int;
 
 uniform vec2 iResolution;
 
-// {simulation}
+// {{fragment}}
 
-layout(location = 0) out vec4 oFragData0;
-layout(location = 1) out vec4 oFragData1;
-layout(location = 2) out vec4 oFragData2;
-layout(location = 3) out vec4 oFragData3;
-layout(location = 4) out vec4 oFragData4;
-layout(location = 5) out vec4 oFragData5;
+in vec4 vColor;
+in vec2 vTexcoord;
+
+out vec4 oFragColor;
 
 void main() {
-  mainSimulation(oFragData0, oFragData1, oFragData2, oFragData3, oFragData4, oFragData5);
+  mainFragment(oFragColor, vColor, vTexcoord);
 }
-#endif
 )GLSL";
 
-const char *shader_source_texture = R"GLSL(precision highp float;
+const char *shader_source_shade_vs = R"GLSL(#version 300 es
+
+precision highp float;
 precision highp int;
 
-uniform sampler2D iFragData0;
-uniform sampler2D iFragData1;
-uniform sampler2D iFragData2;
-uniform sampler2D iFragData3;
-uniform sampler2D iFragData4;
-uniform sampler2D iFragData5;
+uniform vec2 iResolution;
 
-layout(std140) uniform CommonUniforms {
-  mat4 iModelViewProjection;
-  mat4 iModelView;
-  mat4 iProjection;
-  mat4 iInverseModelViewProjection;
-  mat4 iInverseModelView;
-  mat4 iInverseProjection;
-
-  mat4 iControllerTransform[2]; // [Left, Right]
-  vec4 iControllerVelocity[2];
-  vec4 iControllerButtons[2];
-
-  float iTime;
-  float iTimeDelta;
-  float iFrame;
-};
-
-#ifdef VERTEX_SHADER
-void mainVertex(out vec4 oPosition, out vec4 oColor, in vec2 quadPosition, in ivec2 particleCoord) {
-  vec4 particlePos = texelFetch(iFragData0, particleCoord, 0);
-  particlePos.xyz += texelFetch(iFragData2, particleCoord, 0).xyz * quadPosition.x;
-  particlePos.xyz += texelFetch(iFragData3, particleCoord, 0).xyz * quadPosition.y;
-
-  oPosition = iModelViewProjection * particlePos;
-  oColor = texelFetch(iFragData1, particleCoord, 0);
-}
+// {{vertex}}
 
 layout(location = 0) in vec2 aQuadPosition;
 layout(location = 1) in vec2 aQuadTexcoord;
@@ -144,22 +68,44 @@ void main() {
   vTexcoord = aQuadTexcoord;
   mainVertex(gl_Position, vColor, aQuadPosition, aParticleCoord);
 }
-#endif
+)GLSL";
 
-#ifdef FRAGMENT_SHADER
+const char *shader_source_simulation_fs = R"GLSL(#version 300 es
+
+precision highp float;
+precision highp int;
+
 uniform vec2 iResolution;
 
-// {texture}
+// {{simulation}}
 
-in vec4 vColor;
-in vec2 vTexcoord;
-
-out vec4 oFragColor;
+layout(location = 0) out vec4 oFragData0;
+layout(location = 1) out vec4 oFragData1;
+layout(location = 2) out vec4 oFragData2;
+layout(location = 3) out vec4 oFragData3;
+layout(location = 4) out vec4 oFragData4;
+layout(location = 5) out vec4 oFragData5;
 
 void main() {
-  mainFragment(oFragColor, vColor, vTexcoord);
+  mainSimulation(oFragData0, oFragData1, oFragData2, oFragData3, oFragData4, oFragData5);
 }
-#endif
+)GLSL";
+
+const char *shader_source_simulation_vs = R"GLSL(#version 300 es
+
+precision highp float;
+precision highp int;
+
+layout(location = 0) in vec4 aPosition;
+
+void main() {
+  gl_Position = aPosition;
+}
+)GLSL";
+
+const char *shader_source_user_default_fragment = R"GLSL(void mainFragment(out vec4 oColor, in vec4 color, in vec2 texcoord) {
+  oColor = color;
+}
 )GLSL";
 
 const char *shader_source_user_default_simulation = R"GLSL(const vec3 cubeFaceNormals[6] = vec3[6](vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0), vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, -1.0));
@@ -261,7 +207,12 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
 }
 )GLSL";
 
-const char *shader_source_user_default_texture = R"GLSL(void mainFragment(out vec4 oColor, in vec4 color, in vec2 texcoord) {
-  oColor = color;
+const char *shader_source_user_default_vertex = R"GLSL(void mainVertex(out vec4 oPosition, out vec4 oColor, in vec2 quadPosition, in ivec2 particleCoord) {
+  vec4 particlePos = texelFetch(iFragData0, particleCoord, 0);
+  particlePos.xyz += texelFetch(iFragData2, particleCoord, 0).xyz * quadPosition.x;
+  particlePos.xyz += texelFetch(iFragData3, particleCoord, 0).xyz * quadPosition.y;
+
+  oPosition = iModelViewProjection * particlePos;
+  oColor = texelFetch(iFragData1, particleCoord, 0);
 }
 )GLSL";

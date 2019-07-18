@@ -182,7 +182,7 @@ const init = () => {
       minimap: { enabled: false },
     });
 
-    shaderEditorStates = new Array(2).fill().map((_, i) => {
+    shaderEditorStates = new Array(3).fill().map((_, i) => {
       const model = monaco.editor.createModel("", "c");
       model.updateOptions({
         tabSize: 2,

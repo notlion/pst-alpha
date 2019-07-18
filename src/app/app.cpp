@@ -30,11 +30,19 @@ static void splitShaderSource(std::string_view source,
 bool App::init() {
   DEBUG_PRINT_GL_STATS();
 
-  splitShaderSource(shader_source_simulate, "{simulation}", m_user_shader_source_prefixes[0], m_user_shader_source_postfixes[0]);
-  splitShaderSource(shader_source_texture, "{texture}", m_user_shader_source_prefixes[1], m_user_shader_source_postfixes[1]);
+  m_common_uniforms_shader_source = shader_source_common_uniforms;
+  m_simulate_shader_vs_source = shader_source_simulation_vs;
+
+  splitShaderSource(shader_source_simulation_fs, "{{simulation}}", m_user_shader_source_prefixes[0], m_user_shader_source_postfixes[0]);
+  splitShaderSource(shader_source_shade_vs, "{{vertex}}", m_user_shader_source_prefixes[1], m_user_shader_source_postfixes[1]);
+  splitShaderSource(shader_source_shade_fs, "{{fragment}}", m_user_shader_source_prefixes[2], m_user_shader_source_postfixes[2]);
 
   setUserShaderSourceAtIndex(0, shader_source_user_default_simulation);
-  setUserShaderSourceAtIndex(1, shader_source_user_default_texture);
+  setUserShaderSourceAtIndex(1, shader_source_user_default_vertex);
+  setUserShaderSourceAtIndex(2, shader_source_user_default_fragment);
+
+  tryCompileProgramForShaderSourceAtIndex(0);
+  tryCompileProgramForShaderSourceAtIndex(1);
 
   // Create a triangle for rendering fullscreen
   {
@@ -186,8 +194,8 @@ void App::update(double time_seconds) {
 
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
-    gl::useProgram(m_simulate_prog);
-    gl::uniform(m_simulate_prog, "iResolution", gl::vec2(m_particle_framebuffer_resolution));
+    gl::useProgram(m_programs[0]);
+    gl::uniform(m_programs[0], "iResolution", gl::vec2(m_particle_framebuffer_resolution));
 
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
@@ -214,8 +222,8 @@ void App::render(int width, int height) {
 
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
-    gl::useProgram(m_texture_prog);
-    gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
+    gl::useProgram(m_programs[1]);
+    gl::uniform(m_programs[1], "iResolution", gl::vec2(width, height));
 
     gl::enableVertexBuffer(m_particle_quad_vb);
     gl::enableVertexBuffer(m_particles_vb);
@@ -235,16 +243,25 @@ void App::render(int width, int height) {
   }
 }
 
-static std::string concatenateShaderSource(std::string_view prefix, std::string_view user_source, std::string_view postfix) {
+static std::string concatenateShaderSource(std::string_view prefix, std::string_view common_source, std::string_view user_source, std::string_view postfix) {
   auto src = std::string();
-  auto src_size = prefix.size() + user_source.size() + postfix.size() + 1;
+  auto src_size = prefix.size() + common_source.size() + user_source.size() + postfix.size() + 2;
   src.reserve(src_size + 1);
   src += prefix;
+  src += '\n';
+  src += common_source;
   src += '\n';
   src += user_source;
   src += postfix;
   assert(src.size() == src_size);
   return src;
+}
+
+std::string App::concatenateShaderSourceAtIndex(int index){
+  return concatenateShaderSource(m_user_shader_source_prefixes[index],
+                                 m_common_uniforms_shader_source,
+                                 m_user_shader_sources[index],
+                                 m_user_shader_source_postfixes[index]);
 }
 
 std::string_view App::getUserShaderSourceAtIndex(int index) {
@@ -256,13 +273,26 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
   assert(index >= 0 && index < arraySize(m_user_shader_sources));
 
   m_user_shader_sources[index] = shader_src;
+  m_user_shader_sources_concatenated[index] = concatenateShaderSourceAtIndex(index);
+}
 
-  auto src = concatenateShaderSource(m_user_shader_source_prefixes[index], m_user_shader_sources[index], m_user_shader_source_postfixes[index]);
-  auto prog = gl::createProgram(src, gl::SHADER_VERSION_300ES);
+bool App::tryCompileProgramForShaderSourceAtIndex(int index) {
+  assert(index >= 0 && index < arraySize(m_user_shader_sources));
+
+  gl::Program prog;
+
+  switch (index) {
+    case 0:
+      gl::createProgram(prog, m_simulate_shader_vs_source, m_user_shader_sources_concatenated[0]);
+      break;
+    case 1:
+    case 2:
+      gl::createProgram(prog, m_user_shader_sources_concatenated[1], m_user_shader_sources_concatenated[2]);
+      break;
+  }
 
   if (prog.id) {
     gl::useProgram(prog);
-
     gl::uniform(prog, "iFragData0", 0);
     gl::uniform(prog, "iFragData1", 1);
     gl::uniform(prog, "iFragData2", 2);
@@ -271,13 +301,12 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
     gl::uniform(prog, "iFragData5", 5);
     gl::uniformBlockBinding(prog, "CommonUniforms", 0);
 
-    if (index == 0) {
-      m_simulate_prog = std::move(prog);
-    }
-    else {
-      m_texture_prog = std::move(prog);
-    }
+    m_programs[index] = std::move(prog);
+
+    return true;
   }
+
+  return false;
 }
 
 void App::setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {
