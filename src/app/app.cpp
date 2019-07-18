@@ -9,6 +9,15 @@
 
 using namespace std::string_literals;
 
+struct PositionVertex {
+  gl::vec4 position;
+};
+
+struct PositionTexcoord2DVertex {
+  gl::vec2 position;
+  gl::vec2 texcoord;
+};
+
 static void splitShaderSource(std::string_view source,
                               std::string_view line_marker,
                               std::string_view &out_prefix,
@@ -27,17 +36,25 @@ bool App::init() {
   setUserShaderSourceAtIndex(0, shader_source_user_default_simulation);
   setUserShaderSourceAtIndex(1, shader_source_user_default_texture);
 
-  gl::DefaultVertex fs_tri_verts[]{
-    { gl::vec3(-1.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
-    { gl::vec3(3.0f, -1.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) },
-    { gl::vec3(-1.0f, 3.0f, 0.0f), gl::vec3(0.0f, 0.0f, 1.0f), gl::vec2(0.0f, 0.0f) }
-  };
-  gl::DefaultTriangleMesh fs_tri_mesh{
-    { { fs_tri_verts[0], fs_tri_verts[1], fs_tri_verts[2] } },
-    gl::DefaultVertex::default_attribs
-  };
-  gl::createVertexBuffer(m_fullscreen_triangle_vb, fs_tri_mesh);
-  gl::assignVertexBufferAttributeLocations(m_fullscreen_triangle_vb, { 0, -1, -1 });
+  // Create a triangle for rendering fullscreen
+  {
+    const PositionVertex vs[]{
+      { gl::vec4(-1.0f, -1.0f, 0.0f, 1.0f) },
+      { gl::vec4(3.0f, -1.0f, 0.0f, 1.0f) },
+      { gl::vec4(-1.0f, 3.0f, 0.0f, 1.0f) },
+    };
+
+    gl::TriangleMesh<PositionVertex> fullscreen_triangle_mesh{
+      {
+        { { vs[0], vs[1], vs[2] } },
+      },
+      {
+        { GL_FLOAT, 4, 0, 0, 0 },
+      }
+    };
+
+    gl::createVertexBuffer(m_fullscreen_triangle_vb, fullscreen_triangle_mesh);
+  }
 
   // Create particle vertex buffer
   {
@@ -52,7 +69,7 @@ bool App::init() {
     }
 
     const std::vector<gl::VertexAttribute> attribs{
-      { GL_INT, 2, 0, 0, 0 },
+      { GL_INT, 2, 0, 0, 2 },
     };
 
     gl::createVertexBuffer(m_particles_vb, GL_POINTS, sizeof(gl::ivec2) * vertices.size(), vertices.size(), vertices.data(), GL_STATIC_DRAW, attribs);
@@ -60,9 +77,25 @@ bool App::init() {
 
   // Create particle quad vertex buffer
   {
-    auto particle_quad_mesh = gl::createQuad();
+    const PositionTexcoord2DVertex vs[]{
+      { gl::vec2(-1.0f, -1.0f), gl::vec2(0.0f, 0.0f) },
+      { gl::vec2(-1.0f, 1.0f), gl::vec2(0.0f, 1.0f) },
+      { gl::vec2(1.0f, -1.0f), gl::vec2(1.0f, 0.0f) },
+      { gl::vec2(1.0f, 1.0f), gl::vec2(1.0f, 1.0f) },
+    };
+
+    gl::TriangleMesh<PositionTexcoord2DVertex> particle_quad_mesh{
+      {
+        { { vs[0], vs[1], vs[2] } },
+        { { vs[1], vs[3], vs[2] } },
+      },
+      {
+        { GL_FLOAT, 2, sizeof(PositionTexcoord2DVertex), offsetof(PositionTexcoord2DVertex, position), 0 },
+        { GL_FLOAT, 2, sizeof(PositionTexcoord2DVertex), offsetof(PositionTexcoord2DVertex, texcoord), 1 },
+      }
+    };
+    
     gl::createVertexBuffer(m_particle_quad_vb, particle_quad_mesh, GL_STATIC_DRAW);
-    gl::assignVertexBufferAttributeLocations(m_particle_quad_vb, { 1, 2, 3 });
   }
 
   // Create particle data framebuffers
@@ -75,12 +108,12 @@ bool App::init() {
                             m_particle_framebuffer_resolution.x,
                             m_particle_framebuffer_resolution.y,
                             {
-                                { GL_COLOR_ATTACHMENT0, particle_tex_opts },
-                                { GL_COLOR_ATTACHMENT1, particle_tex_opts },
-                                { GL_COLOR_ATTACHMENT2, particle_tex_opts },
-                                { GL_COLOR_ATTACHMENT3, particle_tex_opts },
-                                { GL_COLOR_ATTACHMENT4, particle_tex_opts },
-                                { GL_COLOR_ATTACHMENT5, particle_tex_opts },
+                              { GL_COLOR_ATTACHMENT0, particle_tex_opts },
+                              { GL_COLOR_ATTACHMENT1, particle_tex_opts },
+                              { GL_COLOR_ATTACHMENT2, particle_tex_opts },
+                              { GL_COLOR_ATTACHMENT3, particle_tex_opts },
+                              { GL_COLOR_ATTACHMENT4, particle_tex_opts },
+                              { GL_COLOR_ATTACHMENT5, particle_tex_opts },
                             });
     }
   }
@@ -184,13 +217,12 @@ void App::render(int width, int height) {
     gl::useProgram(m_texture_prog);
     gl::uniform(m_texture_prog, "iResolution", gl::vec2(width, height));
 
-    gl::enableVertexBuffer(m_particles_vb);
     gl::enableVertexBuffer(m_particle_quad_vb);
+    gl::enableVertexBuffer(m_particles_vb);
 
-    glVertexAttribDivisor(m_particles_vb.attribs[0].loc, 1);
     glVertexAttribDivisor(m_particle_quad_vb.attribs[0].loc, 0);
     glVertexAttribDivisor(m_particle_quad_vb.attribs[1].loc, 0);
-    glVertexAttribDivisor(m_particle_quad_vb.attribs[2].loc, 0);
+    glVertexAttribDivisor(m_particles_vb.attribs[0].loc, 1);
 
     glDrawArraysInstanced(GL_TRIANGLES, 0, m_particle_quad_vb.count, m_particles_vb.count);
 

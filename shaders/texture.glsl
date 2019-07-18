@@ -1,6 +1,13 @@
 precision highp float;
 precision highp int;
 
+uniform sampler2D iFragData0;
+uniform sampler2D iFragData1;
+uniform sampler2D iFragData2;
+uniform sampler2D iFragData3;
+uniform sampler2D iFragData4;
+uniform sampler2D iFragData5;
+
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;
   mat4 iModelView;
@@ -19,30 +26,25 @@ layout(std140) uniform CommonUniforms {
 };
 
 #ifdef VERTEX_SHADER
-uniform sampler2D iFragData0;
-uniform sampler2D iFragData1;
-uniform sampler2D iFragData2;
-uniform sampler2D iFragData3;
-uniform sampler2D iFragData4;
-uniform sampler2D iFragData5;
+void mainVertex(out vec4 oPosition, out vec4 oColor, in vec2 quadPosition, in ivec2 particleCoord) {
+  vec4 particlePos = texelFetch(iFragData0, particleCoord, 0);
+  particlePos.xyz += texelFetch(iFragData2, particleCoord, 0).xyz * quadPosition.x;
+  particlePos.xyz += texelFetch(iFragData3, particleCoord, 0).xyz * quadPosition.y;
 
-layout(location = 0) in ivec2 aParticleTexcoord;
-layout(location = 1) in vec3 aQuadPosition;
-layout(location = 2) in vec3 aQuadNormal;
-layout(location = 3) in vec2 aQuadTexcoord;
+  oPosition = iModelViewProjection * particlePos;
+  oColor = texelFetch(iFragData1, particleCoord, 0);
+}
+
+layout(location = 0) in vec2 aQuadPosition;
+layout(location = 1) in vec2 aQuadTexcoord;
+layout(location = 2) in ivec2 aParticleCoord;
 
 out vec4 vColor;
 out vec2 vTexcoord;
 
 void main() {
-  vColor = texelFetch(iFragData1, aParticleTexcoord, 0);
   vTexcoord = aQuadTexcoord;
-
-  vec4 particlePos = texelFetch(iFragData0, aParticleTexcoord, 0);
-  particlePos.xyz += texelFetch(iFragData2, aParticleTexcoord, 0).xyz * aQuadPosition.x +
-                     texelFetch(iFragData3, aParticleTexcoord, 0).xyz * aQuadPosition.y;
-
-  gl_Position = iModelViewProjection * particlePos;
+  mainVertex(gl_Position, vColor, aQuadPosition, aParticleCoord);
 }
 #endif
 
@@ -57,6 +59,6 @@ in vec2 vTexcoord;
 out vec4 oFragColor;
 
 void main() {
-  mainTexture(oFragColor, gl_PointCoord, vColor, vTexcoord);
+  mainFragment(oFragColor, vColor, vTexcoord);
 }
 #endif
