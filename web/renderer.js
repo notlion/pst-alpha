@@ -65,8 +65,6 @@ export class ParticleRendererElement extends HTMLElement {
     this._canvasMouseIgnoreFirstMovementEvent = false;
     this._canvasHasPointerLock = false;
 
-    window.addEventListener("vrdisplaypresentchange", () => this._onVRDisplayPresentChange(), false);
-
     this.isReady = false;
 
     this.module = ParticleRenderer();
@@ -75,6 +73,8 @@ export class ParticleRendererElement extends HTMLElement {
 
       this.module.GL.makeContextCurrent(this._webglContextHandle);
       this.module._init();
+
+      this._initVRDisplay();
 
       this.isReady = true;
       this.dispatchEvent(new Event("ready"));
@@ -303,28 +303,21 @@ export class ParticleRendererElement extends HTMLElement {
     }
   }
 
-  async startVRSession() {
-    try {
+  async _initVRDisplay() {
+    if (navigator.getVRDisplays) {
+      this.vrFrameData = new VRFrameData();
+
       const displays = await navigator.getVRDisplays();
-
       if (displays.length > 0) {
-        this.vrFrameData = new VRFrameData();
-        this.vrDisplay = displays[0];
+        this.vrDisplay = displays[displays.length - 1];
+        this.vrDisplay.depthNear = this.camera.clipNear;
+        this.vrDisplay.depthFar = this.camera.clipFar;
 
-        await this.vrDisplay.requestPresent([{ source: this.canvasElem }]);
+        window.addEventListener("vrdisplaypresentchange", () => this._onVRDisplayPresentChange(), false);
+        window.addEventListener("vrdisplayactivate", () => this.startVRSession(), false);
+        window.addEventListener("vrdisplaydeactivate", () => this.stopVRSession(), false);
       }
     }
-    catch (err) {
-      console.error(err);
-    }
-  }
-
-  async stopVRSession() {
-    if (this.vrDisplay && this.vrDisplay.isPresenting) {
-      await this.vrDisplay.exitPresent();
-    }
-
-    this._startAnimation();
   }
 
   _onVRDisplayPresentChange() {
@@ -334,6 +327,19 @@ export class ParticleRendererElement extends HTMLElement {
       this._startVRAnimation();
     }
     else {
+      this._startAnimation();
+    }
+  }
+
+  async startVRSession() {
+    if (this.vrDisplay) {
+      await this.vrDisplay.requestPresent([{ source: this.canvasElem }]);
+    }
+  }
+
+  async stopVRSession() {
+    if (this.vrDisplay && this.vrDisplay.isPresenting) {
+      await this.vrDisplay.exitPresent();
       this._startAnimation();
     }
   }
