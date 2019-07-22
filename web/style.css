@@ -5,9 +5,14 @@ html, body {
 
 body {
   background-color: #1e1e1e;
+  font-family: "Hack";
 }
 
 canvas {
+  outline: none;
+}
+
+button {
   outline: none;
 }
 
@@ -38,6 +43,49 @@ canvas {
   min-height: 0;
 }
 
+#editor-inputs {
+  font-size: 12px;
+  color: rgb(212, 212, 212);
+  margin: 4px;
+  border-radius: 4px;
+  background-color: #303030;
+}
+#editor-inputs.open > #editor-inputs-body {
+  display: block;
+}
+#editor-inputs.open .toggle-icon {
+  transform: rotate(90deg);
+}
+
+#editor-inputs-toggle {
+  width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: "Hack";
+  font-size: 12px;
+  background: none;
+  border: none;
+  color: rgb(212, 212, 212);
+}
+#editor-inputs-toggle > .toggle-icon {
+  display: inline-block;
+}
+
+#editor-inputs-body {
+  display: none;
+  line-height: 18px;
+  white-space: pre-line;
+  padding: 8px;
+}
+
+#editor-inputs-body > .type {
+  color: rgb(86, 156, 214);
+}
+#editor-inputs-body > .comment {
+  color: rgb(96, 139, 78);
+}
+
 #editor-container {
   flex: 1 1 0px;
 }
@@ -48,6 +96,7 @@ canvas {
   align-items: center;
 }
 .controls > button {
+  font-family: "Hack";
   height: 24px;
   margin: 4px 0 4px 4px;
   border: 0;
@@ -62,7 +111,6 @@ canvas {
 }
 .controls > button, .controls > .text {
   flex: 0 0 auto;
-  font-family: "Hack";
   font-size: 12px;
 }
 .controls > .text {
@@ -105,7 +153,6 @@ canvas {
   color: rgb(212, 212, 212);
   background-color: #303030;
   cursor: pointer;
-  outline: none;
   transition: transform 0.05s ease-out;
   transform-origin: 50% 100%;
 }

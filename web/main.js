@@ -133,6 +133,10 @@ const init = () => {
       updateSelectedTab();
     });
   });
+  
+  document.getElementById("editor-inputs-toggle").addEventListener("click", (event) => {
+    document.getElementById("editor-inputs").classList.toggle("open");
+  });
 
   const timeTextElem = document.getElementById("time-text");
   const fpsTextElem = document.getElementById("fps-text");

@@ -28,6 +28,33 @@
       <button id="vertex-shader-tab">Vertex</button>
       <button id="shade-shader-tab">Fragment</button>
     </div>
+    <div id="editor-inputs">
+      <button id="editor-inputs-toggle"><span class="toggle-icon">▶︎</span> Shader Inputs</button>
+      <div id="editor-inputs-body"><span class="type">sampler2D</span> iFragData0;
+        <span class="type">sampler2D</span> iFragData1;
+        <span class="type">sampler2D</span> iFragData2;
+        <span class="type">sampler2D</span> iFragData3;
+        <span class="type">sampler2D</span> iFragData4;
+        <span class="type">sampler2D</span> iFragData5;
+
+        <span class="type">mat4</span> iModelViewProjection;
+        <span class="type">mat4</span> iModelView;
+        <span class="type">mat4</span> iProjection;
+        <span class="type">mat4</span> iInverseModelViewProjection;
+        <span class="type">mat4</span> iInverseModelView;
+        <span class="type">mat4</span> iInverseProjection;
+
+        <span class="type">mat4</span> iControllerTransform[2]; <span class="comment">// [Left, Right]</span>
+        <span class="type">vec4</span> iControllerVelocity[2];
+        <span class="type">vec4</span> iControllerButtons[2];
+        
+        <span class="type">float</span> iTime;
+        <span class="type">float</span> iTimeDelta;
+        <span class="type">float</span> iFrame;
+        
+        <span class="type">vec2</span> iResolution;
+      </div>
+    </div>
     <div id="editor-container"></div>
     <div id="editor-controls" class="controls">
       <button id="save-shader-button">Save Shader <span class="shortcut-hint">⌃S</span></button>
