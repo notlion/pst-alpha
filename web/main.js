@@ -46,7 +46,9 @@ const updateRendererShader = () => {
 };
 
 const resizeEditor = () => {
-  if (shaderEditor) shaderEditor.layout();
+  if (shaderEditor) {
+    shaderEditor.layout();
+  }
 };
 
 const updateLayout = () => {
@@ -136,6 +138,7 @@ const init = () => {
   
   document.getElementById("editor-inputs-toggle").addEventListener("click", (event) => {
     document.getElementById("editor-inputs").classList.toggle("open");
+    resizeEditor();
   });
 
   const timeTextElem = document.getElementById("time-text");

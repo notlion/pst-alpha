@@ -44,6 +44,7 @@ button {
 }
 
 #editor-inputs {
+  flex: 0 0 auto;
   font-size: 12px;
   color: rgb(212, 212, 212);
   margin: 4px;
@@ -88,6 +89,11 @@ button {
 
 #editor-container {
   flex: 1 1 0px;
+  overflow: hidden;
+}
+
+#editor-controls {
+  flex: 0 0 auto;
 }
 
 .controls {
