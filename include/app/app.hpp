@@ -28,11 +28,11 @@ struct CommonShaderUniforms {
   gl::vec4 controller_velocity[2];
   gl::vec4 controller_buttons[2];
 
-  float time;
-  float time_delta;
-  float frame;
+  GLfloat time;
+  GLfloat time_delta;
+  GLint frame;
 
-  float _pad; // Required to make the struct size a multiple of 16 bytes.
+  GLfloat _pad; // Required to make the struct size a multiple of 16 bytes.
 };
 
 class App {

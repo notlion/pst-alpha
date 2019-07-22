@@ -167,7 +167,7 @@ void App::update(double time_seconds) {
 
     m_common_uniforms.time = float(m_clock.elapsed_seconds);
     m_common_uniforms.time_delta = float(m_clock.elapsed_seconds_delta);
-    m_common_uniforms.frame = float(m_clock.elapsed_frames);
+    m_common_uniforms.frame = GLint(m_clock.elapsed_frames);
 
     gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
   }

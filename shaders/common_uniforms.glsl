@@ -12,7 +12,7 @@ layout(std140) uniform CommonUniforms {
 
   float iTime;
   float iTimeDelta;
-  float iFrame;
+  int iFrame;
 };
 
 uniform sampler2D iFragData[6];

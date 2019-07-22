@@ -18,7 +18,7 @@ const char *shader_source_common_uniforms = R"GLSL(layout(std140) uniform Common
 
   float iTime;
   float iTimeDelta;
-  float iFrame;
+  int iFrame;
 };
 
 uniform sampler2D iFragData[6];
