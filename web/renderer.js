@@ -353,7 +353,7 @@ export class ParticleRendererElement extends HTMLElement {
     this.module._setUserShaderSourceAtIndex(index, offset);
     this.module._free(offset);
 
-    this.module._tryCompileProgramForShaderSourceAtIndex(index);
+    this.module._tryCompileShaderPrograms();
   }
 
   setControllerAtIndex(index, controller) {

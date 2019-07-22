@@ -41,8 +41,7 @@ bool App::init() {
   setUserShaderSourceAtIndex(1, shader_source_user_default_vertex);
   setUserShaderSourceAtIndex(2, shader_source_user_default_fragment);
 
-  tryCompileProgramForShaderSourceAtIndex(0);
-  tryCompileProgramForShaderSourceAtIndex(1);
+  tryCompileShaderPrograms();
 
   // Create a triangle for rendering fullscreen
   {
@@ -276,34 +275,23 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
   m_user_shader_sources_concatenated[index] = concatenateShaderSourceAtIndex(index);
 }
 
-bool App::tryCompileProgramForShaderSourceAtIndex(int index) {
-  assert(index >= 0 && index < arraySize(m_user_shader_sources));
+void App::tryCompileShaderPrograms() {
+  gl::Program programs[2];
 
-  gl::Program prog;
+  gl::createProgram(programs[0], m_simulate_shader_vs_source, m_user_shader_sources_concatenated[0]);
+  gl::createProgram(programs[1], m_user_shader_sources_concatenated[1], m_user_shader_sources_concatenated[2]);
 
-  switch (index) {
-    case 0:
-      gl::createProgram(prog, m_simulate_shader_vs_source, m_user_shader_sources_concatenated[0]);
-      break;
-    case 1:
-    case 2:
-      gl::createProgram(prog, m_user_shader_sources_concatenated[1], m_user_shader_sources_concatenated[2]);
-      break;
+  const GLint uniformSamplerLocations[] = { 0, 1, 2, 3, 4, 5 };
+
+  for (size_t i = 0; i < arraySize(programs); ++i) {
+    if (programs[i].id) {
+      gl::useProgram(programs[i]);
+      gl::uniformBlockBinding(programs[i], "CommonUniforms", 0);
+      gl::uniform(programs[i], "iFragData[0]", uniformSamplerLocations);
+
+      m_programs[i] = std::move(programs[i]);
+    }
   }
-
-  if (prog.id) {
-    gl::useProgram(prog);
-    gl::uniformBlockBinding(prog, "CommonUniforms", 0);
-
-    const GLint uniformSamplerLocations[] = { 0, 1, 2, 3, 4, 5 };
-    gl::uniform(prog, "iFragData[0]", uniformSamplerLocations);
-
-    m_programs[index] = std::move(prog);
-
-    return true;
-  }
-
-  return false;
 }
 
 void App::setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {

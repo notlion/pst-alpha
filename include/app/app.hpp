@@ -75,7 +75,7 @@ public:
 
   std::string_view getUserShaderSourceAtIndex(int index);
   void setUserShaderSourceAtIndex(int index, std::string_view shader_src);
-  bool tryCompileProgramForShaderSourceAtIndex(int index);
+  void tryCompileShaderPrograms();
 
   void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
   void setControllerAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values, const float *buttons_values);

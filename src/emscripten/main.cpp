@@ -31,12 +31,12 @@ const char *getUserShaderSourceAtIndex(int index) {
 
 EMSCRIPTEN_KEEPALIVE
 void setUserShaderSourceAtIndex(int index, const char *shader_src) {
-  return g_app.setUserShaderSourceAtIndex(index, shader_src);
+  g_app.setUserShaderSourceAtIndex(index, shader_src);
 }
 
 EMSCRIPTEN_KEEPALIVE
-bool tryCompileProgramForShaderSourceAtIndex(int index) {
-  return g_app.tryCompileProgramForShaderSourceAtIndex(index);
+void tryCompileShaderPrograms() {
+  g_app.tryCompileShaderPrograms();
 }
 
 EMSCRIPTEN_KEEPALIVE
