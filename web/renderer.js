@@ -87,6 +87,9 @@ export class ParticleRendererElement extends HTMLElement {
     this._cameraRollDirection = 0;
     this._cameraRollQuat = quat.create();
 
+    this._leftViewMatrix = mat4.create();
+    this._rightViewMatrix = mat4.create();
+
     this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
     this.timeIsPaused = false;
@@ -175,12 +178,21 @@ export class ParticleRendererElement extends HTMLElement {
 
     this.vrDisplay.getFrameData(this.vrFrameData);
 
+    if (false) { // this.vrDisplay.stageParameters) {
+      mat4.mul(this._leftViewMatrix, this.vrFrameData.leftViewMatrix, this.vrDisplay.stageParameters.sittingToStandingTransform);
+      mat4.mul(this._rightViewMatrix, this.vrFrameData.rightViewMatrix, this.vrDisplay.stageParameters.sittingToStandingTransform);
+    }
+    else {
+      mat4.copy(this._leftViewMatrix, this.vrFrameData.leftViewMatrix);
+      mat4.copy(this._rightViewMatrix, this.vrFrameData.rightViewMatrix);
+    }
+
     gl.viewport(0, 0, width * 0.5, height);
-    this._setViewAndProjectionMatrices(this.vrFrameData.leftViewMatrix, this.vrFrameData.leftProjectionMatrix);
+    this._setViewAndProjectionMatrices(this._leftViewMatrix, this.vrFrameData.leftProjectionMatrix);
     this.module._render(width * 0.5, height);
 
     gl.viewport(width * 0.5, 0, width * 0.5, height);
-    this._setViewAndProjectionMatrices(this.vrFrameData.rightViewMatrix, this.vrFrameData.rightProjectionMatrix);
+    this._setViewAndProjectionMatrices(this._rightViewMatrix, this.vrFrameData.rightProjectionMatrix);
     this.module._render(width * 0.5, height);
 
     this.vrDisplay.submitFrame();
