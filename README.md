@@ -133,6 +133,7 @@ float hash1(uint n) {
   n = n * (n * n * 15731U + 789221U) + 1376312589U;
   return float(n & uvec3(0x7fffffffU)) / float(0x7fffffff);
 }
+
 vec3 hash3(uint n) {
   n = (n << 13U) ^ n;
   n = n * (n * n * 15731U + 789221U) + 1376312589U;
@@ -153,7 +154,7 @@ float getDepth(vec2 p) {
 
 void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out vec4 oUp, out vec4 oUnused0, out vec4 oUnused1) {
   ivec2 texcoord = ivec2(gl_FragCoord);
-  int id = (texcoord.x + texcoord.y * int(iResolution.x));
+  int id = (texcoord.x + texcoord.y * iResolution.x);
   float r = hash1(uint(id));
 
   if (id < 12) {
@@ -176,7 +177,7 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
   }
   else if (id < 20 + 128) {
     int i = id - 20;
-    int f = int(iFrame) + i;
+    int f = iFrame + i;
     int age = f & 127;
     if (age == 0) {
       mat4 xf = iControllerTransform[i & 1];
@@ -188,15 +189,15 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
       oUp = xf * vec4(0.0, 0.0, 0.02, 0.0);
     }
     else {
-      oPosition = texelFetch(iFragData0, texcoord, 0);
-      oColor = texelFetch(iFragData1, texcoord, 0);
-      oRight = texelFetch(iFragData2, texcoord, 0) * 0.95;
-      oUp = texelFetch(iFragData3, texcoord, 0) * 0.95;
+      oPosition = texelFetch(iFragData[0], texcoord, 0);
+      oColor = texelFetch(iFragData[1], texcoord, 0);
+      oRight = texelFetch(iFragData[2], texcoord, 0) * 0.95;
+      oUp = texelFetch(iFragData[3], texcoord, 0) * 0.95;
     }
   }
   else {
     float t = iTime + r * 20.0;
-    vec2 xy = gl_FragCoord.xy / iResolution * 7.0 - 3.5;
+    vec2 xy = gl_FragCoord.xy / vec2(iResolution) * 7.0 - 3.5;
     vec2 fp = xy + 0.5 * vec2(cos(t * 0.1), sin(t * 0.1));
 
     oPosition = vec4(xy.x, 0.0, xy.y, 1.0);
@@ -215,7 +216,7 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
     oRight.xyz = tx.xzy * r * 0.1 + 0.005;
     oUp.xyz = ty.xzy * (1.0 - r) * 0.1 + 0.005;
 
-    oColor.rg = vec2(texcoord) / iResolution;
+    oColor.rg = vec2(texcoord) / vec2(iResolution);
     oColor.b = r * 0.4;
     float controllerDist = min(distance(oPosition.xyz, iControllerTransform[0][3].xyz), distance(oPosition.xyz, iControllerTransform[1][3].xyz));
     oColor.rgb *= smoothstep(4.0, 2.0, length(fp)) * 1.5 * smoothstep(0.0, 1.0, controllerDist);
@@ -256,7 +257,7 @@ float map(vec3 p) {
 
 void mainSimulation(out vec4 oPos, out vec4 oColor, out vec4 oRight, out vec4 oUp, out vec4 oPrevPos, out vec4 oUnused) {
   ivec2 texcoord = ivec2(gl_FragCoord);
-  int id = (texcoord.x + texcoord.y * int(iResolution.x));
+  int id = (texcoord.x + texcoord.y * iResolution.x);
   float r = hash1(uint(id));
 
   // Controller Body
@@ -282,7 +283,7 @@ void mainSimulation(out vec4 oPos, out vec4 oColor, out vec4 oRight, out vec4 oU
   // Controller Sparkles
   else if (id < 148) {
     int i = id - 20;
-    int f = int(iFrame) + i;
+    int f = iFrame + i;
     int age = f & 127;
     if (age == 0) {
       mat4 xf = iControllerTransform[i & 1];
@@ -294,17 +295,17 @@ void mainSimulation(out vec4 oPos, out vec4 oColor, out vec4 oRight, out vec4 oU
       oUp = xf * vec4(0.0, 0.0, 0.02, 0.0);
     }
     else {
-      oPos = texelFetch(iFragData0, texcoord, 0);
-      oColor = texelFetch(iFragData1, texcoord, 0);
-      oRight = texelFetch(iFragData2, texcoord, 0) * 0.95;
-      oUp = texelFetch(iFragData3, texcoord, 0) * 0.95;
+      oPos = texelFetch(iFragData[0], texcoord, 0);
+      oColor = texelFetch(iFragData[1], texcoord, 0);
+      oRight = texelFetch(iFragData[2], texcoord, 0) * 0.95;
+      oUp = texelFetch(iFragData[3], texcoord, 0) * 0.95;
     }
   }
   // Photons
   else {
-    int count = int(iResolution.x * iResolution.y) - 148;
+    int count = iResolution.x * iResolution.y - 148;
     int i = id - 148;
-    int f = int(iFrame) + i;
+    int f = iFrame + i;
     int age = f % (count / 16);
 
     const vec3 up = vec3(0.0, 1.0, 0.0);
@@ -327,8 +328,8 @@ void mainSimulation(out vec4 oPos, out vec4 oColor, out vec4 oRight, out vec4 oU
       }
     }
     else {
-      vec4 pos = texelFetch(iFragData0, texcoord, 0);
-      vec4 prevPos = texelFetch(iFragData4, texcoord, 0);
+      vec4 pos = texelFetch(iFragData[0], texcoord, 0);
+      vec4 prevPos = texelFetch(iFragData[4], texcoord, 0);
       oPrevPos = pos;
 
       vec4 vel = pos - prevPos;
@@ -360,13 +361,13 @@ void mainSimulation(out vec4 oPos, out vec4 oColor, out vec4 oRight, out vec4 oU
         vec3 g = normalize(vec3(map(pos.xyz + o.xyy) - d, map(pos.xyz + o.yxy) - d, map(pos.xyz + o.yyx) - d));
         oRight = vec4(0.02 * normalize(cross(up, g)), 0.0);
         oUp = vec4(cross(g, oRight.xyz), 0.0);
-        oColor = texelFetch(iFragData1, texcoord, 0);
+        oColor = texelFetch(iFragData[1], texcoord, 0);
         oPos = pos;
         oPrevPos = pos;
       }
       else {
         oPos = pos;
-        oColor = texelFetch(iFragData1, texcoord, 0);
+        oColor = texelFetch(iFragData[1], texcoord, 0);
         oUp = oPos - oPrevPos;
         oRight = vec4(0.05 * cross(oUp.xyz, up), 0.0);
       }

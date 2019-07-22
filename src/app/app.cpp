@@ -223,7 +223,7 @@ void App::render(int width, int height) {
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
     gl::useProgram(m_programs[1]);
-    gl::uniform(m_programs[1], "iResolution", gl::vec2(width, height));
+    gl::uniform(m_programs[1], "iResolution", gl::ivec2(width, height));
 
     gl::enableVertexBuffer(m_particle_quad_vb);
     gl::enableVertexBuffer(m_particles_vb);

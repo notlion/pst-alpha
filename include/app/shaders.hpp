@@ -149,7 +149,7 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
   }
   else if (id < 20 + 128) {
     int i = id - 20;
-    int f = int(iFrame) + i;
+    int f = iFrame + i;
     int age = f & 127;
     if (age == 0) {
       mat4 xf = iControllerTransform[i & 1];
