@@ -3,8 +3,6 @@
 precision highp float;
 precision highp int;
 
-uniform vec2 iResolution;
-
 // {{fragment}}
 
 in vec4 vColor;

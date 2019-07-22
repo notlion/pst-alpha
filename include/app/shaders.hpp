@@ -22,14 +22,13 @@ const char *shader_source_common_uniforms = R"GLSL(layout(std140) uniform Common
 };
 
 uniform sampler2D iFragData[6];
+uniform vec2 iResolution;
 )GLSL";
 
 const char *shader_source_shade_fs = R"GLSL(#version 300 es
 
 precision highp float;
 precision highp int;
-
-uniform vec2 iResolution;
 
 // {{fragment}}
 
@@ -47,8 +46,6 @@ const char *shader_source_shade_vs = R"GLSL(#version 300 es
 
 precision highp float;
 precision highp int;
-
-uniform vec2 iResolution;
 
 // {{vertex}}
 
@@ -69,8 +66,6 @@ const char *shader_source_simulation_fs = R"GLSL(#version 300 es
 
 precision highp float;
 precision highp int;
-
-uniform vec2 iResolution;
 
 // {{simulation}}
 

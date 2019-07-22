@@ -3,8 +3,6 @@
 precision highp float;
 precision highp int;
 
-uniform vec2 iResolution;
-
 // {{vertex}}
 
 layout(location = 0) in vec2 aQuadPosition;

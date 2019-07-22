@@ -3,8 +3,6 @@
 precision highp float;
 precision highp int;
 
-uniform vec2 iResolution;
-
 // {{simulation}}
 
 layout(location = 0) out vec4 oFragData0;
