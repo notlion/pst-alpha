@@ -4,12 +4,7 @@
 
 #pragma once
 
-const char *shader_source_common_uniforms = R"GLSL(uniform sampler2D iFragData0;
-uniform sampler2D iFragData1;
-uniform sampler2D iFragData2;
-uniform sampler2D iFragData3;
-uniform sampler2D iFragData4;
-uniform sampler2D iFragData5;
+const char *shader_source_common_uniforms = R"GLSL(uniform sampler2D iFragData[6];
 
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;
@@ -171,10 +166,10 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
       oUp = xf * vec4(0.0, 0.0, 0.02, 0.0);
     }
     else {
-      oPosition = texelFetch(iFragData0, texcoord, 0);
-      oColor = texelFetch(iFragData1, texcoord, 0);
-      oRight = texelFetch(iFragData2, texcoord, 0) * 0.95;
-      oUp = texelFetch(iFragData3, texcoord, 0) * 0.95;
+      oPosition = texelFetch(iFragData[0], texcoord, 0);
+      oColor = texelFetch(iFragData[1], texcoord, 0);
+      oRight = texelFetch(iFragData[2], texcoord, 0) * 0.95;
+      oUp = texelFetch(iFragData[3], texcoord, 0) * 0.95;
     }
   }
   else {
@@ -208,11 +203,11 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
 )GLSL";
 
 const char *shader_source_user_default_vertex = R"GLSL(void mainVertex(out vec4 oPosition, out vec4 oColor, in vec2 quadPosition, in ivec2 particleCoord) {
-  vec4 particlePos = texelFetch(iFragData0, particleCoord, 0);
-  particlePos.xyz += texelFetch(iFragData2, particleCoord, 0).xyz * quadPosition.x;
-  particlePos.xyz += texelFetch(iFragData3, particleCoord, 0).xyz * quadPosition.y;
+  vec4 particlePos = texelFetch(iFragData[0], particleCoord, 0);
+  particlePos.xyz += texelFetch(iFragData[2], particleCoord, 0).xyz * quadPosition.x;
+  particlePos.xyz += texelFetch(iFragData[3], particleCoord, 0).xyz * quadPosition.y;
 
   oPosition = iModelViewProjection * particlePos;
-  oColor = texelFetch(iFragData1, particleCoord, 0);
+  oColor = texelFetch(iFragData[1], particleCoord, 0);
 }
 )GLSL";

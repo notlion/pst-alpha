@@ -293,12 +293,9 @@ bool App::tryCompileProgramForShaderSourceAtIndex(int index) {
 
   if (prog.id) {
     gl::useProgram(prog);
-    gl::uniform(prog, "iFragData0", 0);
-    gl::uniform(prog, "iFragData1", 1);
-    gl::uniform(prog, "iFragData2", 2);
-    gl::uniform(prog, "iFragData3", 3);
-    gl::uniform(prog, "iFragData4", 4);
-    gl::uniform(prog, "iFragData5", 5);
+
+    const GLint uniformSamplerLocations[] = { 0, 1, 2, 3, 4, 5 };
+    gl::uniform(prog, "iFragData[0]", uniformSamplerLocations);
     gl::uniformBlockBinding(prog, "CommonUniforms", 0);
 
     m_programs[index] = std::move(prog);

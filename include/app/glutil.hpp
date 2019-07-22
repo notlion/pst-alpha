@@ -218,8 +218,18 @@ inline void uniform(GLint loc, GLuint x) {
 inline void uniform(GLint loc, GLfloat x) {
   glUniform1f(loc, x);
 }
-inline void uniform(GLint loc, double x) {
-  glUniform1f(loc, static_cast<GLfloat>(x));
+
+template <GLsizei len>
+inline void uniform(GLint loc, const GLint (&data)[len]) {
+  glUniform1iv(loc, len, data);
+}
+template <GLsizei len>
+inline void uniform(GLint loc, const GLuint (&data)[len]) {
+  glUniform1iv(loc, len, data);
+}
+template <GLsizei len>
+inline void uniform(GLint loc, const GLfloat (&data)[len]) {
+  glUniform1iv(loc, len, data);
 }
 
 inline void uniform(GLint loc, float x, float y) {

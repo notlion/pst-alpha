@@ -1,9 +1,4 @@
-uniform sampler2D iFragData0;
-uniform sampler2D iFragData1;
-uniform sampler2D iFragData2;
-uniform sampler2D iFragData3;
-uniform sampler2D iFragData4;
-uniform sampler2D iFragData5;
+uniform sampler2D iFragData[6];
 
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;

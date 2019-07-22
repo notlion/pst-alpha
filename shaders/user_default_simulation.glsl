@@ -61,10 +61,10 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
       oUp = xf * vec4(0.0, 0.0, 0.02, 0.0);
     }
     else {
-      oPosition = texelFetch(iFragData0, texcoord, 0);
-      oColor = texelFetch(iFragData1, texcoord, 0);
-      oRight = texelFetch(iFragData2, texcoord, 0) * 0.95;
-      oUp = texelFetch(iFragData3, texcoord, 0) * 0.95;
+      oPosition = texelFetch(iFragData[0], texcoord, 0);
+      oColor = texelFetch(iFragData[1], texcoord, 0);
+      oRight = texelFetch(iFragData[2], texcoord, 0) * 0.95;
+      oUp = texelFetch(iFragData[3], texcoord, 0) * 0.95;
     }
   }
   else {
