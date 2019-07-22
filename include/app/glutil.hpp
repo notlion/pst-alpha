@@ -43,10 +43,6 @@ using namespace glm;
   ClassName() noexcept = default;                   \
   ~ClassName() noexcept;
 
-using ivec2 = tvec2<GLint>;
-using ivec3 = tvec3<GLint>;
-using ivec4 = tvec4<GLint>;
-
 struct Uniform {
   GLint loc = -1;
   GLint count;
@@ -232,25 +228,46 @@ inline void uniform(GLint loc, const GLfloat (&data)[len]) {
   glUniform1iv(loc, len, data);
 }
 
-inline void uniform(GLint loc, float x, float y) {
+inline void uniform(GLint loc, GLfloat x, GLfloat y) {
   glUniform2f(loc, x, y);
 }
 inline void uniform(GLint loc, const vec2 &v) {
   glUniform2fv(loc, 1, &v.x);
 }
 
-inline void uniform(GLint loc, float x, float y, float z) {
+inline void uniform(GLint loc, GLfloat x, GLfloat y, GLfloat z) {
   glUniform3f(loc, x, y, z);
 }
 inline void uniform(GLint loc, const vec3 &v) {
   glUniform3fv(loc, 1, &v.x);
 }
 
-inline void uniform(GLint loc, float x, float y, float z, float w) {
+inline void uniform(GLint loc, GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
   glUniform4f(loc, x, y, z, w);
 }
 inline void uniform(GLint loc, const vec4 &v) {
   glUniform4fv(loc, 1, &v.x);
+}
+
+inline void uniform(GLint loc, GLint x, GLint y) {
+  glUniform2i(loc, x, y);
+}
+inline void uniform(GLint loc, const ivec2 &v) {
+  glUniform2iv(loc, 1, &v.x);
+}
+
+inline void uniform(GLint loc, GLint x, GLint y, GLint z) {
+  glUniform3i(loc, x, y, z);
+}
+inline void uniform(GLint loc, const ivec3 &v) {
+  glUniform3iv(loc, 1, &v.x);
+}
+
+inline void uniform(GLint loc, GLint x, GLint y, GLint z, GLint w) {
+  glUniform4i(loc, x, y, z, w);
+}
+inline void uniform(GLint loc, const ivec4 &v) {
+  glUniform4iv(loc, 1, &v.x);
 }
 
 inline void uniform(GLint loc, const mat2 &m) {

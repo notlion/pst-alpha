@@ -16,4 +16,4 @@ layout(std140) uniform CommonUniforms {
 };
 
 uniform sampler2D iFragData[6];
-uniform vec2 iResolution;
+uniform ivec2 iResolution;

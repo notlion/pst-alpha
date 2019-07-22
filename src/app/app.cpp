@@ -195,7 +195,7 @@ void App::update(double time_seconds) {
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
     gl::useProgram(m_programs[0]);
-    gl::uniform(m_programs[0], "iResolution", gl::vec2(m_particle_framebuffer_resolution));
+    gl::uniform(m_programs[0], "iResolution", m_particle_framebuffer_resolution);
 
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 

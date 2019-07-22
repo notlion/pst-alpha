@@ -22,7 +22,7 @@ const char *shader_source_common_uniforms = R"GLSL(layout(std140) uniform Common
 };
 
 uniform sampler2D iFragData[6];
-uniform vec2 iResolution;
+uniform ivec2 iResolution;
 )GLSL";
 
 const char *shader_source_shade_fs = R"GLSL(#version 300 es
@@ -126,7 +126,7 @@ float getDepth(vec2 p) {
 
 void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out vec4 oUp, out vec4 oUnused0, out vec4 oUnused1) {
   ivec2 texcoord = ivec2(gl_FragCoord);
-  int id = (texcoord.x + texcoord.y * int(iResolution.x));
+  int id = (texcoord.x + texcoord.y * iResolution.x);
   float r = hash1(uint(id));
 
   if (id < 12) {
@@ -169,7 +169,7 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
   }
   else {
     float t = iTime + r * 20.0;
-    vec2 xy = gl_FragCoord.xy / iResolution * 7.0 - 3.5;
+    vec2 xy = gl_FragCoord.xy / vec2(iResolution) * 7.0 - 3.5;
     vec2 fp = xy + 0.5 * vec2(cos(t * 0.1), sin(t * 0.1));
 
     oPosition = vec4(xy.x, 0.0, xy.y, 1.0);
@@ -188,7 +188,7 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out ve
     oRight.xyz = tx.xzy * r * 0.1 + 0.005;
     oUp.xyz = ty.xzy * (1.0 - r) * 0.1 + 0.005;
 
-    oColor.rg = vec2(texcoord) / iResolution;
+    oColor.rg = vec2(texcoord) / vec2(iResolution);
     oColor.b = r * 0.4;
     float controllerDist = min(distance(oPosition.xyz, iControllerTransform[0][3].xyz), distance(oPosition.xyz, iControllerTransform[1][3].xyz));
     oColor.rgb *= smoothstep(4.0, 2.0, length(fp)) * 1.5 * smoothstep(0.0, 1.0, controllerDist);

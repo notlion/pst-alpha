@@ -26,7 +26,7 @@ static void logError(std::string_view err) {
   s_error_log.emplace_back(err);
 
   // NOTE(ryan): We must print `err` after converting to std::string to ensure it is null-terminated.
-  PRINT_ERROR("%s", s_error_log.back().c_str());
+  PRINT_ERROR("%s\n", s_error_log.back().c_str());
 }
 
 static void logErrorFmt(const char *fmt, ...) {
