@@ -4,9 +4,7 @@
 
 #pragma once
 
-const char *shader_source_common_uniforms = R"GLSL(uniform sampler2D iFragData[6];
-
-layout(std140) uniform CommonUniforms {
+const char *shader_source_common_uniforms = R"GLSL(layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;
   mat4 iModelView;
   mat4 iProjection;
@@ -22,6 +20,8 @@ layout(std140) uniform CommonUniforms {
   float iTimeDelta;
   float iFrame;
 };
+
+uniform sampler2D iFragData[6];
 )GLSL";
 
 const char *shader_source_shade_fs = R"GLSL(#version 300 es

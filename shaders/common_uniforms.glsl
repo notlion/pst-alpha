@@ -1,5 +1,3 @@
-uniform sampler2D iFragData[6];
-
 layout(std140) uniform CommonUniforms {
   mat4 iModelViewProjection;
   mat4 iModelView;
@@ -16,3 +14,5 @@ layout(std140) uniform CommonUniforms {
   float iTimeDelta;
   float iFrame;
 };
+
+uniform sampler2D iFragData[6];
