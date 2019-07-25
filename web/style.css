@@ -12,8 +12,12 @@ canvas {
   outline: none;
 }
 
-button {
+button, .button {
   outline: none;
+}
+
+a.button, a.button:visited {
+  text-decoration: none;
 }
 
 #pane-left {
@@ -101,21 +105,22 @@ button {
   display: flex;
   align-items: center;
 }
-.controls > button {
+.controls > .button {
   font-family: "Hack";
+  line-height: 24px;
   height: 24px;
   margin: 4px 0 4px 4px;
+  padding: 0 6px;
   border: 0;
   border-radius: 4px;
   color: rgb(212, 212, 212);
   background-color: #303030;
-  outline: none;
   transition: transform 0.05s ease-out;
 }
-.controls > button:not(:disabled) {
+.controls > .button:not(:disabled) {
   cursor: pointer;
 }
-.controls > button, .controls > .text {
+.controls > .button, .controls > .text {
   flex: 0 0 auto;
   font-size: 12px;
 }
@@ -128,14 +133,14 @@ button {
 .controls > .text > .unit {
   color: rgba(212, 212, 212, 0.3);
 }
-.controls > button:active:not(:disabled) {
+.controls > .button:active:not(:disabled) {
   transform: scale(0.9);
   transition: none;
 }
-.controls > button:disabled {
+.controls > .button:disabled {
   color: rgba(212, 212, 212, 0.3);
 }
-.controls > button > .shortcut-hint {
+.controls > .button > .shortcut-hint {
   color: rgba(212, 212, 212, 0.3);
 }
 

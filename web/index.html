@@ -14,10 +14,10 @@
   <div id="pane-right">
     <particle-renderer id="renderer"></particle-renderer>
     <div id="viewport-controls" class="controls">
-      <button id="rewind-button">Rewind</button>
-      <button id="play-pause-button">Play/Pause</button>
-      <button id="reset-camera-button">Reset Camera</button>
-      <button id="enter-vr-button">Enter VR</button>
+      <button class="button" id="rewind-button">Rewind</button>
+      <button class="button" id="play-pause-button">Play/Pause</button>
+      <button class="button" id="reset-camera-button">Reset Camera</button>
+      <button class="button" id="enter-vr-button">Enter VR</button>
       <div class="text"><span id="time-text"></span><span class="unit">s</span></div>
       <div class="text"><span id="fps-text"></span><span class="unit">fps</span></div>
     </div>
@@ -29,7 +29,7 @@
       <button id="shade-shader-tab">Fragment</button>
     </div>
     <div id="editor-inputs">
-      <button id="editor-inputs-toggle"><span class="toggle-icon">▶︎</span> Shader Inputs</button>
+      <button class="button" id="editor-inputs-toggle"><span class="toggle-icon">▶︎</span> Shader Inputs</button>
       <div id="editor-inputs-body"><span class="type">sampler2D</span> iFragData[6];
 
         <span class="type">mat4</span> iModelViewProjection;
@@ -52,7 +52,8 @@
     </div>
     <div id="editor-container"></div>
     <div id="editor-controls" class="controls">
-      <button id="save-shader-button">Save Shader <span class="shortcut-hint">⌃S</span></button>
+      <button class="button" id="compile-shader-button">Compile <span class="shortcut-hint">⌃S ⌘S</span></button>
+      <a class="button" id="download-shader-button">Download</a>
     </div>
     <div id="pane-resize-handle"></div>
   </div>

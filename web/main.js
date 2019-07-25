@@ -45,6 +45,21 @@ const updateRendererShader = () => {
   }
 };
 
+const onDownloadRendererShaderClick = (event) => {
+  if (shaderEditorStates) {
+    const output = {
+      shaders: Array(3).fill().map((_, i) => {
+        return {
+          source: shaderEditorStates[i].model.getValue()
+        }
+      })
+    };
+
+    event.target.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "text/json" }));
+    event.target.download = "shader_" + (new Date()).toISOString() + ".json";
+  }
+};
+
 const resizeEditor = () => {
   if (shaderEditor) {
     shaderEditor.layout();
@@ -154,8 +169,11 @@ const init = () => {
   };
   window.requestAnimationFrame(onAnimationFrame);
 
-  document.getElementById("save-shader-button").addEventListener("click", (event) => {
+  document.getElementById("compile-shader-button").addEventListener("click", (event) => {
     updateRendererShader();
+  });
+  document.getElementById("download-shader-button").addEventListener("click", (event) => {
+    onDownloadRendererShaderClick(event);
   });
   document.getElementById("rewind-button").addEventListener("click", (event) => {
     rendererElem.rewind();
