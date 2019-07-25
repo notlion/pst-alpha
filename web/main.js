@@ -38,10 +38,18 @@ const setEditorShaderIndex = (index) => {
   }
 };
 
-const updateRendererShader = () => {
+const compileCurrentShader = () => {
   if (shaderEditorStates) {
     const shaderSource = shaderEditorStates[selectedShaderSourceIndex].model.getValue();
     rendererElem.setShaderSourceAtIndex(selectedShaderSourceIndex, shaderSource);
+  }
+};
+
+const compileAllShaders = () => {
+  if (shaderEditorStates) {
+    shaderEditorStates.forEach((editorState, i) => {
+      rendererElem.setShaderSourceAtIndex(i, editorState.model.getValue());
+    });
   }
 };
 
@@ -57,6 +65,39 @@ const onDownloadRendererShaderClick = (event) => {
 
     event.target.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "text/json" }));
     event.target.download = "shader_" + (new Date()).toISOString() + ".json";
+  }
+};
+
+const onDrop = (event) => {
+  event.preventDefault();
+
+  let draggedFile = null;
+  if (event.dataTransfer.items && event.dataTransfer.items.length > 0) {
+    draggedFile = event.dataTransfer.items[0].getAsFile();
+  }
+  else if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+    draggedFile = event.dataTransfer.files[0];
+  }
+
+  if (draggedFile) {
+    if (draggedFile.type == "application/json") {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const fileContents = JSON.parse(event.target.result);
+          if (Array.isArray(fileContents.shaders) && fileContents.shaders.length == 3) {
+            fileContents.shaders.forEach((shader, i) => {
+              shaderEditorStates[i].model.setValue(shader.source);
+            });
+            compileAllShaders();
+          }
+        }
+        catch (err) {
+          console.error("Could not parse JSON:", err);
+        }
+      };
+      reader.readAsText(draggedFile);
+    }
   }
 };
 
@@ -150,7 +191,7 @@ const init = () => {
       updateSelectedTab();
     });
   });
-  
+
   document.getElementById("editor-inputs-toggle").addEventListener("click", (event) => {
     document.getElementById("editor-inputs").classList.toggle("open");
     resizeEditor();
@@ -170,11 +211,9 @@ const init = () => {
   window.requestAnimationFrame(onAnimationFrame);
 
   document.getElementById("compile-shader-button").addEventListener("click", (event) => {
-    updateRendererShader();
+    compileCurrentShader();
   });
-  document.getElementById("download-shader-button").addEventListener("click", (event) => {
-    onDownloadRendererShaderClick(event);
-  });
+  document.getElementById("download-shader-button").addEventListener("click", onDownloadRendererShaderClick(event));
   document.getElementById("rewind-button").addEventListener("click", (event) => {
     rendererElem.rewind();
   });
@@ -184,6 +223,10 @@ const init = () => {
   document.getElementById("reset-camera-button").addEventListener("click", (event) => {
     rendererElem.resetCamera();
   });
+  document.body.addEventListener("dragover", (event) => {
+    event.preventDefault();
+  });
+  document.body.addEventListener("drop", onDrop, { capture: true });
 
   const enterVRButtonElem = document.getElementById("enter-vr-button");
   if (navigator.getVRDisplays) {
@@ -221,7 +264,7 @@ const init = () => {
       keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.Enter, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
       contextMenuGroupId: "shader",
       contextMenuOrder: 0,
-      run: editor => updateRendererShader()
+      run: editor => compileCurrentShader()
     });
 
     resizeEditor();
