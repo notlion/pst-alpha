@@ -65,6 +65,8 @@ const onDownloadRendererShaderClick = (event) => {
 
     event.target.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "text/json" }));
     event.target.download = "shader_" + (new Date()).toISOString() + ".json";
+
+    console.log(event);
   }
 };
 
@@ -213,7 +215,7 @@ const init = () => {
   document.getElementById("compile-shader-button").addEventListener("click", (event) => {
     compileCurrentShader();
   });
-  document.getElementById("download-shader-button").addEventListener("click", onDownloadRendererShaderClick(event));
+  document.getElementById("download-shader-button").addEventListener("click", onDownloadRendererShaderClick);
   document.getElementById("rewind-button").addEventListener("click", (event) => {
     rendererElem.rewind();
   });
