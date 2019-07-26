@@ -209,7 +209,8 @@ void App::render(int width, int height) {
 
   // Texture
   {
-    gl::enableBlendAlphaPremult();
+    // gl::enableBlendAlphaPremult();
+    gl::disableBlend();
     gl::enableDepth();
 
     gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
