@@ -14,8 +14,8 @@ void init() {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void update(double time_seconds) {
-  g_app.update(time_seconds);
+void update(int frame_id, double time_seconds, double time_delta_seconds) {
+  g_app.update(frame_id, time_seconds, time_delta_seconds);
 }
 
 EMSCRIPTEN_KEEPALIVE

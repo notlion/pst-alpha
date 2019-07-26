@@ -52,8 +52,6 @@ class App {
   gl::vec4 m_controller_position[2];
   gl::quat m_controller_orientation[2];
 
-  FrameClock m_clock;
-
   std::string m_user_shader_sources[3];
   std::string m_user_shader_sources_concatenated[3];
   std::string_view m_user_shader_source_prefixes[3];
@@ -61,6 +59,8 @@ class App {
 
   std::string_view m_common_uniforms_shader_source;
   std::string_view m_simulate_shader_vs_source;
+
+  FrameClock m_clock;
 
   void updateViewAndProjectionTransforms();
   void updateControllerTransforms();
@@ -70,7 +70,7 @@ class App {
 public:
   bool init();
   void cleanup();
-  void update(double time_seconds);
+  void update(int frame_id, double time_seconds, double time_delta_seconds);
   void render(int width, int height);
 
   std::string_view getUserShaderSourceAtIndex(int index);

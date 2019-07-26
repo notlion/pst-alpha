@@ -92,6 +92,7 @@ export class ParticleRendererElement extends HTMLElement {
 
     this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
+    this.frameId = 0;
     this.timeIsPaused = false;
 
     this._controllerButtons = new Float32Array(4);
@@ -150,7 +151,9 @@ export class ParticleRendererElement extends HTMLElement {
       this.module.GL.makeContextCurrent(this._webglContextHandle);
 
       this.timeMillis += deltaTime;
-      this.module._update(this.timeMillis / 1000.0);
+      this.module._update(this.frameId, this.timeMillis / 1000.0, deltaTime);
+
+      this.frameId++;
     }
   }
 
@@ -293,6 +296,7 @@ export class ParticleRendererElement extends HTMLElement {
   rewind() {
     this._prevFrameTimeMillis = 0;
     this.timeMillis = 0;
+    this.frameId = 0;
   }
 
   resetCamera() {

@@ -157,16 +157,16 @@ void App::updateControllerTransforms() {
   }
 }
 
-void App::update(double time_seconds) {
+void App::update(int frame_id, double time_seconds, double time_delta_seconds) {
   m_clock.tick(time_seconds);
 
   // Update common uniforms
   {
     updateControllerTransforms();
 
-    m_common_uniforms.time = float(m_clock.elapsed_seconds);
-    m_common_uniforms.time_delta = float(m_clock.elapsed_seconds_delta);
-    m_common_uniforms.frame = GLint(m_clock.elapsed_frames);
+    m_common_uniforms.time = float(time_seconds);
+    m_common_uniforms.time_delta = float(time_delta_seconds);
+    m_common_uniforms.frame = frame_id;
 
     gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
   }

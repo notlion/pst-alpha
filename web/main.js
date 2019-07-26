@@ -92,6 +92,7 @@ const onDrop = (event) => {
               shaderEditorStates[i].model.setValue(shader.source);
             });
             compileAllShaders();
+            rendererElem.rewind();
           }
         }
         catch (err) {
