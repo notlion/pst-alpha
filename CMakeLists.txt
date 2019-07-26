@@ -35,11 +35,6 @@ endif ()
 add_executable(${APP_TARGET} ${SOURCE_FILES} ${PLATFORM_SOURCE_FILES})
 set_target_properties(${APP_TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
 
-add_custom_target(inline_shaders
+add_custom_target(inline_shaders ALL
     COMMAND python ${PROJECT_SOURCE_DIR}/generate_inline_shaders.py ${PROJECT_SOURCE_DIR})
 add_dependencies(${APP_TARGET} inline_shaders)
-
-# if (EMSCRIPTEN)
-#   add_custom_command(TARGET ${APP_TARGET} POST_BUILD
-#       COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/emscripten/index.html ${BIN_DIR} DEPENDS ${BIN_DIR})
-# endif ()
