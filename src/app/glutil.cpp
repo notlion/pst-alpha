@@ -384,6 +384,7 @@ void createTexture(Texture &tex, const TextureData &data, const TextureOpts &opt
   glGenTextures(1, &tex.id);
   glBindTexture(opts.target, tex.id);
 
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Assume pixel rows are tightly packed
   glTexImage2D(opts.target, 0, opts.internal_format, data.width, data.height, 0, opts.format, opts.component_type, data.pixels.get());
 
   glTexParameteri(opts.target, GL_TEXTURE_MIN_FILTER, opts.min_filter);
