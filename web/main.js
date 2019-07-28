@@ -53,15 +53,19 @@ const compileAllShaders = () => {
   }
 };
 
+const serializeEditorStateForJson = () => {
+  return {
+    shaders: Array(3).fill().map((_, i) => {
+      return {
+        source: shaderEditorStates[i].model.getValue()
+      }
+    })
+  };
+};
+
 const onDownloadRendererShaderClick = (event) => {
   if (shaderEditorStates) {
-    const output = {
-      shaders: Array(3).fill().map((_, i) => {
-        return {
-          source: shaderEditorStates[i].model.getValue()
-        }
-      })
-    };
+    const output = serializeEditorStateForJson();
 
     event.target.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "text/json" }));
     event.target.download = "shader_" + (new Date()).toISOString() + ".json";
