@@ -126,7 +126,7 @@ export class ParticleRendererElement extends HTMLElement {
     const deltaTime = this._prevFrameTimeMillis === 0 ? 0 : timestamp - this._prevFrameTimeMillis;
     this._prevFrameTimeMillis = timestamp;
 
-    if (!this.vrDisplay) {
+    if (!this.vrDisplay || !this.vrDisplay.isPresenting) {
       this.camera.translateWithLocalOrientation(this._cameraMovementDirection, 0.025);
       quat.identity(this._cameraRollQuat);
       quat.rotateZ(this._cameraRollQuat, this._cameraRollQuat, this._cameraRollDirection * 0.02);
@@ -217,7 +217,7 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   _onPointerLockChange() {
-    this._canvasHasPointerLock = this.canvasElem == document.pointerLockElement;
+    this._canvasHasPointerLock = this.canvasElem === document.pointerLockElement;
     if (this._canvasHasPointerLock) {
       this._canvasMouseIgnoreFirstMovementEvent = true;
       this.canvasElem.addEventListener("mousemove", this._canvasMouseMoveCallback);
