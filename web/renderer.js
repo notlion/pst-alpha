@@ -395,6 +395,12 @@ export class ParticleRendererElement extends HTMLElement {
           this._controllerButtons[i] = controller.buttons[i + 1].value;
         }
       }
+      else if (controller.id.startsWith("OpenVR")) {
+        this._controllerButtons[0] = controller.buttons[1].value;
+        this._controllerButtons[1] = controller.buttons[2].value;
+        this._controllerButtons[2] = controller.buttons[0].value;
+        this._controllerButtons[3] = controller.buttons[3].value;
+      }
       this.module.HEAPF32.set(this._controllerButtons, buttonsOffset / Float32Array.BYTES_PER_ELEMENT);
     }
 
