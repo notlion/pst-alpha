@@ -258,10 +258,11 @@ static std::string concatenateShaderSource(std::string_view prefix, std::string_
 }
 
 std::string App::concatenateShaderSourceAtIndex(int index){
-  return concatenateShaderSource(m_user_shader_source_prefixes[index],
+  return concatenateShaderSource(m_template_shader_source_prefixes[index],
                                  m_common_uniforms_shader_source,
+                                 m_user_shader_sources[]
                                  m_user_shader_sources[index],
-                                 m_user_shader_source_postfixes[index]);
+                                 m_template_shader_source_postfixes[index]);
 }
 
 std::string_view App::getUserShaderSourceAtIndex(int index) {

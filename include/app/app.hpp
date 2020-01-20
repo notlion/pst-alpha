@@ -36,6 +36,9 @@ struct CommonShaderUniforms {
 };
 
 class App {
+  static constexpr size_t USER_SHADER_SOURCE_COUNT{ 4 };
+  static constexpr size_t TEMPLATE_SHADER_SOURCE_COUNT{ 3 };
+
   gl::ivec2 m_particle_framebuffer_resolution{ 128, 128 };
 
   std::unique_ptr<gl::Framebuffer> m_particle_fbs[2];
@@ -52,10 +55,11 @@ class App {
   gl::vec4 m_controller_position[2];
   gl::quat m_controller_orientation[2];
 
-  std::string m_user_shader_sources[3];
-  std::string m_user_shader_sources_concatenated[3];
-  std::string_view m_user_shader_source_prefixes[3];
-  std::string_view m_user_shader_source_postfixes[3];
+  std::string m_user_shader_sources[USER_SHADER_SOURCE_COUNT];
+
+  std::string m_template_shader_sources_concatenated[TEMPLATE_SHADER_SOURCE_COUNT];
+  std::string_view m_template_shader_source_prefixes[TEMPLATE_SHADER_SOURCE_COUNT];
+  std::string_view m_template_shader_source_postfixes[TEMPLATE_SHADER_SOURCE_COUNT];
 
   std::string_view m_common_uniforms_shader_source;
   std::string_view m_simulate_shader_vs_source;
