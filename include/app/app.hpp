@@ -8,14 +8,6 @@
 #include <string>
 #include <string_view>
 
-struct Camera {
-  gl::vec3 position = gl::vec3(0.0f);
-  gl::vec3 target = gl::vec3(0.0f);
-  gl::vec3 up = gl::vec3(0.0f, 1.0f, 0.0f);
-
-  float fovy = 60.0f;
-};
-
 struct CommonShaderUniforms {
   gl::mat4 model_view_projection;
   gl::mat4 model_view;
@@ -37,6 +29,7 @@ struct CommonShaderUniforms {
 
 class App {
   static constexpr size_t USER_SHADER_SOURCE_COUNT{ 4 };
+  static constexpr size_t ASSEMBLED_SHADER_SOURCE_COUNT{ 3 };
   static constexpr size_t TEMPLATE_SHADER_SOURCE_COUNT{ 3 };
 
   gl::ivec2 m_particle_framebuffer_resolution{ 128, 128 };
@@ -56,8 +49,8 @@ class App {
   gl::quat m_controller_orientation[2];
 
   std::string m_user_shader_sources[USER_SHADER_SOURCE_COUNT];
+  std::string m_assembled_shader_sources[ASSEMBLED_SHADER_SOURCE_COUNT];
 
-  std::string m_template_shader_sources_concatenated[TEMPLATE_SHADER_SOURCE_COUNT];
   std::string_view m_template_shader_source_prefixes[TEMPLATE_SHADER_SOURCE_COUNT];
   std::string_view m_template_shader_source_postfixes[TEMPLATE_SHADER_SOURCE_COUNT];
 
@@ -69,7 +62,7 @@ class App {
   void updateViewAndProjectionTransforms();
   void updateControllerTransforms();
 
-  std::string concatenateShaderSourceAtIndex(int index);
+  std::string assembleShaderSourceAtIndex(int index);
 
 public:
   bool init();
@@ -78,6 +71,7 @@ public:
   void render(int width, int height);
 
   std::string_view getUserShaderSourceAtIndex(int index);
+  std::string_view getAssembledShaderSourceAtIndex(int index);
   void setUserShaderSourceAtIndex(int index, std::string_view shader_src);
   void tryCompileShaderPrograms();
 

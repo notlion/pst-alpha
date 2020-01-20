@@ -364,6 +364,10 @@ export class ParticleRendererElement extends HTMLElement {
     return this.module.UTF8ToString(this.module._getUserShaderSourceAtIndex(index));
   }
 
+  getAssembledShaderSourceAtIndex(index) {
+    return this.module.UTF8ToString(this.module._getAssembledShaderSourceAtIndex(index));
+  }
+
   setShaderSourceAtIndex(index, src) {
     const offset = this.module.allocateUTF8(src);
     this.module._setUserShaderSourceAtIndex(index, offset);

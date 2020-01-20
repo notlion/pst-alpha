@@ -93,6 +93,9 @@ void main() {
 }
 )GLSL";
 
+const char *shader_source_user_default_common = R"GLSL(// The contents of this tab will be prefixed in all shaders.
+)GLSL";
+
 const char *shader_source_user_default_fragment = R"GLSL(// https://developer.oculus.com/blog/tech-note-shader-snippets-for-efficient-2d-dithering/
 float dither17(vec2 p) {
 	vec3 k0 = vec3(2.0, 7.0, 23.0);

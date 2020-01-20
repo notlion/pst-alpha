@@ -23,6 +23,13 @@ void render(int width, int height) {
   g_app.render(width, height);
 }
 
+
+EMSCRIPTEN_KEEPALIVE
+const char *getAssembledShaderSourceAtIndex(int index) {
+  auto src = g_app.getAssembledShaderSourceAtIndex(index);
+  return src.data();
+}
+
 EMSCRIPTEN_KEEPALIVE
 const char *getUserShaderSourceAtIndex(int index) {
   auto src = g_app.getUserShaderSourceAtIndex(index);

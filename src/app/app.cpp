@@ -33,13 +33,14 @@ bool App::init() {
   m_common_uniforms_shader_source = shader_source_common_uniforms;
   m_simulate_shader_vs_source = shader_source_simulation_vs;
 
-  splitShaderSource(shader_source_simulation_fs, "{{simulation}}", m_user_shader_source_prefixes[0], m_user_shader_source_postfixes[0]);
-  splitShaderSource(shader_source_shade_vs, "{{vertex}}", m_user_shader_source_prefixes[1], m_user_shader_source_postfixes[1]);
-  splitShaderSource(shader_source_shade_fs, "{{fragment}}", m_user_shader_source_prefixes[2], m_user_shader_source_postfixes[2]);
+  splitShaderSource(shader_source_simulation_fs, "{{simulation}}", m_template_shader_source_prefixes[0], m_template_shader_source_postfixes[0]);
+  splitShaderSource(shader_source_shade_vs, "{{vertex}}", m_template_shader_source_prefixes[1], m_template_shader_source_postfixes[1]);
+  splitShaderSource(shader_source_shade_fs, "{{fragment}}", m_template_shader_source_prefixes[2], m_template_shader_source_postfixes[2]);
 
-  setUserShaderSourceAtIndex(0, shader_source_user_default_simulation);
-  setUserShaderSourceAtIndex(1, shader_source_user_default_vertex);
-  setUserShaderSourceAtIndex(2, shader_source_user_default_fragment);
+  setUserShaderSourceAtIndex(0, shader_source_user_default_common);
+  setUserShaderSourceAtIndex(1, shader_source_user_default_simulation);
+  setUserShaderSourceAtIndex(2, shader_source_user_default_vertex);
+  setUserShaderSourceAtIndex(3, shader_source_user_default_fragment);
 
   tryCompileShaderPrograms();
 
@@ -243,13 +244,19 @@ void App::render(int width, int height) {
   }
 }
 
-static std::string concatenateShaderSource(std::string_view prefix, std::string_view common_source, std::string_view user_source, std::string_view postfix) {
+static std::string concatenateShaderSource(std::string_view prefix,
+                                           std::string_view common_source,
+                                           std::string_view user_common_source,
+                                           std::string_view user_source,
+                                           std::string_view postfix) {
   auto src = std::string();
-  auto src_size = prefix.size() + common_source.size() + user_source.size() + postfix.size() + 2;
+  auto src_size = prefix.size() + common_source.size() + user_common_source.size() + user_source.size() + postfix.size() + 3;
   src.reserve(src_size + 1);
   src += prefix;
   src += '\n';
   src += common_source;
+  src += '\n';
+  src += user_common_source;
   src += '\n';
   src += user_source;
   src += postfix;
@@ -257,11 +264,11 @@ static std::string concatenateShaderSource(std::string_view prefix, std::string_
   return src;
 }
 
-std::string App::concatenateShaderSourceAtIndex(int index){
+std::string App::assembleShaderSourceAtIndex(int index){
   return concatenateShaderSource(m_template_shader_source_prefixes[index],
                                  m_common_uniforms_shader_source,
-                                 m_user_shader_sources[]
-                                 m_user_shader_sources[index],
+                                 m_user_shader_sources[0],
+                                 m_user_shader_sources[index + 1],
                                  m_template_shader_source_postfixes[index]);
 }
 
@@ -270,18 +277,26 @@ std::string_view App::getUserShaderSourceAtIndex(int index) {
   return m_user_shader_sources[index];
 }
 
+std::string_view App::getAssembledShaderSourceAtIndex(int index) {
+  assert(index >= 0 && index < arraySize(m_assembled_shader_sources));
+  return m_assembled_shader_sources[index];
+}
+
 void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
   assert(index >= 0 && index < arraySize(m_user_shader_sources));
 
   m_user_shader_sources[index] = shader_src;
-  m_user_shader_sources_concatenated[index] = concatenateShaderSourceAtIndex(index);
+
+  if (index > 0) {
+    m_assembled_shader_sources[index - 1] = assembleShaderSourceAtIndex(index - 1);
+  }
 }
 
 void App::tryCompileShaderPrograms() {
   gl::Program programs[2];
 
-  gl::createProgram(programs[0], m_simulate_shader_vs_source, m_user_shader_sources_concatenated[0]);
-  gl::createProgram(programs[1], m_user_shader_sources_concatenated[1], m_user_shader_sources_concatenated[2]);
+  gl::createProgram(programs[0], m_simulate_shader_vs_source, m_assembled_shader_sources[0]);
+  gl::createProgram(programs[1], m_assembled_shader_sources[1], m_assembled_shader_sources[2]);
 
   const GLint uniformSamplerLocations[] = { 0, 1, 2, 3, 4, 5 };
 

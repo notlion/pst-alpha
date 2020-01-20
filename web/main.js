@@ -15,6 +15,8 @@ window.MonacoEnvironment = {
   }
 };
 
+const SHADER_COUNT = 4;
+
 let shaderEditorStates = null;
 let shaderEditor = null;
 let rendererElem = null;
@@ -44,6 +46,10 @@ const compileCurrentShader = () => {
   if (shaderEditorStates) {
     const shaderSource = shaderEditorStates[selectedShaderSourceIndex].model.getValue();
     rendererElem.setShaderSourceAtIndex(selectedShaderSourceIndex, shaderSource);
+    
+    // if (selectedShaderSourceIndex > 0) {
+    //   console.log(rendererElem.getAssembledShaderSourceAtIndex(selectedShaderSourceIndex - 1));
+    // }
   }
 };
 
@@ -57,7 +63,7 @@ const compileAllShaders = () => {
 
 const serializeEditorStateForJson = () => {
   return {
-    shaders: Array(3).fill().map((_, i) => {
+    shaders: Array(SHADER_COUNT).fill().map((_, i) => {
       return {
         source: shaderEditorStates[i].model.getValue()
       }
@@ -71,8 +77,6 @@ const onDownloadRendererShaderClick = (event) => {
 
     event.target.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "text/json" }));
     event.target.download = "shader_" + (new Date()).toISOString() + ".json";
-
-    console.log(event);
   }
 };
 
@@ -93,10 +97,14 @@ const onDrop = (event) => {
       reader.onload = (event) => {
         try {
           const fileContents = JSON.parse(event.target.result);
-          if (Array.isArray(fileContents.shaders) && fileContents.shaders.length == 3) {
+          if (Array.isArray(fileContents.shaders) && fileContents.shaders.length >= 3) {
+            // Add an offset to upgrade older shader saves
+            let offset = fileContents.shaders.length === 3 ? 1 : 0;
+
             fileContents.shaders.forEach((shader, i) => {
-              shaderEditorStates[i].model.setValue(shader.source);
+              shaderEditorStates[offset + i].model.setValue(shader.source);
             });
+
             compileAllShaders();
             rendererElem.rewind();
           }
@@ -190,7 +198,7 @@ const init = () => {
     rendererElem.addEventListener("ready", () => {
       if (shaderEditor) {
         initEditorShaders();
-        setEditorShaderIndex(0);
+        setEditorShaderIndex(1);
       }
     });
   }
@@ -266,7 +274,7 @@ const init = () => {
       minimap: { enabled: false },
     });
 
-    shaderEditorStates = new Array(3).fill().map((_, i) => {
+    shaderEditorStates = new Array(SHADER_COUNT).fill().map((_, i) => {
       const model = monaco.editor.createModel("", "c");
       model.updateOptions({
         tabSize: 2,
@@ -291,7 +299,7 @@ const init = () => {
 
     if (rendererElem.isReady) {
       initEditorShaders();
-      setEditorShaderIndex(0);
+      setEditorShaderIndex(1);
     }
   });
 
