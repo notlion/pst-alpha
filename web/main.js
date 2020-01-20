@@ -20,6 +20,8 @@ let shaderEditor = null;
 let rendererElem = null;
 let selectedShaderSourceIndex = 0;
 
+let shaderSourceEdited = false;
+
 const initEditorShaders = () => {
   shaderEditorStates.forEach((editorState, i) => {
     editorState.model.setValue(rendererElem.getShaderSourceAtIndex(i));
@@ -107,6 +109,13 @@ const onDrop = (event) => {
     }
   }
 };
+
+const onBeforeUnload = (event) => {
+  if (shaderSourceEdited) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+}
 
 const resizeEditor = () => {
   if (shaderEditor) {
@@ -274,6 +283,10 @@ const init = () => {
       run: editor => compileCurrentShader()
     });
 
+    shaderEditor.onDidChangeModelContent(() => {
+      shaderSourceEdited = true;
+    });
+
     resizeEditor();
 
     if (rendererElem.isReady) {
@@ -286,4 +299,5 @@ const init = () => {
 };
 
 window.addEventListener("load", init);
+window.addEventListener("beforeunload", onBeforeUnload);
 window.addEventListener("resize", updateLayout);
