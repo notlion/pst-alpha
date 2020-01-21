@@ -87,6 +87,41 @@ void main() {
 )GLSL";
 
 const char *shader_source_user_default_common = R"GLSL(// The contents of this tab will be prefixed in all shaders.
+
+const vec3 cubeVertices[8] = vec3[8](
+  vec3(-1.0, -1.0, -1.0),
+  vec3( 1.0, -1.0, -1.0),
+  vec3(-1.0,  1.0, -1.0),
+  vec3( 1.0,  1.0, -1.0),
+  vec3(-1.0, -1.0,  1.0),
+  vec3( 1.0, -1.0,  1.0),
+  vec3(-1.0,  1.0,  1.0),
+  vec3( 1.0,  1.0,  1.0)
+);
+
+const vec3 cubeNormals[6] = vec3[6](
+  vec3( 0.0,  0.0, -1.0),
+  vec3( 0.0, -1.0,  0.0),
+  vec3(-1.0,  0.0,  0.0),
+  vec3( 0.0,  1.0,  0.0),
+  vec3( 1.0,  0.0,  0.0),
+  vec3( 0.0,  0.0,  1.0)
+);
+
+const int cubeIndices[36] = int[36](
+  0, 3, 2,
+  0, 1, 3,
+  0, 5, 1,
+  0, 4, 5,
+  0, 4, 6,
+  0, 6, 2,
+  7, 2, 6,
+  7, 3, 2,
+  7, 1, 3,
+  7, 5, 1,
+  7, 4, 5,
+  7, 6, 4
+);
 )GLSL";
 
 const char *shader_source_user_default_fragment = R"GLSL(in vec4 vColor;
@@ -96,7 +131,7 @@ void mainFragment(out vec4 oColor) {
 }
 )GLSL";
 
-const char *shader_source_user_default_simulation = R"GLSL(#pragma size 128 128
+const char *shader_source_user_default_simulation = R"GLSL(#pragma size 64 64
 
 void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oData2, out vec4 oData3, out vec4 oData4, out vec4 oData5) {
   ivec2 coord = ivec2(gl_FragCoord);
@@ -105,34 +140,31 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oData2, out ve
   float scale = 1.0 / float(max(iSize.x, iSize.y));
   vec2 pos = (gl_FragCoord.xy - vec2(iSize) * 0.5) * scale;
   oPosition = vec4(pos, -1.25, 1.0);
+  
+  oPosition.z += cos(distance(oPosition.xyz, vec3(0.0)) * 80.0 - iTime * 2.0) * 0.02;
 
   vec2 texcoord = gl_FragCoord.xy / vec2(iSize);
   oColor = vec4(texcoord, 0.0, 1.0);
 }
 )GLSL";
 
-const char *shader_source_user_default_vertex = R"GLSL(#pragma vertexCount 6
-
-const vec2 quadVertices[6] = vec2[6](
-  vec2(-1.0, -1.0),
-  vec2(-1.0, 1.0),
-  vec2(1.0, -1.0),
-  vec2(1.0, -1.0),
-  vec2(-1.0, 1.0),
-  vec2(1.0, 1.0)
-);
+const char *shader_source_user_default_vertex = R"GLSL(#pragma vertexCount 36
 
 out vec4 vColor;
 
 void mainVertex(out vec4 oPosition) {
-  int instanceID = gl_VertexID / 6;
+  int instanceID = gl_VertexID / 36;
   ivec2 coord = ivec2(instanceID % iSize.x, instanceID / iSize.x);
 
   oPosition = texelFetch(iFragData[0], coord, 0);
-  oPosition.xy += quadVertices[gl_VertexID % 6] * 0.0015;
+  oPosition.xyz += cubeVertices[cubeIndices[gl_VertexID % 36]] * 0.004;
 
   oPosition = iModelViewProjection * oPosition;
 
   vColor = texelFetch(iFragData[1], coord, 0);
+
+  vec3 normal = cubeNormals[gl_VertexID / 6 % 6];
+  vec3 lightDir = normalize(vec3(0.6, 0.3, 1.0));
+  vColor *= 0.6 + 0.4 * max(0.0, dot(lightDir, normal));
 }
 )GLSL";
