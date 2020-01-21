@@ -97,7 +97,7 @@ void printStats() {
 }
 
 
-GLuint createShader(std::string_view shader_src, GLenum type) {
+GLuint createShader(std::string_view shader_src, GLenum type, ShaderError *error) {
   auto shader = glCreateShader(type);
 
   assert(shader_src.size() < std::numeric_limits<int>::max());
@@ -117,6 +117,11 @@ GLuint createShader(std::string_view shader_src, GLenum type) {
     if (log_length > 0) {
       std::unique_ptr<GLchar[]> log(new GLchar[log_length]);
       glGetShaderInfoLog(shader, log_length, nullptr, log.get());
+
+      if (error) {
+        error->infoLog = { log.get(), static_cast<std::string_view::size_type>(log_length) };
+      }
+
       logError({ log.get(), static_cast<std::string_view::size_type>(log_length) });
     }
 
@@ -193,61 +198,77 @@ static void cacheActiveAttribs(Program &prog) {
   CHECK_GL_ERROR();
 }
 
-Program createProgram(std::string_view vert_shader_src, std::string_view frag_shader_src) {
+Program createProgram(std::string_view vert_shader_src, std::string_view frag_shader_src, ProgramError *error, bool *outSuccess) {
   Program prog;
-  createProgram(prog, vert_shader_src, frag_shader_src);
+  bool success = createProgram(prog, vert_shader_src, frag_shader_src, error);
+  if (outSuccess) *outSuccess = success;
   return prog;
 }
 
-void createProgram(Program &prog, std::string_view vert_shader_src, std::string_view frag_shader_src) {
+bool createProgram(Program &prog, std::string_view vert_shader_src, std::string_view frag_shader_src, ProgramError *error) {
   deleteProgram(prog);
 
-  auto vshader = createShader(vert_shader_src, GL_VERTEX_SHADER);
-  auto fshader = createShader(frag_shader_src, GL_FRAGMENT_SHADER);
+  ShaderError shaderError;
 
-  if (vshader && fshader) {
-    prog.id = glCreateProgram();
-
-    glAttachShader(prog.id, vshader);
-    glAttachShader(prog.id, fshader);
-
-    glLinkProgram(prog.id);
-
-    glDeleteShader(vshader);
-    glDeleteShader(fshader);
-
-    GLint status;
-    glGetProgramiv(prog.id, GL_LINK_STATUS, &status);
-    if (status != GL_TRUE) {
-      GLint log_length = 0;
-      glGetProgramiv(prog.id, GL_INFO_LOG_LENGTH, &log_length);
-
-      if (log_length > 0) {
-        std::unique_ptr<GLchar[]> log(new GLchar[log_length]);
-        glGetProgramInfoLog(prog.id, log_length, nullptr, log.get());
-        logError({ log.get(), static_cast<std::string_view::size_type>(log_length) });
-      }
-
-      deleteProgram(prog);
-
-      return;
-    }
-
-    cacheActiveUniforms(prog);
-    cacheActiveUniformBlocks(prog);
-    cacheActiveAttribs(prog);
+  auto vertexShader = createShader(vert_shader_src, GL_VERTEX_SHADER, &shaderError);
+  if (!vertexShader) {
+    if (error) error->vertexShader = shaderError;
+    return false;
   }
 
-  CHECK_GL_ERROR();
+  auto fragmentShader = createShader(frag_shader_src, GL_FRAGMENT_SHADER);
+  if (!fragmentShader) {
+    if (error) error->fragmentShader = shaderError;
+    return false;
+  }
+
+  prog.id = glCreateProgram();
+
+  glAttachShader(prog.id, vertexShader);
+  glAttachShader(prog.id, fragmentShader);
+
+  glLinkProgram(prog.id);
+
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+
+  GLint status;
+  glGetProgramiv(prog.id, GL_LINK_STATUS, &status);
+  if (status != GL_TRUE) {
+    GLint log_length = 0;
+    glGetProgramiv(prog.id, GL_INFO_LOG_LENGTH, &log_length);
+
+    if (log_length > 0) {
+      std::unique_ptr<GLchar[]> log(new GLchar[log_length]);
+      glGetProgramInfoLog(prog.id, log_length, nullptr, log.get());
+
+      if (error) {
+        error->infoLog = { log.get(), static_cast<std::string_view::size_type>(log_length) };
+      }
+
+      logError({ log.get(), static_cast<std::string_view::size_type>(log_length) });
+    }
+
+    deleteProgram(prog);
+
+    return false;
+  }
+
+  cacheActiveUniforms(prog);
+  cacheActiveUniformBlocks(prog);
+  cacheActiveAttribs(prog);
+
+  return true;
 }
 
-Program createProgram(std::string_view shader_src, ShaderVersion version) {
+Program createProgram(std::string_view shader_src, ShaderVersion version, ProgramError *error, bool *outSuccess) {
   Program prog;
-  createProgram(prog, shader_src, version);
+  bool success = createProgram(prog, shader_src, version);
+  if (outSuccess) *outSuccess = success;
   return prog;
 }
 
-void createProgram(Program &prog, std::string_view shader_src, ShaderVersion version) {
+bool createProgram(Program &prog, std::string_view shader_src, ShaderVersion version, ProgramError *error) {
   using namespace std::string_literals;
 
   const auto &version_str = [&] {
@@ -264,7 +285,7 @@ void createProgram(Program &prog, std::string_view shader_src, ShaderVersion ver
   auto fragment_src = version_str + "#define FRAGMENT_SHADER\n"s;
   fragment_src += shader_src;
 
-  createProgram(prog, vertex_src, fragment_src);
+  return createProgram(prog, vertex_src, fragment_src, error);
 }
 
 void deleteProgram(Program &prog) noexcept {
@@ -429,8 +450,10 @@ void createRenderbuffer(Renderbuffer &rb, int width, int height, const Renderbuf
 }
 
 void deleteRenderbuffer(Renderbuffer &rb) noexcept {
-  if (rb.id > 0) glDeleteRenderbuffers(1, &rb.id);
-  rb.id = 0;
+  if (rb.id > 0) {
+    glDeleteRenderbuffers(1, &rb.id);
+    rb.id = 0;
+  }
 }
 
 
@@ -459,7 +482,10 @@ void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector
   glGenFramebuffers(1, &fb.id);
   glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
 
+  fb.textures.clear();
   fb.textures.reserve(texture_attachments.size());
+
+  fb.buffers.clear();
   fb.buffers.reserve(texture_attachments.size());
 
   for (const auto &ta : texture_attachments) {
@@ -469,6 +495,7 @@ void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector
     glFramebufferTexture2D(GL_FRAMEBUFFER, ta.attachment, ta.opts.target, fb.textures.back().id, 0);
   }
 
+  fb.renderbuffers.clear();
   fb.renderbuffers.reserve(renderbuffer_attachments.size());
 
   for (const auto &ra : renderbuffer_attachments) {
@@ -489,8 +516,13 @@ void createFramebuffer(Framebuffer &fb, int width, int height, const std::vector
 }
 
 void deleteFramebuffer(Framebuffer &fb) noexcept {
-  for (auto &tex : fb.textures) deleteTexture(tex);
-  for (auto &rb : fb.renderbuffers) deleteRenderbuffer(rb);
+  for (auto &tex : fb.textures) {
+    deleteTexture(tex);
+  }
+
+  for (auto &rb : fb.renderbuffers) {
+    deleteRenderbuffer(rb);
+  }
 
   if (fb.id > 0) {
     glDeleteFramebuffers(1, &fb.id);

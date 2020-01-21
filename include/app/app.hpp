@@ -20,11 +20,13 @@ struct CommonShaderUniforms {
   gl::vec4 controller_velocity[2];
   gl::vec4 controller_buttons[2];
 
+  gl::ivec2 size;
+
   GLfloat time;
   GLfloat time_delta;
   GLint frame;
 
-  GLfloat _pad; // Required to make the struct size a multiple of 16 bytes.
+  GLfloat _pad[3]; // Required to make the struct size a multiple of 16 bytes.
 };
 
 class App {
@@ -32,13 +34,15 @@ class App {
   static constexpr size_t ASSEMBLED_SHADER_SOURCE_COUNT{ 3 };
   static constexpr size_t TEMPLATE_SHADER_SOURCE_COUNT{ 3 };
 
-  gl::ivec2 m_particle_framebuffer_resolution{ 128, 128 };
+  gl::ivec2 m_default_particle_framebuffer_resolution{ 128, 128 };
+  gl::ivec2 m_particle_framebuffer_resolution = m_default_particle_framebuffer_resolution;
 
   std::unique_ptr<gl::Framebuffer> m_particle_fbs[2];
 
   gl::VertexBuffer m_fullscreen_triangle_vb;
-  gl::VertexBuffer m_particles_vb;
-  gl::VertexBuffer m_particle_quad_vb;
+
+  GLsizei m_default_instance_vertex_count = 6;
+  GLsizei m_instance_vertex_count = m_default_instance_vertex_count;
 
   CommonShaderUniforms m_common_uniforms;
   gl::UniformBuffer m_common_uniforms_buffer;
@@ -64,6 +68,9 @@ class App {
 
   std::string assembleShaderSourceAtIndex(int index);
 
+  void parseSimulationShaderPragmas();
+  void parseRenderShaderPragmas();
+
 public:
   bool init();
   void cleanup();
@@ -73,7 +80,8 @@ public:
   std::string_view getUserShaderSourceAtIndex(int index);
   std::string_view getAssembledShaderSourceAtIndex(int index);
   void setUserShaderSourceAtIndex(int index, std::string_view shader_src);
-  void tryCompileShaderPrograms();
+
+  bool tryCompileShaderPrograms();
 
   void setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values);
   void setControllerAtIndex(int index, const float *position_values, const float *velocity_values, const float *orientation_values, const float *buttons_values);

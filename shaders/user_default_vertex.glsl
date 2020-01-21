@@ -1,13 +1,24 @@
-out float vDepth;
+#pragma count 6
 
-void mainVertex(out vec4 oPosition, out vec4 oColor, in vec2 quadPosition, in ivec2 particleCoord) {
-  vec4 particlePos = texelFetch(iFragData[0], particleCoord, 0);
-  particlePos.xyz += texelFetch(iFragData[2], particleCoord, 0).xyz * quadPosition.x;
-  particlePos.xyz += texelFetch(iFragData[3], particleCoord, 0).xyz * quadPosition.y;
+const vec2 quadVertices[6] = vec2[6](
+  vec2(-1.0, -1.0),
+  vec2(-1.0, 1.0),
+  vec2(1.0, -1.0),
+  vec2(1.0, -1.0),
+  vec2(-1.0, 1.0),
+  vec2(1.0, 1.0)
+);
 
-  oPosition = iModelViewProjection * particlePos;
-  vDepth = oPosition.z;
+out vec4 vColor;
 
-  oColor.rgb = texelFetch(iFragData[1], particleCoord, 0).rgb;
-  oColor.a = texelFetch(iFragData[5], particleCoord, 0).r;
+void mainVertex(out vec4 oPosition) {
+  int instanceID = gl_VertexID / 6;
+  ivec2 coord = ivec2(instanceID % iSize.x, instanceID / iSize.x);
+
+  oPosition = texelFetch(iFragData[0], coord, 0);
+  oPosition.xy += quadVertices[gl_VertexID % 6] * 0.0015;
+
+  oPosition = iModelViewProjection * oPosition;
+
+  vColor = texelFetch(iFragData[1], coord, 0);
 }

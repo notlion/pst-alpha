@@ -16,6 +16,8 @@ const char *shader_source_common_uniforms = R"GLSL(layout(std140) uniform Common
   vec4 iControllerVelocity[2];
   vec4 iControllerButtons[2];
 
+  ivec2 iSize;
+
   float iTime;
   float iTimeDelta;
   int iFrame;
@@ -32,13 +34,10 @@ precision highp int;
 
 // {{fragment}}
 
-in vec4 vColor;
-in vec2 vTexcoord;
-
 out vec4 oFragColor;
 
 void main() {
-  mainFragment(oFragColor, vColor, vTexcoord);
+  mainFragment(oFragColor);
 }
 )GLSL";
 
@@ -49,16 +48,10 @@ precision highp int;
 
 // {{vertex}}
 
-layout(location = 0) in vec2 aQuadPosition;
-layout(location = 1) in vec2 aQuadTexcoord;
-layout(location = 2) in ivec2 aParticleCoord;
-
-out vec4 vColor;
-out vec2 vTexcoord;
+// layout(location = 0) in ivec2 aParticleCoord;
 
 void main() {
-  vTexcoord = aQuadTexcoord;
-  mainVertex(gl_Position, vColor, aQuadPosition, aParticleCoord);
+  mainVertex(gl_Position);//, aParticleCoord);
 }
 )GLSL";
 
@@ -96,102 +89,50 @@ void main() {
 const char *shader_source_user_default_common = R"GLSL(// The contents of this tab will be prefixed in all shaders.
 )GLSL";
 
-const char *shader_source_user_default_fragment = R"GLSL(// https://developer.oculus.com/blog/tech-note-shader-snippets-for-efficient-2d-dithering/
-float dither17(vec2 p) {
-	vec3 k0 = vec3(2.0, 7.0, 23.0);
-	float ret = dot(vec3(p, float(iFrame & 34)), k0 / 17.0);
-	return fract(ret);
-}
+const char *shader_source_user_default_fragment = R"GLSL(in vec4 vColor;
 
-vec2 rotate(vec2 v, float t) {
-  return vec2(v.x * cos(t) - v.y * sin(t), v.x * sin(t) + v.y * cos(t));
-}
-
-in float vDepth;
-
-void mainFragment(out vec4 oColor, in vec4 color, in vec2 texcoord) {
-  vec2 p = texcoord - vec2(0.5);
-  float d = length(p);
-  p = rotate(p, d * (color.a * 20.0 + 5.0) - iTime * 2.0);
-  p.x *= 2.0;
-  d = length(p);
-  float alpha = smoothstep(0.5, 0.25, d);
-
-  if (alpha < dither17(gl_FragCoord.xy)) discard;
-  
-  float b = smoothstep(0.8, 0.0, d);
-  b = b * b * b * 1.5;
-  oColor = vec4(color.rgb * b * (0.25 / vDepth), 1.0);
+void mainFragment(out vec4 oColor) {
+  oColor = vColor;
 }
 )GLSL";
 
-const char *shader_source_user_default_simulation = R"GLSL(vec3 hash3(uint n) {
-  n = (n << 13U) ^ n;
-  n = n * (n * n * 15731U + 789221U) + 1376312589U;
-  uvec3 k = n * uvec3(n, n * 16807U, n * 48271U);
-  return vec3(k & uvec3(0x7fffffffU)) / float(0x7fffffff);
-}
+const char *shader_source_user_default_simulation = R"GLSL(#pragma size 128 128
 
-void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oRight, out vec4 oUp, out vec4 oPrevPos, out vec4 oExtra) {
-  ivec2 texcoord = ivec2(gl_FragCoord);
-  int id = (texcoord.x + texcoord.y * iResolution.x);
+void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oData2, out vec4 oData3, out vec4 oData4, out vec4 oData5) {
+  ivec2 coord = ivec2(gl_FragCoord);
+  int id = iSize.x * coord.y + coord.x;
 
-  if (iFrame == 0 || iControllerButtons[1][2] > 0.0) {
-    vec3 r0 = hash3(uint(id));
-    vec3 r1 = hash3(uint(id + 1));
-    vec3 r2 = hash3(uint(id + 2));
-    
-    oPosition = vec4(r0 * 0.25 - 0.125, 1.0);
-    oPosition.z -= 1.0;
-    oPrevPos = oPosition;
-    oPrevPos.xyz -= (r2 - 0.5) * 0.01;
-    oRight = vec4(normalize(r1), 1.0);
-    oUp = vec4(normalize(cross(oRight.xyz, r2)), 1.0);
-    float scale = 0.18 + r1.x * 0.15;
-    scale *= scale * scale;
-    oRight *= scale;
-    oUp *= scale;
-    oColor.xyz = r0;
-    oExtra = vec4(r1, 0.0);
-  }
-  else {
-    vec4 pos = texelFetch(iFragData[0], texcoord, 0);
-    vec4 ppos = texelFetch(iFragData[4], texcoord, 0);
+  float scale = 1.0 / float(max(iSize.x, iSize.y));
+  vec2 pos = (gl_FragCoord.xy - vec2(iSize) * 0.5) * scale;
+  oPosition = vec4(pos, -1.5, 1.0);
 
-    vec4 vel = pos - ppos;
-    vel *= 0.995;
-
-    oExtra = texelFetch(iFragData[5], texcoord, 0);
-
-    for (int i = 0; i < 2; ++i) {
-      float b1 = iControllerButtons[i][1];
-      if (b1 > 0.0) {
-        vec4 o = iControllerTransform[i][3] - pos;
-        vel += o / length(o) * 0.001 * b1 * b1 * b1;
-      }
-    }
-
-    oPosition = pos + vel;
-    oPrevPos = pos;
-
-    oColor = texelFetch(iFragData[1], texcoord, 0);
-    oRight = texelFetch(iFragData[2], texcoord, 0);
-    oUp = texelFetch(iFragData[3], texcoord, 0);
-  }
+  vec2 texcoord = gl_FragCoord.xy / vec2(iSize);
+  oColor = vec4(texcoord, 0.0, 1.0);
 }
 )GLSL";
 
-const char *shader_source_user_default_vertex = R"GLSL(out float vDepth;
+const char *shader_source_user_default_vertex = R"GLSL(#pragma count 6
 
-void mainVertex(out vec4 oPosition, out vec4 oColor, in vec2 quadPosition, in ivec2 particleCoord) {
-  vec4 particlePos = texelFetch(iFragData[0], particleCoord, 0);
-  particlePos.xyz += texelFetch(iFragData[2], particleCoord, 0).xyz * quadPosition.x;
-  particlePos.xyz += texelFetch(iFragData[3], particleCoord, 0).xyz * quadPosition.y;
+const vec2 quadVertices[6] = vec2[6](
+  vec2(-1.0, -1.0),
+  vec2(-1.0, 1.0),
+  vec2(1.0, -1.0),
+  vec2(1.0, -1.0),
+  vec2(-1.0, 1.0),
+  vec2(1.0, 1.0)
+);
 
-  oPosition = iModelViewProjection * particlePos;
-  vDepth = oPosition.z;
+out vec4 vColor;
 
-  oColor.rgb = texelFetch(iFragData[1], particleCoord, 0).rgb;
-  oColor.a = texelFetch(iFragData[5], particleCoord, 0).r;
+void mainVertex(out vec4 oPosition) {
+  int instanceID = gl_VertexID / 6;
+  ivec2 coord = ivec2(instanceID % iSize.x, instanceID / iSize.x);
+
+  oPosition = texelFetch(iFragData[0], coord, 0);
+  oPosition.xy += quadVertices[gl_VertexID % 6] * 0.0015;
+
+  oPosition = iModelViewProjection * oPosition;
+
+  vColor = texelFetch(iFragData[1], coord, 0);
 }
 )GLSL";

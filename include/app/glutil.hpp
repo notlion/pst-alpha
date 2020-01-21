@@ -70,6 +70,17 @@ enum ShaderVersion {
   SHADER_VERSION_300ES = 300
 };
 
+struct ShaderError {
+  std::string infoLog;
+};
+
+struct ProgramError {
+  ShaderError vertexShader;
+  ShaderError fragmentShader;
+
+  std::string infoLog;
+};
+
 struct Program {
   GLuint id = 0;
 
@@ -162,12 +173,12 @@ const std::vector<std::string> &getErrorLog();
 
 void printStats();
 
-GLuint createShader(std::string_view shader_src, GLenum type);
+GLuint createShader(std::string_view shader_src, GLenum type, ShaderError *error = nullptr);
 
-Program createProgram(std::string_view vert_shader_src, std::string_view frag_shader_src);
-void createProgram(Program &prog, std::string_view vert_shader_src, std::string_view frag_shader_src);
-Program createProgram(std::string_view shader_src, ShaderVersion version = SHADER_VERSION_100);
-void createProgram(Program &prog, std::string_view shader_src, ShaderVersion version = SHADER_VERSION_100);
+Program createProgram(std::string_view vert_shader_src, std::string_view frag_shader_src, ProgramError *error = nullptr, bool *success = nullptr);
+bool createProgram(Program &prog, std::string_view vert_shader_src, std::string_view frag_shader_src, ProgramError *error = nullptr);
+Program createProgram(std::string_view shader_src, ShaderVersion version = SHADER_VERSION_100, ProgramError *error = nullptr);
+bool createProgram(Program &prog, std::string_view shader_src, ShaderVersion version = SHADER_VERSION_100);
 void deleteProgram(Program &prog) noexcept;
 
 GLint getUniformLocation(const Program &prog, std::string_view name);

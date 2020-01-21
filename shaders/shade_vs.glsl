@@ -5,14 +5,8 @@ precision highp int;
 
 // {{vertex}}
 
-layout(location = 0) in vec2 aQuadPosition;
-layout(location = 1) in vec2 aQuadTexcoord;
-layout(location = 2) in ivec2 aParticleCoord;
-
-out vec4 vColor;
-out vec2 vTexcoord;
+// layout(location = 0) in ivec2 aParticleCoord;
 
 void main() {
-  vTexcoord = aQuadTexcoord;
-  mainVertex(gl_Position, vColor, aQuadPosition, aParticleCoord);
+  mainVertex(gl_Position);//, aParticleCoord);
 }

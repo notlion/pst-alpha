@@ -64,65 +64,10 @@ bool App::init() {
     gl::createVertexBuffer(m_fullscreen_triangle_vb, fullscreen_triangle_mesh);
   }
 
-  // Create particle vertex buffer
+  // Alloc particle data framebuffers
   {
-    const auto vertex_count = m_particle_framebuffer_resolution.x * m_particle_framebuffer_resolution.y;
-
-    std::vector<gl::ivec2> vertices;
-    vertices.reserve(vertex_count);
-    for (GLint y = 0; y < m_particle_framebuffer_resolution.y; ++y) {
-      for (GLint x = 0; x < m_particle_framebuffer_resolution.x; ++x) {
-        vertices.emplace_back(x, y);
-      }
-    }
-
-    const std::vector<gl::VertexAttribute> attribs{
-      { GL_INT, 2, 0, 0, 2 },
-    };
-
-    gl::createVertexBuffer(m_particles_vb, GL_POINTS, sizeof(gl::ivec2) * vertices.size(), vertices.size(), vertices.data(), GL_STATIC_DRAW, attribs);
-  }
-
-  // Create particle quad vertex buffer
-  {
-    const PositionTexcoord2DVertex vs[]{
-      { gl::vec2(-1.0f, -1.0f), gl::vec2(0.0f, 0.0f) },
-      { gl::vec2(-1.0f, 1.0f), gl::vec2(0.0f, 1.0f) },
-      { gl::vec2(1.0f, -1.0f), gl::vec2(1.0f, 0.0f) },
-      { gl::vec2(1.0f, 1.0f), gl::vec2(1.0f, 1.0f) },
-    };
-
-    gl::TriangleMesh<PositionTexcoord2DVertex> particle_quad_mesh{
-      {
-        { { vs[0], vs[1], vs[2] } },
-        { { vs[1], vs[3], vs[2] } },
-      },
-      {
-        { GL_FLOAT, 2, sizeof(PositionTexcoord2DVertex), offsetof(PositionTexcoord2DVertex, position), 0 },
-        { GL_FLOAT, 2, sizeof(PositionTexcoord2DVertex), offsetof(PositionTexcoord2DVertex, texcoord), 1 },
-      }
-    };
-    
-    gl::createVertexBuffer(m_particle_quad_vb, particle_quad_mesh, GL_STATIC_DRAW);
-  }
-
-  // Create particle data framebuffers
-  {
-    gl::TextureOpts particle_tex_opts{ GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST };
-
     for (size_t i = 0; i < arraySize(m_particle_fbs); ++i) {
       m_particle_fbs[i] = std::make_unique<gl::Framebuffer>();
-      gl::createFramebuffer(*m_particle_fbs[i],
-                            m_particle_framebuffer_resolution.x,
-                            m_particle_framebuffer_resolution.y,
-                            {
-                              { GL_COLOR_ATTACHMENT0, particle_tex_opts },
-                              { GL_COLOR_ATTACHMENT1, particle_tex_opts },
-                              { GL_COLOR_ATTACHMENT2, particle_tex_opts },
-                              { GL_COLOR_ATTACHMENT3, particle_tex_opts },
-                              { GL_COLOR_ATTACHMENT4, particle_tex_opts },
-                              { GL_COLOR_ATTACHMENT5, particle_tex_opts },
-                            });
     }
   }
 
@@ -165,11 +110,35 @@ void App::update(int frame_id, double time_seconds, double time_delta_seconds) {
   {
     updateControllerTransforms();
 
+    m_common_uniforms.size = m_particle_framebuffer_resolution;
+
     m_common_uniforms.time = float(time_seconds);
     m_common_uniforms.time_delta = float(time_delta_seconds);
     m_common_uniforms.frame = frame_id;
+  }
+}
 
-    gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
+void App::render(int width, int height) {
+  gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
+
+  // Create particle data framebuffers (if needed)
+  {
+    for (size_t i = 0; i < arraySize(m_particle_fbs); ++i) {
+      if (m_particle_fbs[i]->width != m_particle_framebuffer_resolution.x || m_particle_fbs[i]->height != m_particle_framebuffer_resolution.y) {
+        gl::TextureOpts particle_tex_opts{ GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST };
+        gl::createFramebuffer(*m_particle_fbs[i],
+                              m_particle_framebuffer_resolution.x,
+                              m_particle_framebuffer_resolution.y,
+                              {
+                                { GL_COLOR_ATTACHMENT0, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT1, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT2, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT3, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT4, particle_tex_opts },
+                                { GL_COLOR_ATTACHMENT5, particle_tex_opts },
+                              });
+      }
+    }
   }
 
   // Simulate
@@ -195,7 +164,7 @@ void App::update(int frame_id, double time_seconds, double time_delta_seconds) {
     gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
     gl::useProgram(m_programs[0]);
-    gl::uniform(m_programs[0], "iResolution", m_particle_framebuffer_resolution);
+    gl::uniform(m_programs[0], "iResolution", gl::ivec2(width, height));
 
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
@@ -203,16 +172,15 @@ void App::update(int frame_id, double time_seconds, double time_delta_seconds) {
 
     CHECK_GL_ERROR();
   }
-}
-
-void App::render(int width, int height) {
-  gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
 
   // Texture
   {
-    // gl::enableBlendAlphaPremult();
     gl::disableBlend();
     gl::enableDepth();
+
+    glViewport(0, 0, width, height);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
     gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
@@ -226,23 +194,13 @@ void App::render(int width, int height) {
     gl::useProgram(m_programs[1]);
     gl::uniform(m_programs[1], "iResolution", gl::ivec2(width, height));
 
-    gl::enableVertexBuffer(m_particle_quad_vb);
-    gl::enableVertexBuffer(m_particles_vb);
-
-    glVertexAttribDivisor(m_particle_quad_vb.attribs[0].loc, 0);
-    glVertexAttribDivisor(m_particle_quad_vb.attribs[1].loc, 0);
-    glVertexAttribDivisor(m_particles_vb.attribs[0].loc, 1);
-
-    glDrawArraysInstanced(GL_TRIANGLES, 0, m_particle_quad_vb.count, m_particles_vb.count);
-
-    glVertexAttribDivisor(m_particles_vb.attribs[0].loc, 0);
-
-    gl::disableVertexBuffer(m_particles_vb);
-    gl::disableVertexBuffer(m_particle_quad_vb);
+    GLsizei instance_count = m_particle_framebuffer_resolution.x * m_particle_framebuffer_resolution.y;
+    glDrawArrays(GL_TRIANGLES, 0, m_instance_vertex_count * instance_count);
 
     CHECK_GL_ERROR();
   }
 }
+
 
 static std::string concatenateShaderSource(std::string_view prefix,
                                            std::string_view common_source,
@@ -292,11 +250,104 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
   }
 }
 
-void App::tryCompileShaderPrograms() {
+
+struct ShaderPragma {
+  std::vector<std::string> args;
+};
+
+static const std::string SHADER_PRAGMA_PREFIX{ "#pragma" }; 
+
+static std::string_view findNextToken(std::string_view::iterator &begin, std::string_view::iterator end) {
+  begin = std::find_if(begin, end, [](auto c) { return !std::isspace(c); });
+  
+  std::string_view token;
+  
+  if (begin != end) {
+    auto tokenEnd = std::find_if(begin, end, [](auto c) { return std::isspace(c); });
+    token = std::string_view(begin, tokenEnd - begin);
+    begin = tokenEnd;
+  }
+
+  return token;
+}
+
+static std::vector<ShaderPragma> parsePragmas(std::string_view source) {
+  std::vector<ShaderPragma> pragmas;
+  
+  for (auto lineBegin = source.begin(); lineBegin != source.end();) {
+    auto lineEnd = std::find(lineBegin, source.end(), '\n');
+    if (lineEnd != source.end()) lineEnd++;
+
+    // Skip leading whitespace
+    lineBegin = std::find_if(lineBegin, lineEnd, [](auto c) { return !std::isspace(c); });
+    if (lineBegin == lineEnd) continue;
+
+    // Check if the line starts with "#pragma"
+    if (lineEnd - lineBegin >= SHADER_PRAGMA_PREFIX.size() && std::equal(SHADER_PRAGMA_PREFIX.begin(), SHADER_PRAGMA_PREFIX.end(), lineBegin)) {
+      pragmas.emplace_back();
+      
+      lineBegin += SHADER_PRAGMA_PREFIX.size();
+
+      // Find and append arguments
+      while (lineBegin != lineEnd) {
+        const auto arg = findNextToken(lineBegin, lineEnd);
+        if (!arg.empty()) {
+          pragmas.back().args.emplace_back(arg);
+        }
+      }
+    }
+    else {
+      lineBegin = lineEnd;
+    }
+  }
+
+  return pragmas;
+}
+
+void App::parseSimulationShaderPragmas() {
+  const auto pragmas = parsePragmas(m_user_shader_sources[1]);
+  for (const auto &pragma : pragmas) {
+    if (pragma.args.size() == 3 && pragma.args[0] == "size") {
+      gl::ivec2 size{ std::atoi(pragma.args[1].c_str()), std::atoi(pragma.args[2].c_str()) };
+      if (size.x > 0 && size.y > 0) {
+        m_particle_framebuffer_resolution = size;
+      }
+      else {
+        m_particle_framebuffer_resolution = m_default_particle_framebuffer_resolution;
+      }
+    }
+  }
+}
+
+void App::parseRenderShaderPragmas() {
+  const auto vertexPragmas = parsePragmas(m_user_shader_sources[2]);
+  for (const auto &pragma : vertexPragmas) {
+    if (pragma.args.size() == 2 && pragma.args[0] == "vertexCount") {
+      int count = std::atoi(pragma.args[1].c_str());
+      if (count > 0) {
+        m_instance_vertex_count = count;
+      }
+      else {
+        m_instance_vertex_count = m_default_instance_vertex_count;
+      }
+    }
+  }
+}
+
+bool App::tryCompileShaderPrograms() {
   gl::Program programs[2];
 
-  gl::createProgram(programs[0], m_simulate_shader_vs_source, m_assembled_shader_sources[0]);
-  gl::createProgram(programs[1], m_assembled_shader_sources[1], m_assembled_shader_sources[2]);
+  gl::ProgramError programError;
+
+  if (!gl::createProgram(programs[0], m_simulate_shader_vs_source, m_assembled_shader_sources[0], &programError)) {
+    return false;
+  }
+  parseSimulationShaderPragmas();
+
+  if (!gl::createProgram(programs[1], m_assembled_shader_sources[1], m_assembled_shader_sources[2], &programError)) {
+    return false;
+  }
+  parseRenderShaderPragmas();
 
   const GLint uniformSamplerLocations[] = { 0, 1, 2, 3, 4, 5 };
 
@@ -309,6 +360,8 @@ void App::tryCompileShaderPrograms() {
       m_programs[i] = std::move(programs[i]);
     }
   }
+
+  return true;
 }
 
 void App::setViewAndProjectionMatrices(const float *view_matrix_values, const float *projection_matrix_values) {

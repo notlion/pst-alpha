@@ -10,6 +10,8 @@ layout(std140) uniform CommonUniforms {
   vec4 iControllerVelocity[2];
   vec4 iControllerButtons[2];
 
+  ivec2 iSize;
+
   float iTime;
   float iTimeDelta;
   int iFrame;
