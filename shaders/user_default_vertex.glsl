@@ -1,4 +1,4 @@
-#pragma count 6
+#pragma vertexCount 6
 
 const vec2 quadVertices[6] = vec2[6](
   vec2(-1.0, -1.0),
