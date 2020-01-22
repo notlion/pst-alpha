@@ -46,10 +46,7 @@ const compileCurrentShader = () => {
   if (shaderEditorStates) {
     const shaderSource = shaderEditorStates[selectedShaderSourceIndex].model.getValue();
     rendererElem.setShaderSourceAtIndex(selectedShaderSourceIndex, shaderSource);
-    
-    // if (selectedShaderSourceIndex > 0) {
-    //   console.log(rendererElem.getAssembledShaderSourceAtIndex(selectedShaderSourceIndex - 1));
-    // }
+    rendererElem.tryCompileShaderPrograms();
   }
 };
 
@@ -58,6 +55,7 @@ const compileAllShaders = () => {
     shaderEditorStates.forEach((editorState, i) => {
       rendererElem.setShaderSourceAtIndex(i, editorState.model.getValue());
     });
+    rendererElem.tryCompileShaderPrograms();
   }
 };
 

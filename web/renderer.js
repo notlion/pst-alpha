@@ -369,7 +369,9 @@ export class ParticleRendererElement extends HTMLElement {
     const offset = this.module.allocateUTF8(src);
     this.module._setUserShaderSourceAtIndex(index, offset);
     this.module._free(offset);
+  }
 
+  tryCompileShaderPrograms() {
     this.module._tryCompileShaderPrograms();
   }
 
