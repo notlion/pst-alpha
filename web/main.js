@@ -111,7 +111,7 @@ const onDownloadRendererShaderClick = (event) => {
 const onCopyShaderLinkClick = (event) => {
   if (navigator.clipboard) {
     const output = serializeEditorStateForJson();
-    const base = window.location.protocol + window.location.host + window.location.pathname;
+    const base = window.location.protocol + "//" + window.location.host + window.location.pathname;
     const url = base + "#" + window.btoa(JSON.stringify(output));
 
     navigator.clipboard.writeText(url);
