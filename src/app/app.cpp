@@ -318,6 +318,8 @@ static std::vector<ShaderPragma> parsePragmas(std::string_view source) {
 }
 
 void App::parseSimulationShaderPragmas() {
+  m_particle_framebuffer_resolution = m_default_particle_framebuffer_resolution;
+
   const auto pragmas = parsePragmas(m_user_shader_sources[1]);
   for (const auto &pragma : pragmas) {
     if (pragma.args.size() == 3 && pragma.args[0] == "size") {
@@ -325,14 +327,14 @@ void App::parseSimulationShaderPragmas() {
       if (size.x > 0 && size.y > 0) {
         m_particle_framebuffer_resolution = size;
       }
-      else {
-        m_particle_framebuffer_resolution = m_default_particle_framebuffer_resolution;
-      }
     }
   }
 }
 
 void App::parseRenderShaderPragmas() {
+  m_instance_vertex_count = m_default_instance_vertex_count;
+  m_cull_mode = m_default_cull_mode;
+
   const auto vertexPragmas = parsePragmas(m_user_shader_sources[2]);
   for (const auto &pragma : vertexPragmas) {
     if (pragma.args.size() == 2 && pragma.args[0] == "vertexCount") {
