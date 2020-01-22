@@ -66,6 +66,8 @@ class App {
 
   FrameClock m_clock;
 
+  int m_simulation_frame_id{ -1 };
+
   void updateViewAndProjectionTransforms();
   void updateControllerTransforms();
 

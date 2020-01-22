@@ -142,7 +142,7 @@ void App::render(int width, int height) {
   }
 
   // Simulate
-  {
+  if (m_simulation_frame_id != m_common_uniforms.frame) {
     std::swap(m_particle_fbs[0], m_particle_fbs[1]);
 
     gl::bindFramebuffer(*m_particle_fbs[0]);
@@ -169,6 +169,8 @@ void App::render(int width, int height) {
     gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
     gl::unbindFramebuffer();
+
+    m_simulation_frame_id = m_common_uniforms.frame;
 
     CHECK_GL_ERROR();
   }
@@ -380,6 +382,8 @@ bool App::tryCompileShaderPrograms() {
       m_programs[i] = std::move(programs[i]);
     }
   }
+
+  m_simulation_frame_id = -1;
 
   return true;
 }
