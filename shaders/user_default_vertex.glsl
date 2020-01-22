@@ -1,4 +1,5 @@
 #pragma vertexCount 36
+#pragma cull back
 
 out vec4 vColor;
 

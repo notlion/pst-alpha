@@ -149,6 +149,7 @@ void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oData2, out ve
 )GLSL";
 
 const char *shader_source_user_default_vertex = R"GLSL(#pragma vertexCount 36
+#pragma cull back
 
 out vec4 vColor;
 
