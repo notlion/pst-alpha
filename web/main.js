@@ -71,12 +71,52 @@ const serializeEditorStateForJson = () => {
   };
 };
 
+const loadEditorStateFromJson = (jsonString) => {
+  try {
+    const fileContents = JSON.parse(jsonString);
+    if (Array.isArray(fileContents.shaders) && fileContents.shaders.length >= 3) {
+      // Add an offset to upgrade older shader saves
+      let offset = fileContents.shaders.length === 3 ? 1 : 0;
+
+      fileContents.shaders.forEach((shader, i) => {
+        shaderEditorStates[offset + i].model.setValue(shader.source);
+      });
+
+      compileAllShaders();
+      rendererElem.rewind();
+    }
+  }
+  catch (err) {
+    console.error("Could not parse JSON:", err);
+  }
+};
+
+const onRendererReady = () => {
+  if (window.location.hash.length > 0) {
+    const jsonString = window.atob(window.location.hash.slice(1));
+    loadEditorStateFromJson(jsonString);
+  }
+
+  initEditorShaders();
+  setEditorShaderIndex(1);
+};
+
 const onDownloadRendererShaderClick = (event) => {
   if (shaderEditorStates) {
     const output = serializeEditorStateForJson();
 
     event.target.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "text/json" }));
     event.target.download = "shader_" + (new Date()).toISOString() + ".json";
+  }
+};
+
+const onCopyShaderLinkClick = (event) => {
+  if (navigator.clipboard) {
+    const output = serializeEditorStateForJson();
+    const base = window.location.protocol + window.location.host + window.location.pathname;
+    const url = base + "#" + window.btoa(JSON.stringify(output));
+
+    navigator.clipboard.writeText(url);
   }
 };
 
@@ -95,23 +135,7 @@ const onDrop = (event) => {
     if (draggedFile.type == "application/json") {
       const reader = new FileReader();
       reader.onload = (event) => {
-        try {
-          const fileContents = JSON.parse(event.target.result);
-          if (Array.isArray(fileContents.shaders) && fileContents.shaders.length >= 3) {
-            // Add an offset to upgrade older shader saves
-            let offset = fileContents.shaders.length === 3 ? 1 : 0;
-
-            fileContents.shaders.forEach((shader, i) => {
-              shaderEditorStates[offset + i].model.setValue(shader.source);
-            });
-
-            compileAllShaders();
-            rendererElem.rewind();
-          }
-        }
-        catch (err) {
-          console.error("Could not parse JSON:", err);
-        }
+        loadEditorStateFromJson(event.target.result);
       };
       reader.readAsText(draggedFile);
     }
@@ -197,8 +221,7 @@ const init = () => {
   if (!rendererElem.isReady) {
     rendererElem.addEventListener("ready", () => {
       if (shaderEditor) {
-        initEditorShaders();
-        setEditorShaderIndex(1);
+        onRendererReady();
       }
     });
   }
@@ -237,6 +260,7 @@ const init = () => {
   document.getElementById("compile-shader-button").addEventListener("click", (event) => {
     compileCurrentShader();
   });
+  document.getElementById("copy-shader-button").addEventListener("click", onCopyShaderLinkClick);
   document.getElementById("download-shader-button").addEventListener("click", onDownloadRendererShaderClick);
   document.getElementById("rewind-button").addEventListener("click", (event) => {
     rendererElem.rewind();
@@ -298,8 +322,7 @@ const init = () => {
     resizeEditor();
 
     if (rendererElem.isReady) {
-      initEditorShaders();
-      setEditorShaderIndex(1);
+      onRendererReady();
     }
   });
 

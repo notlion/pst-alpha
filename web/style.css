@@ -117,7 +117,7 @@ a.button, a.button:visited {
   background-color: #303030;
   transition: transform 0.05s ease-out;
 }
-.controls > .button:last-of-type {
+.controls > .button:last-child {
   margin-right: 4px;
 }
 .controls > .button:not(:disabled) {
