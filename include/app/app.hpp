@@ -41,8 +41,11 @@ class App {
 
   gl::VertexBuffer m_fullscreen_triangle_vb;
 
-  GLsizei m_default_instance_vertex_count = 6;
+  GLsizei m_default_instance_vertex_count{ 6 };
   GLsizei m_instance_vertex_count = m_default_instance_vertex_count;
+
+  GLenum m_default_cull_mode{ GL_NONE };
+  GLenum m_cull_mode = m_default_cull_mode;
 
   CommonShaderUniforms m_common_uniforms;
   gl::UniformBuffer m_common_uniforms_buffer;

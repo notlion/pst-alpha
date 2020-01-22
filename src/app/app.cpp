@@ -178,6 +178,11 @@ void App::render(int width, int height) {
     gl::disableBlend();
     gl::enableDepth();
 
+    if (m_cull_mode != GL_NONE) {
+      glEnable(GL_CULL_FACE);
+      glCullFace(m_cull_mode);
+    }
+
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -196,6 +201,8 @@ void App::render(int width, int height) {
 
     GLsizei instance_count = m_particle_framebuffer_resolution.x * m_particle_framebuffer_resolution.y;
     glDrawArrays(GL_TRIANGLES, 0, m_instance_vertex_count * instance_count);
+
+    glDisable(GL_CULL_FACE);
 
     CHECK_GL_ERROR();
   }
@@ -327,8 +334,13 @@ void App::parseRenderShaderPragmas() {
       if (count > 0) {
         m_instance_vertex_count = count;
       }
-      else {
-        m_instance_vertex_count = m_default_instance_vertex_count;
+    }
+    else if (pragma.args.size() == 2 && pragma.args[0] == "cull") {
+      if (pragma.args[1] == "back") {
+        m_cull_mode = GL_BACK;
+      }
+      else if (pragma.args[1] == "front") {
+        m_cull_mode = GL_FRONT;
       }
     }
   }
