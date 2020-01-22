@@ -252,7 +252,13 @@ void App::setUserShaderSourceAtIndex(int index, std::string_view shader_src) {
 
   m_user_shader_sources[index] = shader_src;
 
-  if (index > 0) {
+  if (index == 0) {
+    // Assemble all shaders if the common source is changed
+    for (size_t i = 0; i < arraySize(m_assembled_shader_sources); ++i) {
+      m_assembled_shader_sources[i] = assembleShaderSourceAtIndex(i);
+    }
+  }
+  else {
     m_assembled_shader_sources[index - 1] = assembleShaderSourceAtIndex(index - 1);
   }
 }
