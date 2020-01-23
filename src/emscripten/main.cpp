@@ -19,8 +19,13 @@ void update(int frame_id, double time_seconds, double time_delta_seconds) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void render(int width, int height) {
-  g_app.render(width, height);
+void simulate(int displayWidth, int displayHeight) {
+  g_app.simulate(displayWidth, displayHeight);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void render(int displayWidth, int displayHeight) {
+  g_app.render(displayWidth, displayHeight);
 }
 
 
@@ -42,8 +47,8 @@ void setUserShaderSourceAtIndex(int index, const char *shader_src) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void tryCompileShaderPrograms() {
-  g_app.tryCompileShaderPrograms();
+bool tryCompileShaderPrograms() {
+  return g_app.tryCompileShaderPrograms();
 }
 
 EMSCRIPTEN_KEEPALIVE

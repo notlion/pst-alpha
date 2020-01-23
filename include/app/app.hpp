@@ -66,8 +66,6 @@ class App {
 
   FrameClock m_clock;
 
-  int m_simulation_frame_id{ -1 };
-
   void updateViewAndProjectionTransforms();
   void updateControllerTransforms();
 
@@ -80,7 +78,8 @@ public:
   bool init();
   void cleanup();
   void update(int frame_id, double time_seconds, double time_delta_seconds);
-  void render(int width, int height);
+  void simulate(int displayWidth, int displayHeight);
+  void render(int displayWidth, int displayHeight);
 
   std::string_view getUserShaderSourceAtIndex(int index);
   std::string_view getAssembledShaderSourceAtIndex(int index);

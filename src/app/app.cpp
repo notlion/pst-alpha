@@ -118,9 +118,7 @@ void App::update(int frame_id, double time_seconds, double time_delta_seconds) {
   }
 }
 
-void App::render(int width, int height) {
-  gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
-
+void App::simulate(int displayWidth, int displayHeight) {
   // Create particle data framebuffers (if needed)
   {
     for (size_t i = 0; i < arraySize(m_particle_fbs); ++i) {
@@ -141,73 +139,67 @@ void App::render(int width, int height) {
     }
   }
 
-  // Simulate
-  if (m_simulation_frame_id != m_common_uniforms.frame) {
-    std::swap(m_particle_fbs[0], m_particle_fbs[1]);
+  gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
 
-    gl::bindFramebuffer(*m_particle_fbs[0]);
+  std::swap(m_particle_fbs[0], m_particle_fbs[1]);
 
-    gl::disableBlend();
-    gl::disableDepth();
+  gl::bindFramebuffer(*m_particle_fbs[0]);
 
-    glViewport(0, 0, m_particle_framebuffer_resolution.x, m_particle_framebuffer_resolution.y);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+  gl::disableBlend();
+  gl::disableDepth();
 
-    gl::bindTexture(m_particle_fbs[1]->textures[0], GL_TEXTURE0);
-    gl::bindTexture(m_particle_fbs[1]->textures[1], GL_TEXTURE1);
-    gl::bindTexture(m_particle_fbs[1]->textures[2], GL_TEXTURE2);
-    gl::bindTexture(m_particle_fbs[1]->textures[3], GL_TEXTURE3);
-    gl::bindTexture(m_particle_fbs[1]->textures[4], GL_TEXTURE4);
-    gl::bindTexture(m_particle_fbs[1]->textures[5], GL_TEXTURE5);
+  glViewport(0, 0, m_particle_framebuffer_resolution.x, m_particle_framebuffer_resolution.y);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
 
-    gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
+  gl::bindTexture(m_particle_fbs[1]->textures[0], GL_TEXTURE0);
+  gl::bindTexture(m_particle_fbs[1]->textures[1], GL_TEXTURE1);
+  gl::bindTexture(m_particle_fbs[1]->textures[2], GL_TEXTURE2);
+  gl::bindTexture(m_particle_fbs[1]->textures[3], GL_TEXTURE3);
+  gl::bindTexture(m_particle_fbs[1]->textures[4], GL_TEXTURE4);
+  gl::bindTexture(m_particle_fbs[1]->textures[5], GL_TEXTURE5);
 
-    gl::useProgram(m_programs[0]);
-    gl::uniform(m_programs[0], "iResolution", gl::ivec2(width, height));
+  gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
-    gl::drawVertexBuffer(m_fullscreen_triangle_vb);
+  gl::useProgram(m_programs[0]);
+  gl::uniform(m_programs[0], "iResolution", gl::ivec2(displayWidth, displayHeight));
 
-    gl::unbindFramebuffer();
+  gl::drawVertexBuffer(m_fullscreen_triangle_vb);
 
-    m_simulation_frame_id = m_common_uniforms.frame;
+  gl::unbindFramebuffer();
 
-    CHECK_GL_ERROR();
+  CHECK_GL_ERROR();
+}
+
+void App::render(int displayWidth, int displayHeight) {
+  gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
+
+  gl::disableBlend();
+  gl::enableDepth();
+
+  if (m_cull_mode != GL_NONE) {
+    glEnable(GL_CULL_FACE);
+    glCullFace(m_cull_mode);
   }
 
-  // Texture
-  {
-    gl::disableBlend();
-    gl::enableDepth();
+  gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
+  gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
+  gl::bindTexture(m_particle_fbs[0]->textures[2], GL_TEXTURE2);
+  gl::bindTexture(m_particle_fbs[0]->textures[3], GL_TEXTURE3);
+  gl::bindTexture(m_particle_fbs[0]->textures[4], GL_TEXTURE4);
+  gl::bindTexture(m_particle_fbs[0]->textures[5], GL_TEXTURE5);
 
-    if (m_cull_mode != GL_NONE) {
-      glEnable(GL_CULL_FACE);
-      glCullFace(m_cull_mode);
-    }
+  gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
 
-    glViewport(0, 0, width, height);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  gl::useProgram(m_programs[1]);
+  gl::uniform(m_programs[1], "iResolution", gl::ivec2(displayWidth, displayHeight));
 
-    gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
-    gl::bindTexture(m_particle_fbs[0]->textures[1], GL_TEXTURE1);
-    gl::bindTexture(m_particle_fbs[0]->textures[2], GL_TEXTURE2);
-    gl::bindTexture(m_particle_fbs[0]->textures[3], GL_TEXTURE3);
-    gl::bindTexture(m_particle_fbs[0]->textures[4], GL_TEXTURE4);
-    gl::bindTexture(m_particle_fbs[0]->textures[5], GL_TEXTURE5);
+  GLsizei instance_count = m_particle_framebuffer_resolution.x * m_particle_framebuffer_resolution.y;
+  glDrawArrays(GL_TRIANGLES, 0, m_instance_vertex_count * instance_count);
 
-    gl::bindUniformBuffer(m_common_uniforms_buffer, 0);
+  glDisable(GL_CULL_FACE);
 
-    gl::useProgram(m_programs[1]);
-    gl::uniform(m_programs[1], "iResolution", gl::ivec2(width, height));
-
-    GLsizei instance_count = m_particle_framebuffer_resolution.x * m_particle_framebuffer_resolution.y;
-    glDrawArrays(GL_TRIANGLES, 0, m_instance_vertex_count * instance_count);
-
-    glDisable(GL_CULL_FACE);
-
-    CHECK_GL_ERROR();
-  }
+  CHECK_GL_ERROR();
 }
 
 
@@ -382,8 +374,6 @@ bool App::tryCompileShaderPrograms() {
       m_programs[i] = std::move(programs[i]);
     }
   }
-
-  m_simulation_frame_id = -1;
 
   return true;
 }

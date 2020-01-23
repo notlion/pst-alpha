@@ -152,6 +152,7 @@ export class ParticleRendererElement extends HTMLElement {
 
       this.timeMillis += deltaTime;
       this.module._update(this.frameId, this.timeMillis / 1000.0, deltaTime);
+      this.module._simulate(this.canvasElem.width, this.canvasElem.height);
 
       this.frameId++;
 
@@ -161,6 +162,12 @@ export class ParticleRendererElement extends HTMLElement {
 
   _renderFrame() {
     this.module.GL.makeContextCurrent(this._webglContextHandle);
+
+    const gl = this.webglContext;
+    gl.viewport(0, 0, this.canvasElem.width, this.canvasElem.height);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     this.module._render(this.canvasElem.width, this.canvasElem.height);
   }
 
@@ -372,7 +379,9 @@ export class ParticleRendererElement extends HTMLElement {
   }
 
   tryCompileShaderPrograms() {
-    this.module._tryCompileShaderPrograms();
+    if (this.module._tryCompileShaderPrograms()) {
+      this.stepOneFrame = true;
+    }
   }
 
   setControllerAtIndex(index, controller) {
