@@ -309,6 +309,14 @@ export class ParticleRendererElement extends HTMLElement {
     quat.identity(this.camera.orientation);
   }
 
+  setCameraPosition(position) {
+    vec3.copy(this.camera.position, position);
+  }
+
+  setCameraOrientation(orientation) {
+    vec3.copy(this.camera.orientation, orientation);
+  }
+
   updateLayout() {
     if (this.vrDisplay && this.vrDisplay.isPresenting) {
       const eyeL = this.vrDisplay.getEyeParameters("left");

@@ -59,19 +59,34 @@ const compileAllShaders = () => {
   }
 };
 
-const serializeEditorStateForJson = () => {
-  return {
+const serializeEditorStateToJSON = () => {
+  return JSON.stringify({
+    camera: {
+      position: Array.from(rendererElem.camera.position),
+      orientation: Array.from(rendererElem.camera.orientation)
+    },
     shaders: Array(SHADER_COUNT).fill().map((_, i) => {
       return {
         source: shaderEditorStates[i].model.getValue()
       }
     })
-  };
+  });
 };
 
 const loadEditorStateFromJson = (jsonString) => {
   try {
     const fileContents = JSON.parse(jsonString);
+
+    const fileCamera = fileContents.camera;
+    if (fileCamera) {
+      if (Array.isArray(fileCamera.position) && fileCamera.position.length >= 3) {
+        rendererElem.setCameraPosition(fileCamera.position);
+      }
+      if (Array.isArray(fileCamera.orientation) && fileCamera.orientation.length >= 4) {
+        rendererElem.setCameraOrientation(fileCamera.orientation);
+      }
+    }
+
     if (Array.isArray(fileContents.shaders) && fileContents.shaders.length >= 3) {
       // Add an offset to upgrade older shader saves
       let offset = fileContents.shaders.length === 3 ? 1 : 0;
@@ -91,7 +106,7 @@ const loadEditorStateFromJson = (jsonString) => {
 
 const onRendererReady = () => {
   if (window.location.hash.length > 0) {
-    const jsonString = window.atob(window.location.hash.slice(1));
+    const jsonString = decodeURIComponent(escape(window.atob(window.location.hash.slice(1))));
     loadEditorStateFromJson(jsonString);
   }
 
@@ -99,22 +114,19 @@ const onRendererReady = () => {
   setEditorShaderIndex(1);
 };
 
-const onDownloadRendererShaderClick = (event) => {
-  if (shaderEditorStates) {
-    const output = serializeEditorStateForJson();
-
-    event.target.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "text/json" }));
-    event.target.download = "shader_" + (new Date()).toISOString() + ".json";
+const onCopyShaderLinkClick = (event) => {
+  if (navigator.clipboard) {
+    const base = window.location.protocol + "//" + window.location.host + window.location.pathname;
+    const url = base + "#" + window.btoa(unescape(encodeURIComponent(serializeEditorStateToJSON())));
+    
+    navigator.clipboard.writeText(url);
   }
 };
 
-const onCopyShaderLinkClick = (event) => {
-  if (navigator.clipboard) {
-    const output = serializeEditorStateForJson();
-    const base = window.location.protocol + "//" + window.location.host + window.location.pathname;
-    const url = base + "#" + window.btoa(JSON.stringify(output));
-
-    navigator.clipboard.writeText(url);
+const onDownloadRendererShaderClick = (event) => {
+  if (shaderEditorStates) {
+    event.target.href = URL.createObjectURL(new Blob([serializeEditorStateToJSON()], { type: "text/json" }));
+    event.target.download = "pst_alpha_shader_" + (new Date()).toISOString() + ".json";
   }
 };
 
