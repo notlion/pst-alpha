@@ -235,7 +235,7 @@ export class ParticleRendererElement extends HTMLElement {
 
   _onCanvasKeyDown(event) {
     if (this._canvasHasPointerLock) {
-      switch (event.key) {
+      switch (event.key.toLowerCase()) {
         case "w":
           this._cameraMovementDirection[2] = 1;
           break;
@@ -260,7 +260,7 @@ export class ParticleRendererElement extends HTMLElement {
 
   _onCanvasKeyUp(event) {
     if (this._canvasHasPointerLock) {
-      switch (event.key) {
+      switch (event.key.toLowerCase()) {
         case "w":
           if (this._cameraMovementDirection[2] > 0) this._cameraMovementDirection[2] = 0;
           break;
