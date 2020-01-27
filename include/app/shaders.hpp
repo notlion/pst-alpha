@@ -131,7 +131,16 @@ void mainFragment(out vec4 oColor) {
 }
 )GLSL";
 
-const char *shader_source_user_default_simulation = R"GLSL(#pragma size 64 64
+const char *shader_source_user_default_simulation = R"GLSL(/*
+Welcome to Particle ShaderToy (α)
+
+Camera    : Left-mouse drag in the viewport and use WASD keys to move. Use QE keys to roll.
+Save/Load : Click Download to save your shader. Drag a saved .json into this window to load it.
+
+Contribute : https://github.com/notlion/pst-alpha
+*/
+
+#pragma size 64 64
 
 void mainSimulation(out vec4 oPosition, out vec4 oColor, out vec4 oData2, out vec4 oData3, out vec4 oData4, out vec4 oData5) {
   ivec2 coord = ivec2(gl_FragCoord);
