@@ -2,7 +2,7 @@ import {ParticleRendererElement} from "./renderer.js"
 
 customElements.define("particle-renderer", ParticleRendererElement);
 
-const monaco_vs_path = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.0/min/vs';
+const monaco_vs_path = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.18.1/min/vs';
 require.config({ paths: { 'vs': monaco_vs_path } });
 
 window.MonacoEnvironment = {
