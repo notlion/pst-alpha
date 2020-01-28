@@ -174,12 +174,17 @@ void App::simulate(int displayWidth, int displayHeight) {
 void App::render(int displayWidth, int displayHeight) {
   gl::updateUniformBuffer(m_common_uniforms_buffer, m_common_uniforms);
 
-  gl::disableBlend();
   gl::enableDepth();
+  glDepthFunc(m_depth_func);
 
   if (m_cull_mode != GL_NONE) {
     glEnable(GL_CULL_FACE);
     glCullFace(m_cull_mode);
+  }
+
+  if (m_blend_func_sfactor != m_default_blend_func_sfactor || m_blend_func_dfactor != m_default_blend_func_dfactor) {
+    glEnable(GL_BLEND);
+    glBlendFunc(m_blend_func_sfactor, m_blend_func_dfactor);
   }
 
   gl::bindTexture(m_particle_fbs[0]->textures[0], GL_TEXTURE0);
@@ -198,6 +203,7 @@ void App::render(int displayWidth, int displayHeight) {
   glDrawArrays(GL_TRIANGLES, 0, m_instance_vertex_count * instance_count);
 
   glDisable(GL_CULL_FACE);
+  glDisable(GL_BLEND);
 
   CHECK_GL_ERROR();
 }
@@ -316,7 +322,7 @@ void App::parseSimulationShaderPragmas() {
 
   const auto pragmas = parsePragmas(m_user_shader_sources[1]);
   for (const auto &pragma : pragmas) {
-    if (pragma.args.size() == 3 && pragma.args[0] == "size") {
+    if (pragma.args.size() == 3 && stringsEqualCaseInsensitive(pragma.args[0], "size")) {
       gl::ivec2 size{ std::atoi(pragma.args[1].c_str()), std::atoi(pragma.args[2].c_str()) };
       if (size.x > 0 && size.y > 0) {
         m_particle_framebuffer_resolution = size;
@@ -326,23 +332,125 @@ void App::parseSimulationShaderPragmas() {
 }
 
 void App::parseRenderShaderPragmas() {
+  const auto findValueByNameCaseInsensitive = [](const auto &names, const auto &values, std::string_view name) -> const GLenum* {
+    const auto it = std::find_if(std::begin(names), std::end(names), [&name](const auto &n) {
+      return stringsEqualCaseInsensitive(name, n);
+    });
+    if (it == std::end(names)) return nullptr;
+    return &values[it - std::begin(names)];
+  };
+
+  static const char *CULL_FACE_MODE_NAMES[]{
+    "none",
+    "back",
+    "front",
+  };
+  static const GLenum CULL_FACE_MODE_VALUES[]{
+    GL_NONE,
+    GL_BACK,
+    GL_FRONT,
+  };
+  assert(arraySize(CULL_FACE_MODE_NAMES) == arraySize(CULL_FACE_MODE_VALUES));
+
+  static const char *BLEND_FUNC_NAMES[]{
+    "zero",
+    "one",
+    "srcColor",
+    "oneMinusSrcColor",
+    "dstColor",
+    "oneMinusDstColor",
+    "srcAlpha",
+    "oneMinusSrcAlpha",
+    "dstAlpha",
+    "oneMinusDstAlpha",
+    "constantColor",
+    "oneMinusConstantColor",
+    "constantAlpha",
+    "oneMinusConstantAlpha",
+    "srcAlphaSaturate",
+  };
+  static const GLenum BLEND_FUNC_VALUES[]{
+    GL_ZERO,
+    GL_ONE,
+    GL_SRC_COLOR,
+    GL_ONE_MINUS_SRC_COLOR,
+    GL_DST_COLOR,
+    GL_ONE_MINUS_DST_COLOR,
+    GL_SRC_ALPHA,
+    GL_ONE_MINUS_SRC_ALPHA,
+    GL_DST_ALPHA,
+    GL_ONE_MINUS_DST_ALPHA,
+    GL_CONSTANT_COLOR,
+    GL_ONE_MINUS_CONSTANT_COLOR,
+    GL_CONSTANT_ALPHA,
+    GL_ONE_MINUS_CONSTANT_ALPHA,
+    GL_SRC_ALPHA_SATURATE,
+  };
+  assert(arraySize(BLEND_FUNC_NAMES) == arraySize(BLEND_FUNC_VALUES));
+
+  static const char *DEPTH_FUNC_NAMES[]{
+    "never",
+    "less",
+    "equal",
+    "lequal",
+    "greater",
+    "notequal",
+    "gequal",
+    "always",
+  };
+  static const GLenum DEPTH_FUNC_VALUES[]{
+    GL_NEVER,
+    GL_LESS,
+    GL_EQUAL,
+    GL_LEQUAL,
+    GL_GREATER,
+    GL_NOTEQUAL,
+    GL_GEQUAL,
+    GL_ALWAYS,
+  };
+  assert(arraySize(DEPTH_FUNC_NAMES) == arraySize(DEPTH_FUNC_VALUES));
+
   m_instance_vertex_count = m_default_instance_vertex_count;
   m_cull_mode = m_default_cull_mode;
 
   const auto vertexPragmas = parsePragmas(m_user_shader_sources[2]);
   for (const auto &pragma : vertexPragmas) {
-    if (pragma.args.size() == 2 && pragma.args[0] == "vertexCount") {
+    if (pragma.args.size() == 2 && stringsEqualCaseInsensitive(pragma.args[0], "vertexCount")) {
       int count = std::atoi(pragma.args[1].c_str());
       if (count > 0) {
         m_instance_vertex_count = count;
       }
     }
-    else if (pragma.args.size() == 2 && pragma.args[0] == "cull") {
-      if (pragma.args[1] == "back") {
-        m_cull_mode = GL_BACK;
+    else if (pragma.args.size() == 2 && (stringsEqualCaseInsensitive(pragma.args[0], "cullFace") || stringsEqualCaseInsensitive(pragma.args[0], "cull"))) {
+      const auto cullMode = findValueByNameCaseInsensitive(CULL_FACE_MODE_NAMES, CULL_FACE_MODE_VALUES, pragma.args[1]);
+      if (cullMode) {
+        m_cull_mode = *cullMode;
       }
-      else if (pragma.args[1] == "front") {
-        m_cull_mode = GL_FRONT;
+    }
+  }
+
+  m_blend_func_sfactor = m_default_blend_func_sfactor;
+  m_blend_func_dfactor = m_default_blend_func_dfactor;
+
+  m_depth_func = m_default_depth_func;
+
+  const auto fragmentPragmas = parsePragmas(m_user_shader_sources[3]);
+  for (const auto &pragma : fragmentPragmas) {
+    if (pragma.args.size() == 3 && stringsEqualCaseInsensitive(pragma.args[0], "blendFunc")) {
+      const auto sfactor = findValueByNameCaseInsensitive(BLEND_FUNC_NAMES, BLEND_FUNC_VALUES, pragma.args[1]);
+      if (sfactor) {
+        m_blend_func_sfactor = *sfactor;
+      }
+
+      const auto dfactor = findValueByNameCaseInsensitive(BLEND_FUNC_NAMES, BLEND_FUNC_VALUES, pragma.args[2]);
+      if (dfactor) {
+        m_blend_func_dfactor = *dfactor;
+      }
+    }
+    else if (pragma.args.size() == 2 && stringsEqualCaseInsensitive(pragma.args[0], "depthFunc")) {
+      const auto func = findValueByNameCaseInsensitive(DEPTH_FUNC_NAMES, DEPTH_FUNC_VALUES, pragma.args[1]);
+      if (func) {
+        m_depth_func = *func;
       }
     }
   }

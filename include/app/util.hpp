@@ -149,6 +149,11 @@ gl::vec4 unpackColor32(const uint8_t *packed);
 gl::vec3 unpackColor24(const uint8_t *packed);
 
 
+// Strings
+
+bool stringsEqualCaseInsensitive(std::string_view s1, std::string_view s2);
+
+
 // Formatting
 
 std::string formatString(const char *fmt, ...);

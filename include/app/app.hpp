@@ -47,6 +47,14 @@ class App {
   GLenum m_default_cull_mode{ GL_NONE };
   GLenum m_cull_mode = m_default_cull_mode;
 
+  GLenum m_default_blend_func_sfactor{ GL_ZERO };
+  GLenum m_default_blend_func_dfactor{ GL_ZERO };
+  GLenum m_blend_func_sfactor = m_default_blend_func_sfactor;
+  GLenum m_blend_func_dfactor = m_default_blend_func_dfactor;
+
+  GLenum m_default_depth_func{ GL_LESS };
+  GLenum m_depth_func = m_default_depth_func;
+
   CommonShaderUniforms m_common_uniforms;
   gl::UniformBuffer m_common_uniforms_buffer;
 

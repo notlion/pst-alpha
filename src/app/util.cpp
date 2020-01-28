@@ -89,6 +89,13 @@ gl::vec3 unpackColor24(const uint8_t *packed) {
 }
 
 
+bool stringsEqualCaseInsensitive(std::string_view s1, std::string_view s2) {
+  return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end(), [](auto a, auto b) {
+    return std::tolower(a) == std::tolower(b);
+  });
+}
+
+
 std::string formatString(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
